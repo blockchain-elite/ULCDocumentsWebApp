@@ -1,0 +1,166 @@
+/*
+	This file is part of ULCDocuments Web App.
+	ULCDocuments Web App is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+	ULCDocuments Web App is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+	You should have received a copy of the GNU General Public License
+	along with ULCDocuments Web App.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+/*  ULCDOCUMENTS BOOTSTRAP OVERWRITE CSS
+*  @author Arnaud VERGNET <arnaud.vergnet@netc.fr>
+*  Dev Entity: Blockchain-Elite (https://www.blockchain-elite.fr/)
+*/
+
+html, body {
+    background: #EDEEF3;
+    height: 100%;
+    padding: 0;
+    margin: 0;
+    font-family: 'Libre Franklin', sans-serif;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Montserrat', sans-serif;
+}
+
+footer {
+    background: #222222;
+    position: absolute;
+    width: 100%;
+    bottom: 0;
+    height: 210px;
+    color: white;
+}
+
+footer a {
+    color: #83e6ff;
+}
+
+footer a:hover {
+    color: #befaff;
+}
+
+.footer-copyright {
+    background: #000000;
+    color: white;
+}
+
+.navbar {
+    background: #990000;
+    color: #ffffff;
+}
+
+.navbar-dark .navbar-text, .navbar-dark .navbar-nav .nav-link {
+    color: #ffffff;
+}
+
+.nav-link, .navbar {
+    transition: 0.3s;
+}
+
+.navbar .nav-link:hover {
+    text-shadow: 0 0 5px #ffffff;
+    border-radius: 10px;
+}
+
+.table td, .table th {
+    vertical-align: middle;
+}
+
+.table th {
+    width: 200px;
+}
+
+.collapsing {
+    -webkit-transition: height 0.1s ease;
+    -moz-transition: height 0.1s ease;
+    -ms-transition: height 0.1s ease;
+    -o-transition: height 0.1s ease;
+    transition: height 0.1s ease;
+}
+
+.bootstrap-notify {
+    width: 575px;
+    padding: 0 10px 0;
+}
+
+.bootstrap-notify-title {
+    font-size: 1.2rem;
+}
+
+@media
+only screen and (max-width: 575px) {
+    /* Force table to not be like tables anymore */
+
+    table, thead, tbody, th, td, tr {
+        display: block;
+    }
+
+    th, td {
+        width: 100% !important;
+    }
+
+    td {
+        /* Behave  like a "row" */
+        position: relative;
+        padding-left: 50%;
+    }
+
+    td:before {
+        /* Now like a table header */
+        position: absolute;
+        /* Top/left values mimic padding */
+        top: 6px;
+        left: 6px;
+        width: 45%;
+        padding-right: 10px;
+        white-space: nowrap;
+    }
+
+    /*.container {*/
+        /*margin: 0;*/
+        /*padding: 0;*/
+    /*}*/
+
+    .card-body {
+        padding: 0.7rem;
+    }
+
+    #fileContainer {
+        padding: 1.25rem;
+    }
+
+    #mainUIContainer .row {
+        margin: 0;
+    }
+
+    #mainUIContainer .row .col-lg-4, #mainUIContainer .row .col-lg-8 {
+        padding: 0;
+    }
+
+    .bootstrap-notify {
+        width: 100%;
+        padding: 5px;
+        font-size: 0.9rem;
+    }
+
+    .bootstrap-notify-title {
+        font-size: 1rem;
+    }
+
+    footer {
+        height: 300px;
+        font-size: 0.8rem;
+    }
+
+    .main-card-nav li, .main-card-nav button {
+        width: 100%;
+        text-align: center;
+    }
+}

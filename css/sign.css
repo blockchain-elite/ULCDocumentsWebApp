@@ -1,0 +1,46 @@
+/*
+	This file is part of ULCDocuments Web App.
+	ULCDocuments Web App is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+	ULCDocuments Web App is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+	You should have received a copy of the GNU General Public License
+	along with ULCDocuments Web App.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+/*  ULCDOCUMENTS SIGN SPECIFIC CSS
+*  @author Arnaud VERGNET <arnaud.vergnet@netc.fr>
+*  Dev Entity: Blockchain-Elite (https://www.blockchain-elite.fr/)
+*/
+
+.dropdown-item.active, .progress-bar {
+    background-color: #17A2B8;
+}
+
+.drop-hover {
+    background: #a9dbe2;
+}
+
+.file-hover {
+    border-color: #17A2B8 !important;
+    box-shadow: 0 0 5px #17A2B8 !important;
+}
+
+.file-selected {
+    border-color: #17A2B8 !important;
+    box-shadow: 0 0 10px #17A2B8 !important;
+}
+
+a {
+    color: #17A2B8;
+    transition: 0.3s;
+}
+
+a:hover {
+    color: #09424b;
+    text-decoration: none;
+}
