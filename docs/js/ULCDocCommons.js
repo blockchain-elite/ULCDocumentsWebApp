@@ -65,15 +65,25 @@ const moderatorReservedKeys = {
     search: 'search-link'
 };
 
+//Used when we query Moderator
+const resultQueryStatus = {
+    unknown : 'unknown',
+    revoked : 'revoked',
+    initialized : 'initialized',
+    confirmed : 'confirmed',
+    inError : 'error'
+};
+
 // Special keys used in kernel info Map
 const kernelReservedKeys = {
     name: 'name',
+    revokedReason : 'revokedReason',
     isOrganisation: 'isOrganisation',
     version: 'version',
     url: 'url',
     mail: 'mail',
     phone: 'phone',
-    status: 'connection-status',
+    status: 'resultQuery-status',
     img: 'img',
     physicalAddress: 'physicalAddress',
     extraData: 'extra-data'

@@ -111,209 +111,171 @@ function startApp(error, sNetwork) {
     logMe(ULCDocModMasterPrefix,"Wallet state:" + WALLET_ACTIVATED);
 }
 
+/**
+*    @dev function that says if kernel is compatible with this webApp
+*    @param {String} addressKernel the adress of the kernel to check
+*    @return {Bool} is the Kernel is compatible with Blockchain this app or not
+*/
+async function isKernelCompatible(addressKernel){
+
+    let versionCompatible = false;
+    let hashCompatible = false;
+    let kernelVersion;
+
+    let ULCDocKernelTest = new web3js.eth.Contract(ULCDocKernelABI, addressKernel);
+
+    try {
+        kernelVersion = await ULCDocKernelTest.methods.Kernel_Version().call();
+        kernelHashFormat = await ULCDocKernelTest.methods.Hash_Algorithm().call();
+    }catch(error){
+        sendNotification(TypeInfo.Critical, "Error Kernel Loading", "Impossible to reach Kernel Compatibility Info.");
+        logMe(ULCDocModMasterPrefix, "Error while reaching kernel version : " + error, TypeInfo.Critical);
+        return false;
+    }
+
+    //convert it as number type, because it's string type
+    kernelVersion = Number(kernelVersion);
+
+    //we check if the Kernel version  is compatible with our list
+    for (ver of kernelVersionCompatibility){
+        if (kernelVersion === ver) {
+            versionCompatible = true;
+            break;
+        }
+    }
+
+    if(!versionCompatible){
+        sendNotification(TypeInfo.Critical,"Incompatible Kernel Version","The Kernel's Version is not compatible with this webApp !");
+        logMe(ULCDocModMasterPrefix,"Kernel Version not compatible : " + kernelVersion);
+        return false;
+    }
+
+    for (hash of hashMethodsCompatibility){
+        if (kernelHashFormat === hash) {
+            hashCompatible = true;
+            break;
+        }
+    }
+
+    if(!hashCompatible){
+        sendNotification(TypeInfo.Critical,"Incompatible Kernel Hash Methods","The hash method of the kernel is not compatible with this webApp !");
+        logMe(ULCDocModMasterPrefix,"Kernel Hash not compatible : " + kernelHashFormat);
+        return false;
+    }
+
+    //if compatible both, then fully compatible :)
+    return  true;
+}
+
+/**
+*   @dev function that return information about a Kernel
+*   @param {String} addressKernel the address of the kernel to check
+*   @return {Map} A map with all Moderator info about the kernel
+*   Specific key : "status", resultQueryStatus
+*/
+async function queryModerator(addressKernel){
+
+    let moderatorInfoKernel = new Map();
+
+    try {
+        let queryResultIdentity = await ULCDocMod.methods.Kernel_Identity_Book(addressKernel).call();
+
+        if(queryResultIdentity["isRevoked"]){
+            moderatorInfoKernel.set("status", resultQueryStatus.revoked);
+            moderatorInfoKernel.set(kernelReservedKeys.revokedReason, queryResultIdentity["revoked_reason"]);
+        }
+        else if (queryResultIdentity["confirmed"]) {
+            moderatorInfoKernel.set(kernelReservedKeys.status, resultQueryStatus.confirmed);
+            moderatorInfoKernel.set(kernelReservedKeys.name,result["name"]);
+            moderatorInfoKernel.set(kernelReservedKeys.version, result["version"].toString());
+
+            //we update detailed info
+            try {
+                queryResultDetailedInfo = await ULCDocMod.methods.Kernel_Info_Book(addressKernel).call();
+
+                moderatorInfoKernel.set(kernelReservedKeys.isOrganisation, queryResultDetailedInfo["isOrganisation"]);
+                moderatorInfoKernel.set(kernelReservedKeys.url, queryResultDetailedInfo["url"]);
+                moderatorInfoKernel.set(kernelReservedKeys.mail, queryResultDetailedInfo["mail"]);
+                moderatorInfoKernel.set(kernelReservedKeys.img, queryResultDetailedInfo["imageURL"]);
+                moderatorInfoKernel.set(kernelReservedKeys.phone,queryResultDetailedInfo["phone"]);
+                moderatorInfoKernel.set(kernelReservedKeys.physicalAddress, queryResultDetailedInfo["physicalAddress"]);
+
+                //extracting extra_data if necessary
+                if(queryResultDetailedInfo["extra_data"] !== "" && queryResultDetailedInfo["extra_data"] !== " "){
+                    logMe(ULCDocModMasterPrefix,"Extra Data detected, extracting...");
+                    moderatorInfoKernel.set(kernelReservedKeys.extraData, formatExtraData(queryResultDetailedInfo["extra_data"]));
+                }
+                else {
+                    moderatorInfoKernel.set(kernelReservedKeys.extraData, undefined);
+                }
+
+            }catch(error){
+                sendNotification(TypeInfo.Critical, "Fatal Error!", "Error while reaching kernel moderator detailed info");
+                logMe(ULCDocModMasterPrefix,"CRITICAL: Unkown error when reaching queryModerator detailed info",TypeInfo.Critical);
+                logMe(ULCDocModMasterPrefix,error);
+                moderatorInfoKernel.set(kernelReservedKeys.status, resultQueryStatus.inError);
+            }
+        }
+        else if (queryResultIdentity["initialized"]){
+            //here we don't have confirmed but intilizated only.
+            moderatorInfoKernel.set(kernelReservedKeys.status, resultQueryStatus.initialized);
+        }
+        else {
+            moderatorInfoKernel.set(kernelReservedKeys.status, resultQueryStatus.unknown);
+        }
+
+    } catch(error){
+        sendNotification(TypeInfo.Critical, "Fatal Error!", "Error while reaching kernel moderator identity");
+        logMe(ULCDocModMasterPrefix,"CRITICAL: Unkown error when reaching queryModerator identity",TypeInfo.Critical);
+        logMe(ULCDocModMasterPrefix,error);
+        moderatorInfoKernel.set(kernelReservedKeys.status, resultQueryStatus.inError);
+    }
+
+    return moderatorInfoKernel;
+
+}
+
 
 /**@dev function that update the ULCDocKernel.
-* @param addressKernel {String} the kernel address you want to update */
-
+* @param {String} addressKernel the kernel address you want to update */
 async function updateKernelAddress(addressKernel){
 
-    let connectionInfo = new Map();
-
     if(web3js.utils.isAddress(addressKernel)){
-        //if the hexa code is valid, we need to ask moderator for kernel info (if any)
-
 
         //first we need to know if kernel has version compatible with this module.
+        if(isKernelCompatible(addressKernel)){
+            //if the kernel is compatible, we need to ask moderator for kernel info (if any)
+            let moderatorInfoKernel = await queryModerator(addressKernel);
 
+            let statusResult = moderatorInfoKernel.get(kernelReservedKeys.status);
+            moderatorInfoKernel.delete(kernelReservedKeys.status); // not necessary for UI after.
 
-        // i know it's dirty, but that just for the moment, don't worry :S
-
-        let compatible = false;
-        let kernelVersion;
-        let ULCDocKernelTest = new web3js.eth.Contract(ULCDocKernelABI, addressKernel)
-        try {
-            kernelVersion = await ULCDocKernelTest.methods.Kernel_Version().call();
-            kernelHashFormat = await ULCDocKernelTest.methods.Hash_Algorithm().call();
-        }catch(error){
-            sendNotification(TypeInfo.Critical, "Error Kernel Loading", "Impossible to reach Kernel Basic Info.");
-            logMe(ULCDocModMasterPrefix, "Error while reaching kernel version : " + error, TypeInfo.Critical);
-            connectionInfo.set(kernelReservedKeys.status, TypeInfo.Critical);
-            UI.updateKernelConnection(connectionInfo);
-            return;
-        }
-
-        kernelVersion = Number(kernelVersion);
-
-        for (ver of kernelVersionCompatibility){
-            if (kernelVersion === ver) {
-                compatible = true;
+            if(statusResult === resultQueryStatus.confirmed){ //OK!
+                updateKernelObject(addressKernel, moderatorInfoKernel);
+            }
+            else {
+                //we ask UI for unsecure connection
+                UI.promptKernelConnectionWarnAnswer(resultQueryStatus, resultQueryStatus === resultQueryStatus.revoked ? moderatorInfoKernel.get(kernelReservedKeys.revokedReason) : undefined);
             }
         }
-
-        if(!compatible){
-            sendNotification(TypeInfo.Critical,"Bad Kernel Version","The version of the kernel is not compatible with this module !");
-            logMe(ULCDocModMasterPrefix,"Kernel Version not compatible : " + kernelVersion);
-            connectionInfo.set(kernelReservedKeys.status, TypeInfo.Critical);
-            UI.updateKernelConnection(connectionInfo);
-            return;
+        else {
+            // Here kernel not compatible, so we return error statement.
+            UI.updateKernelConnection(TypeInfo.Critical, undefined);
         }
-
-        compatible = false;
-
-        for (hash of hashMethodsCompatibility){
-            if (kernelHashFormat === hash) {
-                compatible = true;
-            }
-        }
-
-        if(!compatible){
-            sendNotification(TypeInfo.Critical,"Bad Kernel Hash Methods","The hash methods of the kernel is not compatible with this module !");
-            logMe(ULCDocModMasterPrefix,"Kernel Hash not compatible : " + kernelHashFormat);
-            connectionInfo.set(kernelReservedKeys.status, TypeInfo.Critical);
-            UI.updateKernelConnection(connectionInfo);
-            return;
-        }
-
-
-        try {
-            let result = await ULCDocMod.methods.Kernel_Identity_Book(addressKernel).call();
-            if(result["isRevoked"]){ // we used to know, but revoked
-                $.confirm({
-                    title: 'Security consideration',
-                    content: 'Kernel is revoked by the moderator. That mean Moderator do not recorgnize this kernel anymore. <br/> Revoked reason : ' + result["revoked_reason"] + ' <br/> Do you cant to connect anyway ? (Not recommended)',
-                    type: 'red',
-                    columnClass: 'medium',
-                    theme: 'material',
-                    typeAnimated: true,
-                    buttons: {
-                        confirm: async function () {
-                            await updateKernelObject(addressKernel);
-                            connectionInfo.set(kernelReservedKeys.status, TypeInfo.Warning);
-                            UI.updateKernelConnection(connectionInfo);
-                            sendNotification(TypeInfo.Critical,"Important Information", "Address specified has been revoked by authority. You can still use it at your own risk.");
-                        },
-                        cancel: function () {
-                            sendNotification(TypeInfo.Critical, "Connection rejected", "You choose not to connect to the kernel.");
-                            logMe(ULCDocModMasterPrefix,"Connection refused by user");
-                            connectionInfo.set(kernelReservedKeys.status, TypeInfo.Critical);
-                            UI.updateKernelConnection(connectionInfo);
-                        }
-                    }
-                });
-            }
-            else if(result["confirmed"]){ //OK!
-                await updateKernelObject(addressKernel);
-                //Assigning correct structure
-                let kernel_extra = new Map();
-                connectionInfo.set(kernelReservedKeys.name,result["name"]);
-                connectionInfo.set(kernelReservedKeys.version, result["version"].toString());
-
-                try {
-                    resultInfo = await ULCDocMod.methods.Kernel_Info_Book(addressKernel).call();                    //we update objects.
-                    await updateKernelObject(addressKernel);
-
-                    //extracting extra_data if necessary
-                    if(resultInfo["extra_data"] !== "" && resultInfo["extra_data"] !== " "){
-                        logMe(ULCDocModMasterPrefix,"Extra Data detected, extracting...");
-                        kernel_extra = formatExtraData(resultInfo["extra_data"]);
-                    }
-
-                    connectionInfo.set(kernelReservedKeys.isOrganisation, resultInfo["isOrganisation"]);
-                    connectionInfo.set(kernelReservedKeys.url, resultInfo["url"]);
-                    connectionInfo.set(kernelReservedKeys.mail, resultInfo["mail"]);
-                    connectionInfo.set(kernelReservedKeys.img, resultInfo["imageURL"]);
-                    connectionInfo.set(kernelReservedKeys.phone,resultInfo["phone"]);
-                    connectionInfo.set(kernelReservedKeys.physicalAddress, resultInfo["physicalAddress"]);
-                    connectionInfo.set(kernelReservedKeys.extraData, kernel_extra);
-                    //sending to UI
-                    connectionInfo.set(kernelReservedKeys.status, TypeInfo.Good);
-                    UI.updateKernelConnection(connectionInfo);
-                    sendNotification(TypeInfo.Good, "Kernel Updated", "Kernel address successfully updated.");
-                }catch(error){
-                    sendNotification(TypeInfo.Critical, "Fatal Error!", "Error while updating kernel address");
-                    logMe(ULCDocModMasterPrefix,"CRITICAL: Unkown error when reaching Kernel_Info_Book",TypeInfo.Critical);
-                    logMe(ULCDocModMasterPrefix,error);
-                    connectionInfo.set(kernelReservedKeys.status, TypeInfo.Critical);
-                    UI.updateKernelConnection(connectionInfo);
-                }
-
-            }
-            else if(result["initialized"]) { //if init but not confirm, then pending
-                logMe(ULCDocModMasterPrefix,"Moderator know kernel but not confirmed...");
-                $.confirm({
-                    title: 'Security consideration',
-                    content: "The moderator know the address, but don't have passed security confirmation yet. <br/> Do you cant to connect anyway ? (Not recommended !)",
-                    type: 'orange',
-                    columnClass: 'medium',
-                    theme: 'material',
-                    typeAnimated: true,
-                    buttons: {
-                        confirm: async function () {
-                            await updateKernelObject(addressKernel);
-                            connectionInfo.set(kernelReservedKeys.status, TypeInfo.Warning);
-                            UI.updateKernelConnection(connectionInfo);
-                            sendNotification(TypeInfo.Warning,"Important Information", "Address specified is not recognised by loaded authority. You can still use it at your own risk.");
-                        },
-                        cancel: function () {
-                            sendNotification(TypeInfo.Critical, "Connection rejected", "You choose not to connect to the kernel.");
-                            logMe(ULCDocModMasterPrefix,"Connection refused by user");
-                            connectionInfo.set(kernelReservedKeys.status, TypeInfo.Critical);
-                            UI.updateKernelConnection(connectionInfo);
-                        }
-                    }
-                });
-            }
-            else { //if not init, then we don't know at all the kernel
-            logMe(ULCDocModMasterPrefix,"Moderator don't know the Kernel");
-            $.confirm({
-                title: 'Security consideration',
-                content: "The moderator don't know the address you gave <br/> Do you cant to connect anyway ? (Not recommended)",
-                type: 'orange',
-                columnClass: 'medium',
-                theme: 'material',
-                typeAnimated: true,
-                buttons: {
-                    confirm: async function () {
-                        await updateKernelObject(addressKernel);
-                        connectionInfo.set(kernelReservedKeys.status, TypeInfo.Warning);
-                        UI.updateKernelConnection(connectionInfo);
-                        sendNotification(TypeInfo.Warning,"Important Information", "Address specified is not recognised by loaded authority. You can still use it at your own risk.");
-                    },
-                    cancel: function () {
-                        sendNotification(TypeInfo.Critical, "Connection rejected", "You choose not to connect to the kernel.");
-                        logMe(ULCDocModMasterPrefix,"Connection refused by user");
-                        connectionInfo.set(kernelReservedKeys.status, TypeInfo.Critical);
-                        UI.updateKernelConnection(connectionInfo);
-                    }
-                }
-            });
-
-        }
-
-
-
-    }catch(error){
-        sendNotification(TypeInfo.Critical, "Fatal Error!", "Error while updating kernel address");
-        logMe(ULCDocModMasterPrefix,"CRITICAL: Unkown error when reaching Kernel_Identity_Book(adressKernel)",TypeInfo.Critical);
-        logMe(ULCDocModMasterPrefix, error);
-        connectionInfo.set(kernelReservedKeys.status, TypeInfo.Critical);
-        UI.updateKernelConnection(connectionInfo);
     }
-}
 
-else {
-    sendNotification(TypeInfo.Critical, "Invalid Address", "The kernel address does not respect format.");
-    logMe(ULCDocModMasterPrefix,"Wrong kernel address format");
-    connectionInfo.set(kernelReservedKeys.status, TypeInfo.Critical);
-    UI.updateKernelConnection(connectionInfo);
-}
+    else {
+        sendNotification(TypeInfo.Critical, "Invalid Address", "The kernel address does not respect format.");
+        logMe(ULCDocModMasterPrefix,"Wrong kernel address format");
+        UI.updateKernelConnection(TypeInfo.Critical, undefined);
+    }
 }
 
 /**
     Function that update in masterJS the objet kernel
     @param {String} addressKernel the addresse of the kernel to load
 **/
-async function updateKernelObject(addressKernel){
+async function updateKernelObject(addressKernel, moderatorInfoKernel){
     CONF_ADDRESS_KERNEL = addressKernel;
     ULCDocKernel  = new web3js.eth.Contract(ULCDocKernelABI, CONF_ADDRESS_KERNEL);
 
@@ -324,7 +286,6 @@ async function updateKernelObject(addressKernel){
         logMe(ULCDocModMasterPrefix, "Impossible to read operatorsForChange", TypeInfo.Critical);
         logMe(ULCDocModMasterPrefix, error);
         sendNotification(TypeInfo.Critical,"Error reading kernel", "Impossible to find security property : number signatures needed");
-
     }
 
 
@@ -346,6 +307,7 @@ async function updateKernelObject(addressKernel){
     }
 
 
+    UI.updateKernelConnection(moderatorInfoKernel !== 'undefined' ? TypeInfo.Good : TypeInfo.warning, moderatorInfoKernel);
     logMe(ULCDocModMasterPrefix,"new kernel link Loaded.");
 }
 
@@ -405,7 +367,6 @@ async function updateModeratorInfo(testULCDocMod){
 /** @dev Function that change the moderator address
 * @param addressModerator {String} the new moderator address */
 async function updateModeratorAddress(addressModerator){
-
 
     if(web3js.utils.isAddress(addressModerator)){
 
