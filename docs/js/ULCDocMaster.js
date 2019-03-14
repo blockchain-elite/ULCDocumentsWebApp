@@ -251,28 +251,17 @@ async function updateKernelAddress(addressKernel){
             moderatorInfoKernel.delete(kernelReservedKeys.status); // not necessary for UI after.
 
             if(statusResult === resultQueryStatus.confirmed){ //OK!
-                await updateKernelObject(addressKernel);
-                UI.updateKernelConnection(TypeInfo.Good, moderatorInfoKernel);
-                sendNotification(TypeInfo.Good, "Kernel Updated", "Kernel address successfully updated.");
+                updateKernelObject(addressKernel, moderatorInfoKernel);
             }
             else {
                 //we ask UI for unsecure connection
-                if(UI.getKernelConnectionWarnAnswer(resultQueryStatus, resultQueryStatus.revoked ? moderatorInfoKernel.get(kernelReservedKeys.revokedReason) : undefined){
-                    sendNotification(TypeInfo.Critical,"Important Information", "Address specified is not recognized  by authority. You can still use it at your own risk.");
-                    await updateKernelObject(addressKernel);
-                    UI.updateKernelConnection(TypeInfo.Warning, undefined);
-                }
-                else {
-                    sendNotification(TypeInfo.Critical, "Connection rejected", "You choose not to connect to the kernel.");
-                    UI.updateKernelConnection(TypeInfo.Critical, undefined);
-                }
+                UI.promptKernelConnectionWarnAnswer(resultQueryStatus, resultQueryStatus === resultQueryStatus.revoked ? moderatorInfoKernel.get(kernelReservedKeys.revokedReason) : undefined);
             }
         }
         else {
             // Here kernel not compatible, so we return error statement.
             UI.updateKernelConnection(TypeInfo.Critical, undefined);
         }
-
     }
 
     else {
@@ -286,7 +275,7 @@ async function updateKernelAddress(addressKernel){
     Function that update in masterJS the objet kernel
     @param {String} addressKernel the addresse of the kernel to load
 **/
-async function updateKernelObject(addressKernel){
+async function updateKernelObject(addressKernel, moderatorInfoKernel){
     CONF_ADDRESS_KERNEL = addressKernel;
     ULCDocKernel  = new web3js.eth.Contract(ULCDocKernelABI, CONF_ADDRESS_KERNEL);
 
@@ -318,6 +307,7 @@ async function updateKernelObject(addressKernel){
     }
 
 
+    UI.updateKernelConnection(moderatorInfoKernel !== 'undefined' ? TypeInfo.Good : TypeInfo.warning, moderatorInfoKernel);
     logMe(ULCDocModMasterPrefix,"new kernel link Loaded.");
 }
 
@@ -377,7 +367,6 @@ async function updateModeratorInfo(testULCDocMod){
 /** @dev Function that change the moderator address
 * @param addressModerator {String} the new moderator address */
 async function updateModeratorAddress(addressModerator){
-
 
     if(web3js.utils.isAddress(addressModerator)){
 
