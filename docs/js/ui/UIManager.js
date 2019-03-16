@@ -1072,6 +1072,7 @@ function UIManager() {
      */
     let trySign = function () {
         updateProgress(0, true);
+        deleteDuplicateFromList(getCurrentList());
         let invalidElements = getInvalidElements();
         if (invalidElements.length)
             displayInvalidElementsError(invalidElements);
@@ -1722,6 +1723,20 @@ function UIManager() {
             i++;
         }
         return i === index ? item : undefined;
+    };
+
+    /**
+     * Keep only one item of the same hash in the list
+     *
+     * @param list {Map} The list to search items in
+     */
+    let deleteDuplicateFromList = function (list) {
+        for (let item1 of list.values()) {
+            for (let item2 of list.values()) {
+                if (item1 !== item2 && item1.getHash() === item2.getHash())
+                    UI.removeItemFromList(item2.getIndex(), item2.isSelected());
+            }
+        }
     };
 
     /**
