@@ -141,17 +141,24 @@ function UIManager() {
     _blockchainErrorMsg.get(APP_MODE.sign).set(TypeElement.TransactionSuccess, ['Signature successfully sent!', COLOR_CLASSES.success]);
     _blockchainErrorMsg.get(APP_MODE.sign).set(TypeElement.TransactionFailure, ['Signature failed!', COLOR_CLASSES.danger]);
 
+    const WALLET_STATE = {
+        unknown: 0,
+        injected: 1,
+        infura: 2
+    };
+
     let _uniqueIdCounter = 0; // unique id referencing a list item (file, text or hash)
     let _itemsProcessedCounter = 0; // The number of items in the current list (file text or hash) that have been checked
     let _currentKernelAddress = ""; // The current kernel address the user is connected to
     let _defaultModeratorAddress;
     let _currentModeratorAddress; // The current moderator address the user is connected to
-    let _isConnected = false; // Is the user connected to a valid kernel ?
+    let _isModeratorConnected = false; // Is the user connected to a valid moderator ?
+    let _isKernelConnected = false; // Is the user connected to a valid kernel ?
     let _isVerbose = false; // Should we display additional information in the console
     let _canUseDropZone = true; // Can the user use the dropZone ?
     let _currentTab = TAB_TYPE.file; // The current tab selected (text, file or hash)
     let _currentAppMode = APP_MODE.check; // The current app mode (check or sign)
-    let _isWalletInjected = false; // Are we using an injected wallet (metamask) ?
+    let _currentWalletState = WALLET_STATE.unknown; // Are we using an injected wallet (metamask) ?
     let _isAccountOwner = false; // Is the current account owner of the current kernel ?
     let _isLoadingAccounts = false; // Are we currently requesting account information ?
     let _isAccountsListAvailable = false; // Do we have an account list ready ?
@@ -257,7 +264,7 @@ function UIManager() {
             $.selector_cache('#checkButtonText').html('Fetch');
             $.selector_cache('#signActionButtonContainer').show();
             $.selector_cache('#accountsCard').show();
-            if (_isConnected)
+            if (_isKernelConnected)
                 askForAccounts();
         }
         recreateAppModeItemList();
@@ -279,21 +286,26 @@ function UIManager() {
      */
     let setDefaultFieldValues = function () {
         let kernelAddress = getUrlHashParameter(HASH_PARAM_NAMES.kernelAddress);
-        if (kernelAddress !== undefined)
+        if (kernelAddress !== undefined) {
             _currentKernelAddress = kernelAddress;
+            $.selector_cache('#kernelAddressInput').val(_currentKernelAddress);
+        }
     };
 
     /**
      * Display the UI and connect to the kernel specified in the url
      */
-    let readyUI = function () {
-        // Display the UI
-        $.selector_cache('#loadingScreen').fadeOut('fast', function () {
-            $.selector_cache('#baseContainer').fadeIn('fast');
-        });
-        // Connect to kernel
-        if (_currentKernelAddress !== '')
-            UI.connectToKernel();
+    let tryReadyUI = function () {
+        if (_isModeratorConnected && _currentWalletState !== WALLET_STATE.unknown
+            && $.selector_cache('#loadingScreen').css('display') !== 'none') {
+            // Display the UI
+            $.selector_cache('#loadingScreen').fadeOut('fast', function () {
+                $.selector_cache('#baseContainer').fadeIn('fast');
+            });
+            // Connect to kernel
+            if (_currentKernelAddress !== '')
+                UI.connectToKernel();
+        }
     };
 
     /**
@@ -506,8 +518,7 @@ function UIManager() {
                     action: function () {
                         UI.setVerbose(false);
                         _currentModeratorAddress = _defaultModeratorAddress;
-                        setModeratorConnectionLoading(true);
-                        updateModeratorAddress(_currentModeratorAddress); // Call to ULCDocMaster
+                        connectToModerator();
                     }
                 },
                 formSubmit: {
@@ -545,8 +556,7 @@ function UIManager() {
                     btnClass: 'btn-orange',
                     action: function () {
                         _currentModeratorAddress = address;
-                        setModeratorConnectionLoading(true);
-                        updateModeratorAddress(_currentModeratorAddress); // Call to ULCDocMaster
+                        connectToModerator();
                     }
                 },
                 cancel: function () {
@@ -556,10 +566,17 @@ function UIManager() {
         });
     };
 
+    let connectToModerator = function () {
+        _isModeratorConnected = false;
+        setModeratorConnectionLoading(true);
+        updateModeratorAddress(_currentModeratorAddress); // Call to ULCDocMaster
+    };
+
     /**
      * Show a dialog to enter a new kernel address
      */
     let showKernelInput = function () {
+        let checkedAttr = _currentAppMode === APP_MODE.sign ? 'checked' : '';
         $.confirm({
             title: 'Change kernel address',
             content: '' +
@@ -576,7 +593,7 @@ function UIManager() {
                 '</div>' +
                 '</form>' +
                 '<div class="custom-control form-control-lg custom-checkbox">' +
-                '    <input type="checkbox" class="custom-control-input" id="enableSignButton">' +
+                '    <input type="checkbox" class="custom-control-input" id="enableSignButton"' + checkedAttr + '>' +
                 '    <label class="custom-control-label" for="enableSignButton">Enable signing for this kernel</label>' +
                 '</div>',
             type: 'blue',
@@ -1251,7 +1268,7 @@ function UIManager() {
         setConnectionButtonLockedState(state);
         UI.updateCheckButtonState();
         if (state) { // Instantly display connecting
-            _isConnected = false;
+            _isKernelConnected = false;
             $.selector_cache('#kernelConnectedAddress').html('Connection in progress...');
             setDOMColor($.selector_cache('#kernelInfoHeader'), COLOR_CLASSES.secondary);
             $.selector_cache('#kernelConnectionInfoIcon').attr('class', 'fas fa-circle-notch fa-spin fa-fw');
@@ -1273,7 +1290,7 @@ function UIManager() {
         setConnectionButtonLockedState(state);
         UI.updateCheckButtonState();
         if (state) { // Instantly display connecting
-            _isConnected = false;
+            _isKernelConnected = false;
             $.selector_cache('#moderatorConnectedAddress').html('Connection in progress...');
             setDOMColor($.selector_cache('#moderatorInfoHeader'), COLOR_CLASSES.secondary);
         }
@@ -1340,7 +1357,7 @@ function UIManager() {
      * Display kernel buttons linking to moderator if the user is owner of the current kernel
      */
     let updateKernelButtonsState = function () {
-        if (_isAccountOwner && _isConnected)
+        if (_isAccountOwner && _isKernelConnected)
             $.selector_cache("#kernelButtons").show();
         else
             $.selector_cache("#kernelButtons").hide();
@@ -1507,7 +1524,7 @@ function UIManager() {
      * based on current tab, wallet state and kernel ownership
      */
     let updateMainUIState = function () {
-        if (!_isConnected) {
+        if (!_isKernelConnected) {
             $.selector_cache('#mainUIContainer').hide();
             $.selector_cache('#accountsCard').hide();
             $.selector_cache('#loadingAccountsMessage').hide();
@@ -1518,7 +1535,7 @@ function UIManager() {
             $.selector_cache('#accountsCard').hide();
             $.selector_cache('#loadingAccountsMessage').hide();
             setSignError(false, "", "", undefined, false)
-        } else if (!_isWalletInjected) { // In sign mode without injected wallet
+        } else if (_currentWalletState !== WALLET_STATE.injected) { // In sign mode without injected wallet
             $.selector_cache('#mainUIContainer').hide();
             $.selector_cache('#accountsCard').hide();
             $.selector_cache('#loadingAccountsMessage').hide();
@@ -1711,7 +1728,7 @@ function UIManager() {
      * @return {boolean} Can we start the checking procedure ?
      */
     this.canCheck = function () {
-        return _isConnected && getCurrentList().size;
+        return _isKernelConnected && getCurrentList().size;
     };
 
     /**
@@ -1720,7 +1737,7 @@ function UIManager() {
      * @return {boolean} Can we start the signing procedure ?
      */
     this.canSign = function () {
-        return _isConnected && _isWalletInjected && getCurrentList().size;
+        return _isKernelConnected && _currentWalletState === WALLET_STATE.injected && getCurrentList().size;
     };
 
     /**
@@ -2066,7 +2083,7 @@ function UIManager() {
      * Initialize the UI with default value.
      */
     this.initUI = function () {
-        this.setVerbose(true); // TODO remove in prod
+        this.setVerbose(false);
         log('Successfully Loaded');
         setAppVersion();
         setDefaultFieldValues();
@@ -2075,7 +2092,7 @@ function UIManager() {
         UI.updateCheckButtonState();
         UI.setUIButtonState(UI_STATE.none);
         setKernelInfo(undefined, undefined);
-        setModeratorInfo(undefined, 'Connected to default');
+        setModeratorInfo(undefined, 'Connection in progress...');
         for (let i of Object.keys(TAB_TYPE)) {
             resetTabZone(TAB_TYPE[i]);
         }
@@ -2146,17 +2163,17 @@ function UIManager() {
             $.selector_cache('#connectionTypeField').html('Wallet Injected');
             $.selector_cache('#connectionTypeField').addClass('badge-success');
             $.selector_cache('#connectionTypeField').attr('data-original-title', 'You are using an injected wallet');
-            _isWalletInjected = true;
+            _currentWalletState = WALLET_STATE.injected;
         } else {
             $.selector_cache('#connectionTypeField').html('Infura');
             $.selector_cache('#connectionTypeField').addClass('badge-success');
             $.selector_cache('#connectionTypeField').attr('data-original-title', 'You are using an infura wallet');
-            _isWalletInjected = false;
+            _currentWalletState = WALLET_STATE.infura;
         }
         updateMainUIState();
         UI.updateCheckButtonState();
 
-        readyUI();
+        tryReadyUI();
     };
 
     /**
@@ -2201,7 +2218,7 @@ function UIManager() {
                         }
                     },
                     cancel: function () {
-                        // Close
+                        UI.updateKernelConnection(undefined, undefined);
                     },
                 }
             });
@@ -2222,7 +2239,6 @@ function UIManager() {
     this.updateKernelConnection = function (connectionStatus, moderatorInfo) {
         _isAccountsListAvailable = false; // Kernel owners may change
         setKernelConnectionLoading(false);
-        console.log(connectionStatus);
         $.selector_cache('#collapseSignature').collapse('show');
         switch (connectionStatus) {
             case TypeInfo.Good:
@@ -2231,7 +2247,7 @@ function UIManager() {
                 setKernelInfo(moderatorInfo, TypeInfo.Good);
                 if (_currentAppMode === APP_MODE.sign)
                     askForAccounts();
-                _isConnected = true;
+                _isKernelConnected = true;
                 break;
             case TypeInfo.Warning:
                 $.selector_cache('#kernelConnectionInfoIcon').attr('class', 'fas fa-exclamation-triangle text-warning');
@@ -2240,21 +2256,21 @@ function UIManager() {
                 setKernelInfo(undefined, TypeInfo.Warning);
                 if (_currentAppMode === APP_MODE.sign)
                     askForAccounts();
-                _isConnected = true;
+                _isKernelConnected = true;
                 break;
             case TypeInfo.Critical:
                 $.selector_cache('#kernelConnectionInfoIcon').attr('class', 'fas fa-times text-danger');
                 $.selector_cache('#kernelConnectedAddress').html("Could not connect to '" + _currentKernelAddress + "'");
                 setDOMColor($.selector_cache('#kernelInfoHeader'), COLOR_CLASSES.danger);
                 setKernelInfo(undefined, TypeInfo.Critical);
-                _isConnected = false;
+                _isKernelConnected = false;
                 break;
             default:
                 $.selector_cache('#kernelConnectionInfoIcon').attr('class', 'fas fa-question');
                 $.selector_cache('#kernelConnectedAddress').html("Not Connected");
                 setDOMColor($.selector_cache('#kernelInfoHeader'), COLOR_CLASSES.secondary);
                 setKernelInfo(undefined, undefined);
-                _isConnected = false;
+                _isKernelConnected = false;
                 break;
         }
         UI.updateCheckButtonState();
@@ -2275,8 +2291,10 @@ function UIManager() {
         if (connectionInfo !== undefined && connectionInfo.has(moderatorReservedKeys.status))
             connectionType = connectionInfo.get(moderatorReservedKeys.status);
 
+        _isModeratorConnected = true;
         setModeratorConnectionLoading(false);
         log('Updating moderator input UI', TypeInfo.Info);
+        UI.updateKernelConnection(undefined, undefined); // Reset the kernel connection
         switch (connectionType) {
             case TypeInfo.Good:
                 $.selector_cache('#moderatorConnectionInfoIcon').attr('class', 'fas fa-check-circle text-success');
@@ -2288,14 +2306,14 @@ function UIManager() {
                 setModeratorInfo(connectionInfo, "");
                 break;
             case TypeInfo.Critical:
-                _isConnected = false;
+                _isKernelConnected = false;
                 $.selector_cache('#moderatorConnectionInfoIcon').attr('class', 'fas fa-times text-danger');
                 $.selector_cache('#moderatorConnectedAddress').html("Could not connect to '" + _currentModeratorAddress + "'");
                 setDOMColor($.selector_cache('#moderatorInfoHeader'), COLOR_CLASSES.danger);
                 setModeratorInfo(undefined, 'Connection could not be established, falling back to default');
-                UI.updateKernelConnection(undefined); // Reset the kernel connection
                 break;
         }
+        tryReadyUI();
         UI.updateCheckButtonState();
     };
 
