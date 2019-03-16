@@ -242,6 +242,7 @@ function UIManager() {
      */
     let setUIElements = function (type) {
         setUrlHashParameter(HASH_PARAM_NAMES.appMode, HASH_APP_MODE[type]); // update the url
+        setUrlHashParameter(HASH_PARAM_NAMES.appMode, HASH_APP_MODE[type]); // update the url
         _currentAppMode = type;
         for (let key of Object.keys(APP_MODE)) {
             if (APP_MODE[key] === type)
@@ -511,6 +512,10 @@ function UIManager() {
             icon: 'fas fa-cog',
             escapeKey: 'cancel',
             typeAnimated: true,
+            onContentReady: function () {
+                // when content is fetched & rendered in DOM
+                $("#moderatorInput").focus(); // Focus the input for faster copy/paste
+            },
             buttons: {
                 default: {
                     text: 'Use Default Settings',
@@ -602,6 +607,10 @@ function UIManager() {
             icon: 'fas fa-edit',
             escapeKey: 'cancel',
             typeAnimated: true,
+            onContentReady: function () {
+                // when content is fetched & rendered in DOM
+                $("#kernelInput").focus(); // Focus the input for faster copy/paste
+            },
             buttons: {
                 formSubmit: {
                     text: 'Connect',
@@ -765,7 +774,7 @@ function UIManager() {
         $.selector_cache('#cancelButton').attr('disabled', state !== UI_STATE.fetched);
         // Reset elements type if we cancel fetching
         if (state === UI_STATE.none && (_currentUiState === UI_STATE.fetching || _currentUiState === UI_STATE.fetched))
-            resetElements();
+            resetElementsFromList(getCurrentList());
 
         _currentUiState = state;
     };
@@ -1118,11 +1127,27 @@ function UIManager() {
         return elements;
     };
 
-    let resetElements = function () {
-        for (let item of getCurrentList().values()) {
+    /**
+     * Reset element state and information from the given list
+     *
+     * @param list {Map} the map containing the items to reset
+     */
+    let resetElementsFromList = function (list) {
+        for (let item of list.values()) {
             item.setType(TypeElement.Unknown);
-            item.setInformation(new Map ());
-            item.setExtraData(new Map ());
+            item.setInformation(new Map());
+            item.setExtraData(new Map());
+        }
+    };
+
+    /**
+     * Reset elements from every list
+     */
+    let resetAllElements = function () {
+        for (let mode of Object.keys(APP_MODE)) {
+            for (let tab of Object.keys(TAB_TYPE)) {
+                resetElementsFromList(getList(APP_MODE[mode], TAB_TYPE[tab]));
+            }
         }
     };
 
@@ -1195,7 +1220,8 @@ function UIManager() {
             if (item.getCustomExtraData().length) {// We have valid extra data
                 item.setExtraData(customExtraToMap(item.getCustomExtraData()));
                 infoMap.set(elementReservedKeys.extraData, item.getExtraData());
-            } if (infoMap.size === 0) //If no data, set map to undefined
+            }
+            if (infoMap.size === 0) //If no data, set map to undefined
                 infoMap = undefined;
         } else // We are not the first one to sign, we cannot enter new values
             infoMap = undefined;
@@ -1269,6 +1295,7 @@ function UIManager() {
         UI.updateCheckButtonState();
         if (state) { // Instantly display connecting
             _isKernelConnected = false;
+            updateMainUIState();
             $.selector_cache('#kernelConnectedAddress').html('Connection in progress...');
             setDOMColor($.selector_cache('#kernelInfoHeader'), COLOR_CLASSES.secondary);
             $.selector_cache('#kernelConnectionInfoIcon').attr('class', 'fas fa-circle-notch fa-spin fa-fw');
@@ -1291,6 +1318,8 @@ function UIManager() {
         UI.updateCheckButtonState();
         if (state) { // Instantly display connecting
             _isKernelConnected = false;
+            _isModeratorConnected = false;
+            updateMainUIState();
             $.selector_cache('#moderatorConnectedAddress').html('Connection in progress...');
             setDOMColor($.selector_cache('#moderatorInfoHeader'), COLOR_CLASSES.secondary);
         }
@@ -1396,9 +1425,7 @@ function UIManager() {
         if (kernelInfo.has(kernelReservedKeys.physicalAddress) && kernelInfo.get(kernelReservedKeys.physicalAddress) !== '') {
             $.selector_cache("#kernelAddress").html(kernelInfo.get(kernelReservedKeys.physicalAddress));
             $.selector_cache("#kernelAddress").attr('href', OSM_QUERY_LINK + kernelInfo.get(kernelReservedKeys.physicalAddress));
-        }
-
-        else
+        } else
             $.selector_cache("#kernelAddressContainer").hide();
 
         if (kernelInfo.has(kernelReservedKeys.url) && kernelInfo.get(kernelReservedKeys.url) !== "") {
@@ -1426,7 +1453,7 @@ function UIManager() {
      */
     let setKernelConnectedAddress = function (kernelInfo) {
         if (kernelInfo.has(kernelReservedKeys.name))
-            $.selector_cache('#kernelConnectedAddress').html("Currently connected to : '" + kernelInfo.get(kernelReservedKeys.name) + "'");
+            $.selector_cache('#kernelConnectedAddress').html("Currently connected to : '<strong>" + kernelInfo.get(kernelReservedKeys.name) + "</strong>'");
         else
             $.selector_cache('#kernelConnectedAddress').html("Currently connected to : '" + _currentKernelAddress + "'");
     };
@@ -1437,7 +1464,7 @@ function UIManager() {
      * @param kernelInfo {Map} The information received from backend
      */
     let setKernelExtraData = function (kernelInfo) {
-        if (kernelInfo.has(kernelReservedKeys.extraData) && kernelInfo.get(kernelReservedKeys.extraData).size) {
+        if (kernelInfo.get(kernelReservedKeys.extraData) !== undefined && kernelInfo.get(kernelReservedKeys.extraData).size) {
             let $kernelExtraDataTable = $.selector_cache("#kernelExtraDataTable");
             for (let [key, value] of kernelInfo.get(kernelReservedKeys.extraData)) {
                 $kernelExtraDataTable.append(
@@ -1528,35 +1555,35 @@ function UIManager() {
             $.selector_cache('#mainUIContainer').hide();
             $.selector_cache('#accountsCard').hide();
             $.selector_cache('#loadingAccountsMessage').hide();
-            setSignError(true, "Not connected",
+            setMainUIError(true, "Not connected",
                 "Please connect to a kernel to start using the app", COLOR_CLASSES.info, false);
         } else if (_currentAppMode === APP_MODE.check) { // In check mode
             $.selector_cache('#mainUIContainer').show();
             $.selector_cache('#accountsCard').hide();
             $.selector_cache('#loadingAccountsMessage').hide();
-            setSignError(false, "", "", undefined, false)
+            setMainUIError(false, "", "", undefined, false)
         } else if (_currentWalletState !== WALLET_STATE.injected) { // In sign mode without injected wallet
             $.selector_cache('#mainUIContainer').hide();
             $.selector_cache('#accountsCard').hide();
             $.selector_cache('#loadingAccountsMessage').hide();
-            setSignError(true, "Wallet not injected",
+            setMainUIError(true, "Wallet not injected",
                 "Please make sure you have metamask installed.", COLOR_CLASSES.warning, true);
         } else if (_isLoadingAccounts) {
             $.selector_cache('#mainUIContainer').hide();
             $.selector_cache('#accountsCard').show();
             $.selector_cache('#loadingAccountsMessage').show();
-            setSignError(false, '', '', undefined, false);
+            setMainUIError(false, '', '', undefined, false);
         } else if (!_isAccountOwner) { // In sign mode with an injected wallet but not kernel owner
             $.selector_cache('#mainUIContainer').hide();
             $.selector_cache('#accountsCard').show();
             $.selector_cache('#loadingAccountsMessage').hide();
-            setSignError(true, 'Not owner',
+            setMainUIError(true, 'Not owner',
                 'You are not the owner of this kernel. You must be owner to sign documents.', COLOR_CLASSES.danger, false);
         } else { // In sign mode with injected wallet and kernel owner
             $.selector_cache('#mainUIContainer').show();
             $.selector_cache('#accountsCard').show();
             $.selector_cache('#loadingAccountsMessage').hide();
-            setSignError(false, '', '', undefined, false);
+            setMainUIError(false, '', '', undefined, false);
         }
     };
 
@@ -1569,7 +1596,7 @@ function UIManager() {
      * @param color {COLOR_CLASSES} The color of the error
      * @param showMetamask {Boolean} Should we display the metamask download link ?
      */
-    let setSignError = function (state, title, message, color, showMetamask) {
+    let setMainUIError = function (state, title, message, color, showMetamask) {
         if (state) {
             $.selector_cache('#signErrorText').html(message);
             $.selector_cache('#signErrorTitle').html(title);
@@ -1785,7 +1812,7 @@ function UIManager() {
             $.selector_cache('#detailsEmptyZone').hide();
             $.selector_cache('#detailsZone').show();
             setDOMColor($.selector_cache('#generalInfoBody'), item.getCardColor());
-            
+
             let file = undefined;
             if (_currentTab === TAB_TYPE.file)
                 file = item.getFile();
@@ -2191,15 +2218,15 @@ function UIManager() {
                     'revoked reason: ' + revokedReason;
                 break;
             case resultQueryStatus.initialized:
-                message = 'The moderator knows the kernel you are connecting to, but has not yet passed security confirmation.' +
+                message = 'The Moderator knows the Kernel you are connecting to, but has not yet passed security confirmation.' +
                     'As such, it cannot provide information on its identity.';
                 break;
             case resultQueryStatus.unknown:
-                message = 'The moderator does not know the kernel you are connecting to and cannot prove its identity.';
+                message = 'The Kernel you are connecting is unknown to the Moderator. It is impossible to prove its identity.';
                 break;
         }
         if (message !== '') {
-            message += '\nAre you sure you want to connect?';
+            message += '<br>Are you sure you want to connect?';
             $.confirm({
                 title: 'Security information',
                 content: message,
@@ -2207,6 +2234,7 @@ function UIManager() {
                 type: 'orange',
                 icon: 'fas fa-exclamation-triangle',
                 escapeKey: 'cancel',
+                columnClass: 'medium',
                 typeAnimated: true,
                 buttons: {
                     confirm: {
@@ -2238,6 +2266,7 @@ function UIManager() {
      */
     this.updateKernelConnection = function (connectionStatus, moderatorInfo) {
         _isAccountsListAvailable = false; // Kernel owners may change
+        resetAllElements(); // Element signatures are different from each kernel
         setKernelConnectionLoading(false);
         $.selector_cache('#collapseSignature').collapse('show');
         switch (connectionStatus) {
@@ -2299,9 +2328,11 @@ function UIManager() {
             case TypeInfo.Good:
                 $.selector_cache('#moderatorConnectionInfoIcon').attr('class', 'fas fa-check-circle text-success');
                 if (_currentModeratorAddress === _defaultModeratorAddress)
-                    $.selector_cache('#moderatorConnectedAddress').html("Currently connected to Blockchain Élite ULCDocuments Official");
+                    $.selector_cache('#moderatorConnectedAddress').html("Currently connected to default: " +
+                        "<strong>Blockchain Élite ULCDocuments Official</strong>");
                 else
-                    $.selector_cache('#moderatorConnectedAddress').html("Currently connected to : '" + _currentModeratorAddress + "'");
+                    $.selector_cache('#moderatorConnectedAddress').html("Currently connected to: " +
+                        "'<strong>" + _currentModeratorAddress + "</strong>'");
                 setDOMColor($.selector_cache('#moderatorInfoHeader'), COLOR_CLASSES.success);
                 setModeratorInfo(connectionInfo, "");
                 break;

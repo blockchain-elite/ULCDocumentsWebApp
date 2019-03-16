@@ -277,9 +277,12 @@
     margin: auto;
 }
 
-#kernelInfoEmptyTextContainer {
-    font-size: 2rem;
+#kernelInput, #moderatorInput {
+    margin: 0 5px;
+    width: available;
+    width: -moz-available;
 }
+
 #moderatorConnectedAddress, #kernelConnectedAddress {
     word-break: break-all;
 }
