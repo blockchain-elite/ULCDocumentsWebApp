@@ -830,7 +830,7 @@ async function signOptimisedDocuments(myHashArray, infoArray, indexArray){
     }
 
     if(lightPushArray[0].length > 0){
-        lightPushArray[0].length > 1 ? requestMultiLightPushDocs(lightPushArray[0],lightPushArray[1],lightPushArray[2]) : requestPushDoc(pushArray[0][0], pushArray[1][0], pushArray[2][0]);
+        lightPushArray[0].length > 1 ? requestMultiLightPushDocs(lightPushArray[0],lightPushArray[1],lightPushArray[2]) : requestPushDoc(lightPushArray[0][0], lightPushArray[1][0], lightPushArray[2][0]);
     }
 
     if(pushArray[0].length > 0){
