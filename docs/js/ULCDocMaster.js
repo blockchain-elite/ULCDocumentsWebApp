@@ -243,7 +243,9 @@ async function updateKernelAddress(addressKernel){
     if(web3js.utils.isAddress(addressKernel)){
 
         //first we need to know if kernel has version compatible with this module.
-        if(isKernelCompatible(addressKernel)){
+        let compatible = await isKernelCompatible(addressKernel);
+        
+        if(compatible){
             //if the kernel is compatible, we need to ask moderator for kernel info (if any)
             let moderatorInfoKernel = await queryModerator(addressKernel);
 
