@@ -824,9 +824,14 @@ async function signOptimisedDocuments(myHashArray, infoArray, indexArray){
         }
     }
     //now execute it.
+    //for gaz opti, better to call one by one signing if only one item.
+    if(confirmArray[0].length > 0){
+        confirmArray[0].length > 1 ? requestMultiConfirmDocs(confirmArray[0],confirmArray[1]) : requestConfirmDoc(confirmArray[0][0],confirmArray[1][0]);
+    }
 
-    if(confirmArray[0].length > 0) requestMultiConfirmDocs(confirmArray[0],confirmArray[1]);
-    if(lightPushArray[0].length > 0) requestMultiLightPushDocs(lightPushArray[0],lightPushArray[1],lightPushArray[2]);
+    if(lightPushArray[0].length > 0){
+        lightPushArray[0].length > 1 ? requestMultiLightPushDocs(lightPushArray[0],lightPushArray[1],lightPushArray[2]) : requestPushDoc(pushArray[0][0], pushArray[1][0], pushArray[2][0]);
+    }
 
     if(pushArray[0].length > 0){
         for (i in pushArray){
