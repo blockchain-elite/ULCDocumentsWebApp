@@ -48,6 +48,14 @@ class ListItem {
         this.cardColor = COLOR_CLASSES.none;
     }
 
+    reset() {
+        this.setType(TypeElement.Unknown);
+        this.setInformation(new Map());
+        this.setExtraData(new Map());
+        this.customExtraData = [];
+        this.txUrl = '';
+    }
+
     getIndex() {
         return this.index;
     }

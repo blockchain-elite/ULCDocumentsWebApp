@@ -165,6 +165,9 @@ function UIManager() {
     let _filesOverLimitArray = [];
     let _currentUiState = UI_STATE.none;
 
+    let _elementsToSign = 0;
+    let _elementSigned = 0;
+
     /* *********************************************************
      *                      JQUERY SELECTORS
      **********************************************************/
@@ -691,14 +694,21 @@ function UIManager() {
      */
     let checkStart = function () {
         UI.resetProgress(); // reset progress
+        resetElementsFromList(getCurrentList());
         if (_currentTab !== TAB_TYPE.file)
             cleanList(); // remove invalid test/hash entries before checking
         if (!isCurrentItemListEmpty()) {
             for (let item of getCurrentList().values()) {
                 item.setType(TypeElement.Loading);
             }
-            UI.setUIButtonState(UI_STATE.checking);
-            log('Checking started...');
+            if (_currentAppMode === APP_MODE.check) {
+                UI.setUIButtonState(UI_STATE.checking);
+                log('Checking started...');
+            } else {
+                UI.setUIButtonState(UI_STATE.fetching);
+                log('Fetching started...');
+            }
+
             _itemsProcessedCounter = 0;
             checkNextItem();
         } else {
@@ -777,6 +787,7 @@ function UIManager() {
             resetElementsFromList(getCurrentList());
 
         _currentUiState = state;
+        updateDIsplayedItemInfo();
     };
 
     /**
@@ -1006,16 +1017,20 @@ function UIManager() {
             let currentItem = getCurrentListItemByIndex(_itemsProcessedCounter);
             if (_currentAppMode === APP_MODE.check) {
                 $.selector_cache('#actionInProgress').html('Checking...');
-                switch (_currentTab) {
-                    case TAB_TYPE.file:
-                        checkFile(currentItem.getFile(), currentItem.getIndex());
-                        break;
-                    case TAB_TYPE.text:
-                        checkText(currentItem.getText(), currentItem.getIndex());
-                        break;
-                    case TAB_TYPE.hash:
-                        checkHash(currentItem.getHash(), currentItem.getIndex());
-                        break;
+                if (currentItem.getHash() !== '')
+                    checkHash(currentItem.getHash(), currentItem.getIndex());
+                else {
+                    switch (_currentTab) {
+                        case TAB_TYPE.file:
+                            checkFile(currentItem.getFile(), currentItem.getIndex());
+                            break;
+                        case TAB_TYPE.text:
+                            checkText(currentItem.getText(), currentItem.getIndex());
+                            break;
+                        case TAB_TYPE.hash:
+                            checkHash(currentItem.getHash(), currentItem.getIndex());
+                            break;
+                    }
                 }
             } else {
                 $.selector_cache('#actionInProgress').html('Fetching information...');
@@ -1057,11 +1072,19 @@ function UIManager() {
      */
     let trySign = function () {
         updateProgress(0, true);
+        deleteDuplicateFromList(getCurrentList());
         let invalidElements = getInvalidElements();
         if (invalidElements.length)
             displayInvalidElementsError(invalidElements);
         else
             UI.setUIButtonState(UI_STATE.fetched);
+    };
+
+    let updateDIsplayedItemInfo = function () {
+        for (let i of getCurrentList().values()) {
+            if (i.isSelected())
+                UI.displayFileProps(i.getIndex());
+        }
     };
 
     /**
@@ -1134,9 +1157,7 @@ function UIManager() {
      */
     let resetElementsFromList = function (list) {
         for (let item of list.values()) {
-            item.setType(TypeElement.Unknown);
-            item.setInformation(new Map());
-            item.setExtraData(new Map());
+            item.reset();
         }
     };
 
@@ -1183,6 +1204,8 @@ function UIManager() {
                     action: function () {
                         UI.setUIButtonState(UI_STATE.signing);
                         _itemsProcessedCounter = 0;
+                        _elementsToSign = getCurrentList().size;
+                        _elementSigned = 0;
                         signNextItem();
                     }
                 },
@@ -1237,7 +1260,6 @@ function UIManager() {
         sendNotification(TypeInfo.Good, 'Signing Finished', 'Finished sending signing transactions.' +
             ' Awaiting blockchain response...');
         updateProgress(0, true);
-        UI.setUIButtonState(UI_STATE.none);
     };
 
     /**
@@ -1704,6 +1726,20 @@ function UIManager() {
     };
 
     /**
+     * Keep only one item of the same hash in the list
+     *
+     * @param list {Map} The list to search items in
+     */
+    let deleteDuplicateFromList = function (list) {
+        for (let item1 of list.values()) {
+            for (let item2 of list.values()) {
+                if (item1 !== item2 && item1.getHash() === item2.getHash())
+                    UI.removeItemFromList(item2.getIndex(), item2.isSelected());
+            }
+        }
+    };
+
+    /**
      * Get the item identified by its index in every item list, starting by the current for performance reasons
      *
      * @param index {Number} The unique item identifier
@@ -1813,15 +1849,16 @@ function UIManager() {
             $.selector_cache('#detailsEmptyZone').hide();
             $.selector_cache('#detailsZone').show();
             setDOMColor($.selector_cache('#generalInfoBody'), item.getCardColor());
-
             let file = undefined;
             if (_currentTab === TAB_TYPE.file)
                 file = item.getFile();
             fillFileProp(file);
             setupItemInputFields(item);
             fillReservedFields(item);
+            console.log(_currentUiState);
             // Display blockchain edit fields if the item has no signatures
-            if (_currentAppMode === APP_MODE.sign && item.getType() === TypeElement.Fake && item.getNumSign() === 0) {
+            if (_currentAppMode === APP_MODE.sign && _currentUiState === UI_STATE.fetched
+                && item.getType() === TypeElement.Fake && item.getNumSign() === 0) {
                 log('Displaying Blockchain edit fields', TypeInfo.Info);
                 $.selector_cache('#fileBlockchainInfoEmptyZone').hide();
                 $.selector_cache('#fileBlockchainInfoZone').hide();
@@ -1908,7 +1945,7 @@ function UIManager() {
                 $.selector_cache("#itemTextInput").on('change keyup paste', function () {
                     item.setText($.selector_cache("#itemTextInput").val());
                     if (item.getType() !== TypeElement.Unknown) {
-                        item.setType(TypeElement.Unknown);
+                        item.reset();
                         item.setHash('');
                         UI.displayFileProps(item.getIndex());
                         UI.resetProgress();
@@ -1925,7 +1962,7 @@ function UIManager() {
                 $.selector_cache("#itemHashInput").on('change keyup paste', function () {
                     item.setHash($.selector_cache("#itemHashInput").val());
                     if (item.getType() !== TypeElement.Unknown) {
-                        item.setType(TypeElement.Unknown);
+                        item.reset();
                         UI.displayFileProps(item.getIndex());
                         UI.resetProgress();
                         UI.setUIButtonState(UI_STATE.none);
@@ -2378,6 +2415,7 @@ function UIManager() {
             elementInfo.delete(elementReservedKeys.status);
             getCurrentListItem(index).setNumSign(signNum);
             getCurrentListItem(index).setNeededSign(signNeed);
+            // Do not reset element info and extra data if transaction failed
             getCurrentListItem(index).setInformation(elementInfo);
             getCurrentListItem(index).setExtraData(extraData);
         } else {
@@ -2474,8 +2512,10 @@ function UIManager() {
      */
     this.updateTransactionTx = function (index, url) {
         let item = getCurrentListItem(index);
-        item.setTxUrl(url);
-        item.setType(TypeElement.TxProcessing);
+        if (url !== undefined) {
+            item.setTxUrl(url);
+            item.setType(TypeElement.TxProcessing);
+        }
         signNextItem();
     };
 
@@ -2495,14 +2535,12 @@ function UIManager() {
                 item.setType(TypeElement.TransactionSuccess);
             } else {
                 item.setType(TypeElement.TransactionFailure);
-                if (_currentUiState === UI_STATE.signing) { // Unlock UI if we failed whille signing (user reject transaction)
-                    updateProgress(-1, false);
-                    UI.setUIButtonState(UI_STATE.none);
-                }
             }
-
         } else
             log('Item with index ' + index + ' has been removed and cannot be updated', TypeInfo.Warning);
+        _elementSigned += 1;
+        if (_elementSigned === _elementsToSign)
+            UI.setUIButtonState(UI_STATE.none);
     };
 
 }
