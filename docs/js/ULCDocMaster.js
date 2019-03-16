@@ -244,7 +244,7 @@ async function updateKernelAddress(addressKernel){
 
         //first we need to know if kernel has version compatible with this module.
         let compatible = await isKernelCompatible(addressKernel);
-        
+
         if(compatible){
             //if the kernel is compatible, we need to ask moderator for kernel info (if any)
             let moderatorInfoKernel = await queryModerator(addressKernel);
@@ -478,7 +478,7 @@ async function requestAccountInfo(){
 
         INFO_ACCOUNT_LOADED = localAccount[0];
 
-        if(typeof accountInterval !== 'undefined') clearInterval(accountInterval);
+        if(typeof accountInterval !== undefined) clearInterval(accountInterval);
 
         var accountInterval = setInterval(async function() {
             allAccount = await web3js.eth.getAccounts();
@@ -727,7 +727,7 @@ async function checkHash(myHash, index){
                         my_extras = formatExtraData(result["extra_data"]);
                         all_datas.set(elementReservedKeys.extraData, my_extras);
                     }
-                    all_datas.set(elementReservedKeys.date, result["signed_date"]);
+                    all_datas.set(elementReservedKeys.date, formatHumanReadableDate(Number(result["signed_date"])));
                     all_datas.set(elementReservedKeys.source,result["source"]);
                     all_datas.set(elementReservedKeys.documentFamily, result["document_family"]);
                     all_datas.set(elementReservedKeys.status, TypeElement.Signed);
@@ -788,8 +788,6 @@ function formatExtraData(raw_extra_data){
     return result;
 }
 
-/** @TODO : Convert hexa info. **/
-
 
 /** @dev function that serialise extra_data field input
 *  @param {Map} mapExtraData with unserialised data
@@ -811,6 +809,9 @@ function extraDataFormat(mapExtraData){
 
 }
 
+/** @dev function that create good link to etherscan depending on network connected.
+*  @param {String} txHash the hash of the transaction
+* @return {String} link to etherscan */
 function formatTxURL(txHash){
     let finalUrl;
 
@@ -834,6 +835,15 @@ function formatTxURL(txHash){
     return finalUrl;
 }
 
+/** @dev function that create human readable date from block.timestamp value
+*  @param {Number} nonHumanDate block.timestamp date
+* @return {String} converted date */
+function formatHumanReadableDate(nonHumanDate) {
+
+    //Because Blockchain Time is not trustable at +- 30 minutes
+    //There is not need to display minutes/secondes of this date.
+    return new Date(nonHumanDate * 1000).toLocaleString([],{day: '2-digit', hour: '2-digit', year:'2-digit', month:'2-digit', timeZoneName:'short'});
+}
 
 /************
 *  LISTENERS*
