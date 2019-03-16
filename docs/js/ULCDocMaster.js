@@ -255,7 +255,7 @@ async function updateKernelAddress(addressKernel){
             }
             else {
                 //we ask UI for unsecure connection
-                UI.promptKernelConnectionWarnAnswer(resultQueryStatus, resultQueryStatus === resultQueryStatus.revoked ? moderatorInfoKernel.get(kernelReservedKeys.revokedReason) : undefined);
+                UI.promptKernelConnectionWarnAnswer(statusResult, statusResult === resultQueryStatus.revoked ? moderatorInfoKernel.get(kernelReservedKeys.revokedReason) : undefined);
             }
         }
         else {
@@ -307,7 +307,7 @@ async function updateKernelObject(addressKernel, moderatorInfoKernel){
     }
 
 
-    UI.updateKernelConnection(moderatorInfoKernel !== 'undefined' ? TypeInfo.Good : TypeInfo.warning, moderatorInfoKernel);
+    UI.updateKernelConnection(moderatorInfoKernel !== undefined ? TypeInfo.Good : TypeInfo.Warning, moderatorInfoKernel);
     logMe(ULCDocModMasterPrefix,"new kernel link Loaded.");
 }
 

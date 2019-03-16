@@ -2160,28 +2160,75 @@ function UIManager() {
     };
 
     /**
+     * Show a dialog to the user asking for connection confirmation
+     *
+     * @param status {resultQueryStatus} The status of the connection
+     * @param revokedReason {String} The reason
+     */
+    this.promptKernelConnectionWarnAnswer = function (status, revokedReason) {
+        let message = '';
+        switch (status) {
+            case resultQueryStatus.revoked:
+                message = 'The Kernel you are connecting to has been revoked by the moderator.\n' +
+                    'This mean the moderator does not recognize the kernel anymore and cannot prove its identity.\n' +
+                    'revoked reason: ' + revokedReason;
+                break;
+            case resultQueryStatus.initialized:
+                message = 'The moderator knows the kernel you are connecting to, but has not yet passed security confirmation.' +
+                    'As such, it cannot provide information on its identity.';
+                break;
+            case resultQueryStatus.unknown:
+                message = 'The moderator does not know the kernel you are connecting to and cannot prove its identity.';
+                break;
+        }
+        if (message !== '') {
+            message += '\nAre you sure you want to connect?';
+            $.confirm({
+                title: 'Security information',
+                content: message,
+                theme: JQUERY_CONFIRM_THEME,
+                type: 'orange',
+                icon: 'fas fa-exclamation-triangle',
+                escapeKey: 'cancel',
+                typeAnimated: true,
+                buttons: {
+                    confirm: {
+                        keys: ['enter'],
+                        btnClass: 'btn-orange',
+                        action: function () {
+                            log('Connection insecure');
+                            updateKernelObject(_currentKernelAddress, undefined);
+                        }
+                    },
+                    cancel: function () {
+                        // Close
+                    },
+                }
+            });
+        }
+    };
+
+    /**
      * Set the kernel connection information.
      *
-     * @param connectionInfo {Map} The connection information
+     * @param connectionStatus {TypeInfo} The connection status
+     * @param moderatorInfo {Map} The connection information
      * Reserved keys :
      * 'connection-status' for a TypeInfo describing the connection.
      * 'img' for the image url. Not setting this key will not show an image.
      * 'extra-data' for a map containing additional data.
      *
      */
-    this.updateKernelConnection = function (connectionInfo) {
+    this.updateKernelConnection = function (connectionStatus, moderatorInfo) {
         _isAccountsListAvailable = false; // Kernel owners may change
-        let connectionType = TypeInfo.Info;
-        if (connectionInfo !== undefined && connectionInfo.has(kernelReservedKeys.status))
-            connectionType = connectionInfo.get(kernelReservedKeys.status);
-
         setKernelConnectionLoading(false);
+        console.log(connectionStatus);
         $.selector_cache('#collapseSignature').collapse('show');
-        switch (connectionType) {
+        switch (connectionStatus) {
             case TypeInfo.Good:
                 $.selector_cache('#kernelConnectionInfoIcon').attr('class', 'fas fa-check-circle text-success');
                 setDOMColor($.selector_cache('#kernelInfoHeader'), COLOR_CLASSES.success);
-                setKernelInfo(connectionInfo, TypeInfo.Good);
+                setKernelInfo(moderatorInfo, TypeInfo.Good);
                 if (_currentAppMode === APP_MODE.sign)
                     askForAccounts();
                 _isConnected = true;
@@ -2417,7 +2464,3 @@ function UIManager() {
 
 let UI = new UIManager();
 UI.initUI();
-
-
-//TODO
-// If no data entered in edit blockchain info, send undefined to backend
