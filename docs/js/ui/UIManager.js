@@ -1006,16 +1006,20 @@ function UIManager() {
             let currentItem = getCurrentListItemByIndex(_itemsProcessedCounter);
             if (_currentAppMode === APP_MODE.check) {
                 $.selector_cache('#actionInProgress').html('Checking...');
-                switch (_currentTab) {
-                    case TAB_TYPE.file:
-                        checkFile(currentItem.getFile(), currentItem.getIndex());
-                        break;
-                    case TAB_TYPE.text:
-                        checkText(currentItem.getText(), currentItem.getIndex());
-                        break;
-                    case TAB_TYPE.hash:
-                        checkHash(currentItem.getHash(), currentItem.getIndex());
-                        break;
+                if (currentItem.getHash() !== '')
+                    checkHash(currentItem.getHash(), currentItem.getIndex());
+                else {
+                    switch (_currentTab) {
+                        case TAB_TYPE.file:
+                            checkFile(currentItem.getFile(), currentItem.getIndex());
+                            break;
+                        case TAB_TYPE.text:
+                            checkText(currentItem.getText(), currentItem.getIndex());
+                            break;
+                        case TAB_TYPE.hash:
+                            checkHash(currentItem.getHash(), currentItem.getIndex());
+                            break;
+                    }
                 }
             } else {
                 $.selector_cache('#actionInProgress').html('Fetching information...');
@@ -1134,9 +1138,7 @@ function UIManager() {
      */
     let resetElementsFromList = function (list) {
         for (let item of list.values()) {
-            item.setType(TypeElement.Unknown);
-            item.setInformation(new Map());
-            item.setExtraData(new Map());
+            item.reset();
         }
     };
 
@@ -1908,7 +1910,7 @@ function UIManager() {
                 $.selector_cache("#itemTextInput").on('change keyup paste', function () {
                     item.setText($.selector_cache("#itemTextInput").val());
                     if (item.getType() !== TypeElement.Unknown) {
-                        item.setType(TypeElement.Unknown);
+                        item.reset();
                         item.setHash('');
                         UI.displayFileProps(item.getIndex());
                         UI.resetProgress();
@@ -1925,7 +1927,7 @@ function UIManager() {
                 $.selector_cache("#itemHashInput").on('change keyup paste', function () {
                     item.setHash($.selector_cache("#itemHashInput").val());
                     if (item.getType() !== TypeElement.Unknown) {
-                        item.setType(TypeElement.Unknown);
+                        item.reset();
                         UI.displayFileProps(item.getIndex());
                         UI.resetProgress();
                         UI.setUIButtonState(UI_STATE.none);
