@@ -1182,8 +1182,21 @@ function UIManager() {
                     btnClass: 'btn-blue',
                     action: function () {
                         UI.setUIButtonState(UI_STATE.signing);
-                        _itemsProcessedCounter = 0;
-                        signNextItem();
+
+                        let allRequest = [[],[],[]];
+
+                        for(let _itemsProcessedCounter = 0 ; _itemsProcessedCounter < getCurrentList().size ; _itemsProcessedCounter++){
+                            $.selector_cache('#actionInProgress').html('Signing...');
+                            updateProgress(_itemsProcessedCounter, false);
+                            let currentItem = getCurrentListItemByIndex(_itemsProcessedCounter);
+                            allRequest[0].push(currentItem.getHash());
+                            allRequest[1].push(getItemInfoToSign(currentItem));
+                            allRequest[2].push(currentItem.getIndex());
+                        }
+
+                        signOptimisedDocuments(allRequest[0],allRequest[1],allRequest[2]);
+
+
                     }
                 },
                 cancel: function () {
