@@ -752,7 +752,7 @@ async function signDocument(myHash, info, index){
 
         //if we don't have info, then we just confirm document
         if(typeof info === 'undefined'){
-            requestConfirmDoc(myHash, info, index);
+            requestConfirmDoc(myHash, index);
         }
         else {
             requestPushDoc(myHash,info,index);
