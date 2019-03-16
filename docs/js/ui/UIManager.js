@@ -1149,6 +1149,7 @@ function UIManager() {
                 resetElementsFromList(getList(APP_MODE[mode], TAB_TYPE[tab]));
             }
         }
+        UI.resetProgress();
     };
 
     /**
