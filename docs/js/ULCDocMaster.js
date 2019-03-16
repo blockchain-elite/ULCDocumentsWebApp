@@ -181,13 +181,13 @@ async function queryModerator(addressKernel){
         let queryResultIdentity = await ULCDocMod.methods.Kernel_Identity_Book(addressKernel).call();
 
         if(queryResultIdentity["isRevoked"]){
-            moderatorInfoKernel.set("status", resultQueryStatus.revoked);
+            moderatorInfoKernel.set(kernelReservedKeys.status, resultQueryStatus.revoked);
             moderatorInfoKernel.set(kernelReservedKeys.revokedReason, queryResultIdentity["revoked_reason"]);
         }
         else if (queryResultIdentity["confirmed"]) {
             moderatorInfoKernel.set(kernelReservedKeys.status, resultQueryStatus.confirmed);
-            moderatorInfoKernel.set(kernelReservedKeys.name,result["name"]);
-            moderatorInfoKernel.set(kernelReservedKeys.version, result["version"].toString());
+            moderatorInfoKernel.set(kernelReservedKeys.name,queryResultIdentity["name"]);
+            moderatorInfoKernel.set(kernelReservedKeys.version, queryResultIdentity["version"].toString());
 
             //we update detailed info
             try {
