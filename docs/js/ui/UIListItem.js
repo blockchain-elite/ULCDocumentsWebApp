@@ -153,7 +153,6 @@ class ListItem {
      */
     setInformation(information) {
         this.information = new Map (information);
-        console.error('setting info: ' + information);
         if (this.isSelected()) {
             UI.displayFileProps(this.index);
         }
@@ -165,7 +164,6 @@ class ListItem {
      * @return {Object}
      */
     getInformation() {
-        console.error('getting info');
         return this.information;
     }
 

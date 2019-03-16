@@ -701,8 +701,14 @@ function UIManager() {
             for (let item of getCurrentList().values()) {
                 item.setType(TypeElement.Loading);
             }
-            UI.setUIButtonState(UI_STATE.checking);
-            log('Checking started...');
+            if (_currentAppMode === APP_MODE.check) {
+                UI.setUIButtonState(UI_STATE.checking);
+                log('Checking started...');
+            } else {
+                UI.setUIButtonState(UI_STATE.fetching);
+                log('Fetching started...');
+            }
+
             _itemsProcessedCounter = 0;
             checkNextItem();
         } else {
@@ -781,6 +787,7 @@ function UIManager() {
             resetElementsFromList(getCurrentList());
 
         _currentUiState = state;
+        updateDIsplayedItemInfo();
     };
 
     /**
@@ -1072,6 +1079,13 @@ function UIManager() {
             UI.setUIButtonState(UI_STATE.fetched);
     };
 
+    let updateDIsplayedItemInfo = function () {
+        for (let i of getCurrentList().values()) {
+            if (i.isSelected())
+                UI.displayFileProps(i.getIndex());
+        }
+    };
+
     /**
      * Display an error message showing the invalid elements that cannot be signed.
      *
@@ -1245,7 +1259,6 @@ function UIManager() {
         sendNotification(TypeInfo.Good, 'Signing Finished', 'Finished sending signing transactions.' +
             ' Awaiting blockchain response...');
         updateProgress(0, true);
-        UI.setUIButtonState(UI_STATE.none); // TODO do not unlock UI
     };
 
     /**
@@ -1827,8 +1840,10 @@ function UIManager() {
             fillFileProp(file);
             setupItemInputFields(item);
             fillReservedFields(item);
+            console.log(_currentUiState);
             // Display blockchain edit fields if the item has no signatures
-            if (_currentAppMode === APP_MODE.sign && item.getType() === TypeElement.Fake && item.getNumSign() === 0) {
+            if (_currentAppMode === APP_MODE.sign && _currentUiState === UI_STATE.fetched
+                && item.getType() === TypeElement.Fake && item.getNumSign() === 0) {
                 log('Displaying Blockchain edit fields', TypeInfo.Info);
                 $.selector_cache('#fileBlockchainInfoEmptyZone').hide();
                 $.selector_cache('#fileBlockchainInfoZone').hide();
@@ -2386,7 +2401,6 @@ function UIManager() {
             getCurrentListItem(index).setNumSign(signNum);
             getCurrentListItem(index).setNeededSign(signNeed);
             // Do not reset element info and extra data if transaction failed
-            console.log(getCurrentListItem(index).getType());
             getCurrentListItem(index).setInformation(elementInfo);
             getCurrentListItem(index).setExtraData(extraData);
         } else {
@@ -2506,10 +2520,6 @@ function UIManager() {
                 item.setType(TypeElement.TransactionSuccess);
             } else {
                 item.setType(TypeElement.TransactionFailure);
-                if (_currentUiState === UI_STATE.signing) { // Unlock UI if we failed while signing (user reject transaction)
-                    updateProgress(-1, false);
-                    UI.setUIButtonState(UI_STATE.none);
-                }
             }
         } else
             log('Item with index ' + index + ' has been removed and cannot be updated', TypeInfo.Warning);
