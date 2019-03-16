@@ -165,6 +165,9 @@ function UIManager() {
     let _filesOverLimitArray = [];
     let _currentUiState = UI_STATE.none;
 
+    let _elementsToSign = 0;
+    let _elementSigned = 0;
+
     /* *********************************************************
      *                      JQUERY SELECTORS
      **********************************************************/
@@ -691,6 +694,7 @@ function UIManager() {
      */
     let checkStart = function () {
         UI.resetProgress(); // reset progress
+        resetElementsFromList(getCurrentList());
         if (_currentTab !== TAB_TYPE.file)
             cleanList(); // remove invalid test/hash entries before checking
         if (!isCurrentItemListEmpty()) {
@@ -1185,6 +1189,8 @@ function UIManager() {
                     action: function () {
                         UI.setUIButtonState(UI_STATE.signing);
                         _itemsProcessedCounter = 0;
+                        _elementsToSign = getCurrentList().size;
+                        _elementSigned = 0;
                         signNextItem();
                     }
                 },
@@ -1239,7 +1245,7 @@ function UIManager() {
         sendNotification(TypeInfo.Good, 'Signing Finished', 'Finished sending signing transactions.' +
             ' Awaiting blockchain response...');
         updateProgress(0, true);
-        UI.setUIButtonState(UI_STATE.none);
+        UI.setUIButtonState(UI_STATE.none); // TODO do not unlock UI
     };
 
     /**
@@ -1815,7 +1821,6 @@ function UIManager() {
             $.selector_cache('#detailsEmptyZone').hide();
             $.selector_cache('#detailsZone').show();
             setDOMColor($.selector_cache('#generalInfoBody'), item.getCardColor());
-
             let file = undefined;
             if (_currentTab === TAB_TYPE.file)
                 file = item.getFile();
@@ -2380,6 +2385,8 @@ function UIManager() {
             elementInfo.delete(elementReservedKeys.status);
             getCurrentListItem(index).setNumSign(signNum);
             getCurrentListItem(index).setNeededSign(signNeed);
+            // Do not reset element info and extra data if transaction failed
+            console.log(getCurrentListItem(index).getType());
             getCurrentListItem(index).setInformation(elementInfo);
             getCurrentListItem(index).setExtraData(extraData);
         } else {
@@ -2476,8 +2483,10 @@ function UIManager() {
      */
     this.updateTransactionTx = function (index, url) {
         let item = getCurrentListItem(index);
-        item.setTxUrl(url);
-        item.setType(TypeElement.TxProcessing);
+        if (url !== undefined) {
+            item.setTxUrl(url);
+            item.setType(TypeElement.TxProcessing);
+        }
         signNextItem();
     };
 
@@ -2497,14 +2506,16 @@ function UIManager() {
                 item.setType(TypeElement.TransactionSuccess);
             } else {
                 item.setType(TypeElement.TransactionFailure);
-                if (_currentUiState === UI_STATE.signing) { // Unlock UI if we failed whille signing (user reject transaction)
+                if (_currentUiState === UI_STATE.signing) { // Unlock UI if we failed while signing (user reject transaction)
                     updateProgress(-1, false);
                     UI.setUIButtonState(UI_STATE.none);
                 }
             }
-
         } else
             log('Item with index ' + index + ' has been removed and cannot be updated', TypeInfo.Warning);
+        _elementSigned += 1;
+        if (_elementSigned === _elementsToSign)
+            UI.setUIButtonState(UI_STATE.none);
     };
 
 }

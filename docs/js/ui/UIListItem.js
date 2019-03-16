@@ -52,6 +52,8 @@ class ListItem {
         this.setType(TypeElement.Unknown);
         this.setInformation(new Map());
         this.setExtraData(new Map());
+        this.customExtraData = [];
+        this.txUrl = '';
     }
 
     getIndex() {
@@ -151,6 +153,7 @@ class ListItem {
      */
     setInformation(information) {
         this.information = new Map (information);
+        console.error('setting info: ' + information);
         if (this.isSelected()) {
             UI.displayFileProps(this.index);
         }
@@ -162,6 +165,7 @@ class ListItem {
      * @return {Object}
      */
     getInformation() {
+        console.error('getting info');
         return this.information;
     }
 
