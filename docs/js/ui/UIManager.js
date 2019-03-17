@@ -22,7 +22,7 @@
  *                      CONSTANTS
  **********************************************************/
 
-const APP_VERSION = 'beta 0.0.8';
+const APP_VERSION = 'beta 0.0.9';
 
 const APP_BASE_URL = 'https://ulcdocuments.blockchain-elite.fr/';
 
@@ -330,7 +330,7 @@ function UIManager() {
      */
     let showTestnetWarning = function () {
         $.confirm({
-            title: 'Connection insecure',
+            title: 'Untrusted network',
             content: 'You are connected to a test network. Please note that signatures cannot be trusted and are only used for testing purposes.',
             theme: JQUERY_CONFIRM_THEME,
             type: 'orange',
@@ -1261,14 +1261,19 @@ function UIManager() {
                         UI.setUIButtonState(UI_STATE.signing);
                         _elementsToSign = getCurrentList().size;
                         _elementSigned = 0;
+                        $.selector_cache('#actionInProgress').html('Signing...');
 
                         if (!_isOptimizerEnabled) {
                             log('Signing without optimizer', TypeInfo.Info);
                             _itemsProcessedCounter = 0;
-                            signNextItem();
+                            for (_itemsProcessedCounter = 0; _itemsProcessedCounter < getCurrentList().size; _itemsProcessedCounter++) {
+                                updateProgress(_itemsProcessedCounter, false);
+                                let currentItem = getCurrentListItemByIndex(_itemsProcessedCounter);
+                                signDocument(currentItem.getHash(), getItemInfoToSign(currentItem), currentItem.getIndex());
+                            }
+                            endSign();
                         } else {
                             log('Signing with optimizer', TypeInfo.Info);
-                            $.selector_cache('#actionInProgress').html('Signing...');
                             let requests = [[], [], []];
                             for (_itemsProcessedCounter = 0; _itemsProcessedCounter < getCurrentList().size; _itemsProcessedCounter++) {
                                 updateProgress(_itemsProcessedCounter, false);
@@ -1288,21 +1293,6 @@ function UIManager() {
                 },
             }
         });
-    };
-
-    /**
-     * Send the next hash to the backend to sign it
-     */
-    let signNextItem = function () {
-        if (_itemsProcessedCounter < getCurrentList().size) {
-            log('Signing next item', TypeInfo.Info);
-            $.selector_cache('#actionInProgress').html('Signing...');
-            updateProgress(_itemsProcessedCounter, false);
-            let currentItem = getCurrentListItemByIndex(_itemsProcessedCounter);
-            _itemsProcessedCounter += 1;
-            signDocument(currentItem.getHash(), getItemInfoToSign(currentItem), currentItem.getIndex());
-        } else
-            endSign();
     };
 
     /**
@@ -1501,7 +1491,6 @@ function UIManager() {
             onImgLoad("#kernelImg", function () {
                 $.selector_cache("#kernelImg").fadeIn('fast');
             });
-
         }
 
         if (kernelInfo.has(kernelReservedKeys.name) && kernelInfo.get(kernelReservedKeys.name) !== "")
@@ -2591,8 +2580,6 @@ function UIManager() {
             item.setTxUrl(url);
             item.setType(TypeElement.TxProcessing);
         }
-        if (!_isOptimizerEnabled)
-            signNextItem();
     };
 
     /**
