@@ -2439,10 +2439,11 @@ function UIManager() {
         switch (connectionType) {
             case TypeInfo.Good:
                 $.selector_cache('#moderatorConnectionInfoIcon').attr('class', 'fas fa-check-circle text-success');
-                if (_currentModeratorAddress === _defaultModeratorAddress)
+                if (_currentModeratorAddress === _defaultModeratorAddress) {
+                    let modName = _currentNetworkType === TypeConnection.Mainnet ? 'Blockchain Élite ULCDocuments Official' : 'Blockchain Élite ULCDocuments Testnet';
                     $.selector_cache('#moderatorConnectedAddress').html("Currently connected to default: " +
-                        "<strong>Blockchain Élite ULCDocuments Official</strong>");
-                else
+                        "<strong>" + modName + "</strong>");
+                } else
                     $.selector_cache('#moderatorConnectedAddress').html("Currently connected to: " +
                         "'<strong>" + _currentModeratorAddress + "</strong>'");
                 setDOMColor($.selector_cache('#moderatorInfoHeader'), COLOR_CLASSES.success);
