@@ -160,7 +160,7 @@ function UIManager() {
     let _currentTab = TAB_TYPE.file; // The current tab selected (text, file or hash)
     let _currentAppMode = APP_MODE.check; // The current app mode (check or sign)
     let _currentWalletState = WALLET_STATE.unknown; // Are we using an injected wallet (metamask) ?
-    let _isAccountOwner = false; // Is the current account owner of the current kernel ?
+    let _isAccountOperator = false; // Is the current account operator of the current kernel ?
     let _isLoadingAccounts = false; // Are we currently requesting account information ?
     let _isAccountsListAvailable = false; // Do we have an account list ready ?
     let _filesOverLimitArray = [];
@@ -1437,10 +1437,10 @@ function UIManager() {
     };
 
     /**
-     * Display kernel buttons linking to moderator if the user is owner of the current kernel
+     * Display kernel buttons linking to moderator if the user is an operator of the current kernel
      */
     let updateKernelButtonsState = function () {
-        if (_isAccountOwner && _isKernelConnected)
+        if (_isAccountOperator && _isKernelConnected)
             $.selector_cache("#kernelButtons").show();
         else
             $.selector_cache("#kernelButtons").hide();
@@ -1627,13 +1627,13 @@ function UIManager() {
             $.selector_cache('#accountsCard').show();
             $.selector_cache('#loadingAccountsMessage').show();
             setMainUIError(false, '', '', undefined, false);
-        } else if (!_isAccountOwner) { // In sign mode with an injected wallet but not kernel owner
+        } else if (!_isAccountOperator) { // In sign mode with an injected wallet but not kernel operator
             $.selector_cache('#mainUIContainer').hide();
             $.selector_cache('#accountsCard').show();
             $.selector_cache('#loadingAccountsMessage').hide();
-            setMainUIError(true, 'Not owner',
-                'You are not the owner of this kernel. You must be owner to sign documents.', COLOR_CLASSES.danger, false);
-        } else { // In sign mode with injected wallet and kernel owner
+            setMainUIError(true, 'Not operator',
+                'You are not an operator on this kernel. You must be an operator to sign documents.', COLOR_CLASSES.danger, false);
+        } else { // In sign mode with injected wallet and kernel operator
             $.selector_cache('#mainUIContainer').show();
             $.selector_cache('#accountsCard').show();
             $.selector_cache('#loadingAccountsMessage').hide();
@@ -2333,7 +2333,7 @@ function UIManager() {
      *
      */
     this.updateKernelConnection = function (connectionStatus, moderatorInfo) {
-        _isAccountsListAvailable = false; // Kernel owners may change
+        _isAccountsListAvailable = false; // Kernel operators may change
         resetAllElements(); // Element signatures are different from each kernel
         setKernelConnectionLoading(false);
         $.selector_cache('#collapseSignature').collapse('show');
@@ -2484,25 +2484,25 @@ function UIManager() {
                 $.selector_cache('#accountsListZone').show();
                 for (let [key, value] of accountsMap) {
                     let rowClass = "alert-danger";
-                    let rowOwnership = "Not Owner";
+                    let rowOwnership = "Not Operator";
                     if (value) {
                         rowClass = "alert-success";
-                        rowOwnership = "Owner";
+                        rowOwnership = "Operator";
                     }
                     if (isFirstElem) { // This is the current account
                         $.selector_cache('#accountState').html(rowOwnership);
                         $.selector_cache('#accountListHeader').attr('class', 'card-header ' + rowClass);
-                        if (value) { // This account is the kernels owner
+                        if (value) { // This account is an operator
                             $.selector_cache('#collapseAccounts').collapse('hide');
-                            _isAccountOwner = true;
+                            _isAccountOperator = true;
                         } else {
                             $.selector_cache('#collapseAccounts').collapse('show');
-                            _isAccountOwner = false;
+                            _isAccountOperator = false;
                         }
                         $.selector_cache('#accountsTable').html( // Reset the zone
                             '<tr>' +
                             '<th scope="row">Account Address</th>' +
-                            '<th>Ownership</th>' +
+                            '<th>Status</th>' +
                             '</tr>');
                         $.selector_cache("#accountsTable").append(
                             "<tr class='" + rowClass + "'>\n" +
@@ -2525,7 +2525,7 @@ function UIManager() {
                 $.selector_cache('#accountsListBody').hide();
                 $.selector_cache('#accountState').html("None");
                 setDOMColor($.selector_cache('#accountListHeader'), COLOR_CLASSES.secondary);
-                _isAccountOwner = false;
+                _isAccountOperator = false;
             }
             _isLoadingAccounts = false;
             updateKernelButtonsState();
