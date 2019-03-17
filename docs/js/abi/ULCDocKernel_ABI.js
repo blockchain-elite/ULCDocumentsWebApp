@@ -407,6 +407,24 @@ ULCDocKernelABI = [
     "type": "function"
   },
   {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "_allKeys",
+        "type": "bytes32[]"
+      },
+      {
+        "name": "_allDocumentFamily",
+        "type": "uint16[]"
+      }
+    ],
+    "name": "lightPushDocumentList",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "constant": true,
     "inputs": [],
     "name": "operatorCount",

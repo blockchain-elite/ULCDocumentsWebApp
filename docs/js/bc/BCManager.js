@@ -12,7 +12,7 @@
 	along with ULCDocuments Web App.  If not, see <http://www.gnu.org/licenses/>.
 */
 
-/*  ULCDOCUMENTS MASTER JAVASCRIPT HANDLER (COMMON READ+WRITE)
+/*  ULCDOCUMENTS MASTER JAVASCRIPT MANAGER (COMMON READ+WRITE)
 *  @author Adrien BARBANSON <Contact Form On Blockchain-Élite website>
 *  Dev Entity: Blockchain-Elite (https://www.blockchain-elite.fr/)
 */
@@ -20,7 +20,7 @@
 /*************
 *  CONST PART*
 **************/
-const kernelVersionCompatibility = [2];
+const kernelVersionCompatibility = [3];
 const moderatorVersionCompatibility = [2];
 const hashMethodsCompatibility = ["SHA3-256"];
 
@@ -111,209 +111,173 @@ function startApp(error, sNetwork) {
     logMe(ULCDocModMasterPrefix,"Wallet state:" + WALLET_ACTIVATED);
 }
 
+/**
+*    @dev function that says if kernel is compatible with this webApp
+*    @param {String} addressKernel the adress of the kernel to check
+*    @return {Bool} is the Kernel is compatible with Blockchain this app or not
+*/
+async function isKernelCompatible(addressKernel){
+
+    let versionCompatible = false;
+    let hashCompatible = false;
+    let kernelVersion;
+
+    let ULCDocKernelTest = new web3js.eth.Contract(ULCDocKernelABI, addressKernel);
+
+    try {
+        kernelVersion = await ULCDocKernelTest.methods.Kernel_Version().call();
+        kernelHashFormat = await ULCDocKernelTest.methods.Hash_Algorithm().call();
+    }catch(error){
+        sendNotification(TypeInfo.Critical, "Error Kernel Loading", "Impossible to reach Kernel Compatibility Info.");
+        logMe(ULCDocModMasterPrefix, "Error while reaching kernel version : " + error, TypeInfo.Critical);
+        return false;
+    }
+
+    //convert it as number type, because it's string type
+    kernelVersion = Number(kernelVersion);
+
+    //we check if the Kernel version  is compatible with our list
+    for (ver of kernelVersionCompatibility){
+        if (kernelVersion === ver) {
+            versionCompatible = true;
+            break;
+        }
+    }
+
+    if(!versionCompatible){
+        sendNotification(TypeInfo.Critical,"Incompatible Kernel Version","The Kernel's Version is not compatible with this webApp !");
+        logMe(ULCDocModMasterPrefix,"Kernel Version not compatible : " + kernelVersion);
+        return false;
+    }
+
+    for (hash of hashMethodsCompatibility){
+        if (kernelHashFormat === hash) {
+            hashCompatible = true;
+            break;
+        }
+    }
+
+    if(!hashCompatible){
+        sendNotification(TypeInfo.Critical,"Incompatible Kernel Hash Methods","The hash method of the kernel is not compatible with this webApp !");
+        logMe(ULCDocModMasterPrefix,"Kernel Hash not compatible : " + kernelHashFormat);
+        return false;
+    }
+
+    //if compatible both, then fully compatible :)
+    return  true;
+}
+
+/**
+*   @dev function that return information about a Kernel
+*   @param {String} addressKernel the address of the kernel to check
+*   @return {Map} A map with all Moderator info about the kernel
+*   Specific key : "status", resultQueryStatus
+*/
+async function queryModerator(addressKernel){
+
+    let moderatorInfoKernel = new Map();
+
+    try {
+        let queryResultIdentity = await ULCDocMod.methods.Kernel_Identity_Book(addressKernel).call();
+
+        if(queryResultIdentity["isRevoked"]){
+            moderatorInfoKernel.set(kernelReservedKeys.status, resultQueryStatus.revoked);
+            moderatorInfoKernel.set(kernelReservedKeys.revokedReason, queryResultIdentity["revoked_reason"]);
+        }
+        else if (queryResultIdentity["confirmed"]) {
+            moderatorInfoKernel.set(kernelReservedKeys.status, resultQueryStatus.confirmed);
+            moderatorInfoKernel.set(kernelReservedKeys.name,queryResultIdentity["name"]);
+            moderatorInfoKernel.set(kernelReservedKeys.version, queryResultIdentity["version"].toString());
+
+            //we update detailed info
+            try {
+                queryResultDetailedInfo = await ULCDocMod.methods.Kernel_Info_Book(addressKernel).call();
+
+                moderatorInfoKernel.set(kernelReservedKeys.isOrganisation, queryResultIdentity["isOrganisation"]);
+                moderatorInfoKernel.set(kernelReservedKeys.url, queryResultDetailedInfo["url"]);
+                moderatorInfoKernel.set(kernelReservedKeys.mail, queryResultDetailedInfo["mail"]);
+                moderatorInfoKernel.set(kernelReservedKeys.img, queryResultDetailedInfo["imageURL"]);
+                moderatorInfoKernel.set(kernelReservedKeys.phone,queryResultDetailedInfo["phone"]);
+                moderatorInfoKernel.set(kernelReservedKeys.physicalAddress, queryResultDetailedInfo["physicalAddress"]);
+
+                //extracting extra_data if necessary
+                if(queryResultDetailedInfo["extra_data"] !== "" && queryResultDetailedInfo["extra_data"] !== " "){
+                    logMe(ULCDocModMasterPrefix,"Extra Data detected, extracting...");
+                    moderatorInfoKernel.set(kernelReservedKeys.extraData, formatExtraData(queryResultDetailedInfo["extra_data"]));
+                }
+                else {
+                    moderatorInfoKernel.set(kernelReservedKeys.extraData, undefined);
+                }
+
+            }catch(error){
+                sendNotification(TypeInfo.Critical, "Fatal Error!", "Error while reaching kernel moderator detailed info");
+                logMe(ULCDocModMasterPrefix,"CRITICAL: Unkown error when reaching queryModerator detailed info",TypeInfo.Critical);
+                logMe(ULCDocModMasterPrefix,error);
+                moderatorInfoKernel.set(kernelReservedKeys.status, resultQueryStatus.inError);
+            }
+        }
+        else if (queryResultIdentity["initialized"]){
+            //here we don't have confirmed but intilizated only.
+            moderatorInfoKernel.set(kernelReservedKeys.status, resultQueryStatus.initialized);
+        }
+        else {
+            moderatorInfoKernel.set(kernelReservedKeys.status, resultQueryStatus.unknown);
+        }
+
+    } catch(error){
+        sendNotification(TypeInfo.Critical, "Fatal Error!", "Error while reaching kernel moderator identity");
+        logMe(ULCDocModMasterPrefix,"CRITICAL: Unkown error when reaching queryModerator identity",TypeInfo.Critical);
+        logMe(ULCDocModMasterPrefix,error);
+        moderatorInfoKernel.set(kernelReservedKeys.status, resultQueryStatus.inError);
+    }
+
+    return moderatorInfoKernel;
+
+}
+
 
 /**@dev function that update the ULCDocKernel.
-* @param addressKernel {String} the kernel address you want to update */
-
+* @param {String} addressKernel the kernel address you want to update */
 async function updateKernelAddress(addressKernel){
 
-    let connectionInfo = new Map();
-
     if(web3js.utils.isAddress(addressKernel)){
-        //if the hexa code is valid, we need to ask moderator for kernel info (if any)
-
 
         //first we need to know if kernel has version compatible with this module.
+        let compatible = await isKernelCompatible(addressKernel);
 
+        if(compatible){
+            //if the kernel is compatible, we need to ask moderator for kernel info (if any)
+            let moderatorInfoKernel = await queryModerator(addressKernel);
 
-        // i know it's dirty, but that just for the moment, don't worry :S
+            let statusResult = moderatorInfoKernel.get(kernelReservedKeys.status);
+            moderatorInfoKernel.delete(kernelReservedKeys.status); // not necessary for UI after.
 
-        let compatible = false;
-        let kernelVersion;
-        let ULCDocKernelTest = new web3js.eth.Contract(ULCDocKernelABI, addressKernel)
-        try {
-            kernelVersion = await ULCDocKernelTest.methods.Kernel_Version().call();
-            kernelHashFormat = await ULCDocKernelTest.methods.Hash_Algorithm().call();
-        }catch(error){
-            sendNotification(TypeInfo.Critical, "Error Kernel Loading", "Impossible to reach Kernel Basic Info.");
-            logMe(ULCDocModMasterPrefix, "Error while reaching kernel version : " + error, TypeInfo.Critical);
-            connectionInfo.set(kernelReservedKeys.status, TypeInfo.Critical);
-            UI.updateKernelConnection(connectionInfo);
-            return;
-        }
-
-        kernelVersion = Number(kernelVersion);
-
-        for (ver of kernelVersionCompatibility){
-            if (kernelVersion === ver) {
-                compatible = true;
+            if(statusResult === resultQueryStatus.confirmed){ //OK!
+                updateKernelObject(addressKernel, moderatorInfoKernel);
+            }
+            else {
+                //we ask UI for unsecure connection
+                UI.promptKernelConnectionWarnAnswer(statusResult, statusResult === resultQueryStatus.revoked ? moderatorInfoKernel.get(kernelReservedKeys.revokedReason) : undefined);
             }
         }
-
-        if(!compatible){
-            sendNotification(TypeInfo.Critical,"Bad Kernel Version","The version of the kernel is not compatible with this module !");
-            logMe(ULCDocModMasterPrefix,"Kernel Version not compatible : " + kernelVersion);
-            connectionInfo.set(kernelReservedKeys.status, TypeInfo.Critical);
-            UI.updateKernelConnection(connectionInfo);
-            return;
+        else {
+            // Here kernel not compatible, so we return error statement.
+            UI.updateKernelConnection(TypeInfo.Critical, undefined);
         }
-
-        compatible = false;
-
-        for (hash of hashMethodsCompatibility){
-            if (kernelHashFormat === hash) {
-                compatible = true;
-            }
-        }
-
-        if(!compatible){
-            sendNotification(TypeInfo.Critical,"Bad Kernel Hash Methods","The hash methods of the kernel is not compatible with this module !");
-            logMe(ULCDocModMasterPrefix,"Kernel Hash not compatible : " + kernelHashFormat);
-            connectionInfo.set(kernelReservedKeys.status, TypeInfo.Critical);
-            UI.updateKernelConnection(connectionInfo);
-            return;
-        }
-
-
-        try {
-            let result = await ULCDocMod.methods.Kernel_Identity_Book(addressKernel).call();
-            if(result["isRevoked"]){ // we used to know, but revoked
-                $.confirm({
-                    title: 'Security consideration',
-                    content: 'Kernel is revoked by the moderator. That mean Moderator do not recorgnize this kernel anymore. <br/> Revoked reason : ' + result["revoked_reason"] + ' <br/> Do you cant to connect anyway ? (Not recommended)',
-                    type: 'red',
-                    columnClass: 'medium',
-                    theme: 'material',
-                    typeAnimated: true,
-                    buttons: {
-                        confirm: async function () {
-                            await updateKernelObject(addressKernel);
-                            connectionInfo.set(kernelReservedKeys.status, TypeInfo.Warning);
-                            UI.updateKernelConnection(connectionInfo);
-                            sendNotification(TypeInfo.Critical,"Important Information", "Address specified has been revoked by authority. You can still use it at your own risk.");
-                        },
-                        cancel: function () {
-                            sendNotification(TypeInfo.Critical, "Connection rejected", "You choose not to connect to the kernel.");
-                            logMe(ULCDocModMasterPrefix,"Connection refused by user");
-                            connectionInfo.set(kernelReservedKeys.status, TypeInfo.Critical);
-                            UI.updateKernelConnection(connectionInfo);
-                        }
-                    }
-                });
-            }
-            else if(result["confirmed"]){ //OK!
-                await updateKernelObject(addressKernel);
-                //Assigning correct structure
-                let kernel_extra = new Map();
-                connectionInfo.set(kernelReservedKeys.name,result["name"]);
-                connectionInfo.set(kernelReservedKeys.version, result["version"].toString());
-
-                try {
-                    resultInfo = await ULCDocMod.methods.Kernel_Info_Book(addressKernel).call();                    //we update objects.
-                    await updateKernelObject(addressKernel);
-
-                    //extracting extra_data if necessary
-                    if(resultInfo["extra_data"] !== "" && resultInfo["extra_data"] !== " "){
-                        logMe(ULCDocModMasterPrefix,"Extra Data detected, extracting...");
-                        kernel_extra = formatExtraData(resultInfo["extra_data"]);
-                    }
-
-                    connectionInfo.set(kernelReservedKeys.isOrganisation, resultInfo["isOrganisation"]);
-                    connectionInfo.set(kernelReservedKeys.url, resultInfo["url"]);
-                    connectionInfo.set(kernelReservedKeys.mail, resultInfo["mail"]);
-                    connectionInfo.set(kernelReservedKeys.img, resultInfo["imageURL"]);
-                    connectionInfo.set(kernelReservedKeys.phone,resultInfo["phone"]);
-                    connectionInfo.set(kernelReservedKeys.physicalAddress, resultInfo["physicalAddress"]);
-                    connectionInfo.set(kernelReservedKeys.extraData, kernel_extra);
-                    //sending to UI
-                    connectionInfo.set(kernelReservedKeys.status, TypeInfo.Good);
-                    UI.updateKernelConnection(connectionInfo);
-                    sendNotification(TypeInfo.Good, "Kernel Updated", "Kernel address successfully updated.");
-                }catch(error){
-                    sendNotification(TypeInfo.Critical, "Fatal Error!", "Error while updating kernel address");
-                    logMe(ULCDocModMasterPrefix,"CRITICAL: Unkown error when reaching Kernel_Info_Book",TypeInfo.Critical);
-                    logMe(ULCDocModMasterPrefix,error);
-                    connectionInfo.set(kernelReservedKeys.status, TypeInfo.Critical);
-                    UI.updateKernelConnection(connectionInfo);
-                }
-
-            }
-            else if(result["initialized"]) { //if init but not confirm, then pending
-                logMe(ULCDocModMasterPrefix,"Moderator know kernel but not confirmed...");
-                $.confirm({
-                    title: 'Security consideration',
-                    content: "The moderator know the address, but don't have passed security confirmation yet. <br/> Do you cant to connect anyway ? (Not recommended !)",
-                    type: 'orange',
-                    columnClass: 'medium',
-                    theme: 'material',
-                    typeAnimated: true,
-                    buttons: {
-                        confirm: async function () {
-                            await updateKernelObject(addressKernel);
-                            connectionInfo.set(kernelReservedKeys.status, TypeInfo.Warning);
-                            UI.updateKernelConnection(connectionInfo);
-                            sendNotification(TypeInfo.Warning,"Important Information", "Address specified is not recognised by loaded authority. You can still use it at your own risk.");
-                        },
-                        cancel: function () {
-                            sendNotification(TypeInfo.Critical, "Connection rejected", "You choose not to connect to the kernel.");
-                            logMe(ULCDocModMasterPrefix,"Connection refused by user");
-                            connectionInfo.set(kernelReservedKeys.status, TypeInfo.Critical);
-                            UI.updateKernelConnection(connectionInfo);
-                        }
-                    }
-                });
-            }
-            else { //if not init, then we don't know at all the kernel
-            logMe(ULCDocModMasterPrefix,"Moderator don't know the Kernel");
-            $.confirm({
-                title: 'Security consideration',
-                content: "The moderator don't know the address you gave <br/> Do you cant to connect anyway ? (Not recommended)",
-                type: 'orange',
-                columnClass: 'medium',
-                theme: 'material',
-                typeAnimated: true,
-                buttons: {
-                    confirm: async function () {
-                        await updateKernelObject(addressKernel);
-                        connectionInfo.set(kernelReservedKeys.status, TypeInfo.Warning);
-                        UI.updateKernelConnection(connectionInfo);
-                        sendNotification(TypeInfo.Warning,"Important Information", "Address specified is not recognised by loaded authority. You can still use it at your own risk.");
-                    },
-                    cancel: function () {
-                        sendNotification(TypeInfo.Critical, "Connection rejected", "You choose not to connect to the kernel.");
-                        logMe(ULCDocModMasterPrefix,"Connection refused by user");
-                        connectionInfo.set(kernelReservedKeys.status, TypeInfo.Critical);
-                        UI.updateKernelConnection(connectionInfo);
-                    }
-                }
-            });
-
-        }
-
-
-
-    }catch(error){
-        sendNotification(TypeInfo.Critical, "Fatal Error!", "Error while updating kernel address");
-        logMe(ULCDocModMasterPrefix,"CRITICAL: Unkown error when reaching Kernel_Identity_Book(adressKernel)",TypeInfo.Critical);
-        logMe(ULCDocModMasterPrefix, error);
-        connectionInfo.set(kernelReservedKeys.status, TypeInfo.Critical);
-        UI.updateKernelConnection(connectionInfo);
     }
-}
 
-else {
-    sendNotification(TypeInfo.Critical, "Invalid Address", "The kernel address does not respect format.");
-    logMe(ULCDocModMasterPrefix,"Wrong kernel address format");
-    connectionInfo.set(kernelReservedKeys.status, TypeInfo.Critical);
-    UI.updateKernelConnection(connectionInfo);
-}
+    else {
+        sendNotification(TypeInfo.Critical, "Invalid Address", "The kernel address does not respect format.");
+        logMe(ULCDocModMasterPrefix,"Wrong kernel address format");
+        UI.updateKernelConnection(TypeInfo.Critical, undefined);
+    }
 }
 
 /**
     Function that update in masterJS the objet kernel
     @param {String} addressKernel the addresse of the kernel to load
 **/
-async function updateKernelObject(addressKernel){
+async function updateKernelObject(addressKernel, moderatorInfoKernel){
     CONF_ADDRESS_KERNEL = addressKernel;
     ULCDocKernel  = new web3js.eth.Contract(ULCDocKernelABI, CONF_ADDRESS_KERNEL);
 
@@ -324,7 +288,6 @@ async function updateKernelObject(addressKernel){
         logMe(ULCDocModMasterPrefix, "Impossible to read operatorsForChange", TypeInfo.Critical);
         logMe(ULCDocModMasterPrefix, error);
         sendNotification(TypeInfo.Critical,"Error reading kernel", "Impossible to find security property : number signatures needed");
-
     }
 
 
@@ -346,6 +309,7 @@ async function updateKernelObject(addressKernel){
     }
 
 
+    UI.updateKernelConnection(typeof moderatorInfoKernel !== 'undefined' ? TypeInfo.Good : TypeInfo.Warning, moderatorInfoKernel);
     logMe(ULCDocModMasterPrefix,"new kernel link Loaded.");
 }
 
@@ -405,7 +369,6 @@ async function updateModeratorInfo(testULCDocMod){
 /** @dev Function that change the moderator address
 * @param addressModerator {String} the new moderator address */
 async function updateModeratorAddress(addressModerator){
-
 
     if(web3js.utils.isAddress(addressModerator)){
 
@@ -670,8 +633,114 @@ function getCompatibleFamily() {
     return KERNEL_FAMILY_AVAIABLE;
 }
 
+
+function requestPushDoc(myHash, info, index){
+
+    //HERE ALL ELEMENT NULL MUST BE ""
+    let source = info.get(elementReservedKeys.source);
+    let document_family = info.get(elementReservedKeys.documentFamily);
+    let extraDataMap = info.get(elementReservedKeys.extraData);
+
+    let extraDataSerial = "";
+
+    if(typeof source === 'undefined') source = "";
+    if(typeof document_family === 'undefined') document_family = 0;
+    if(typeof extraDataMap !== 'undefined') extraDataSerial = extraDataFormat(extraDataMap);
+
+    ULCDocKernel.methods.pushDocument(myHash, source, document_family, extraDataSerial).send({from: INFO_ACCOUNT_LOADED})
+    .on('error',(error) => {
+        UI.updateTransactionTx(index, undefined);
+        UI.updateTransactionState(index, false);
+        sendNotification(TypeInfo.Critical, "Error during transaction", "The transaction has critical error. See console for more info.");
+        logMe(ULCDocModMasterPrefix, "Error while sending pushDocument : ");
+        logMe(ULCDocModMasterPrefix, error, TypeInfo.critical);
+    })
+    .on('transactionHash', (hash) => {
+        UI.updateTransactionTx(index, formatTxURL(hash));
+    })
+    .on('receipt', (receipt) => {
+        UI.updateTransactionState(index, true);
+        logMe(ULCDocModMasterPrefix, "New receipt :" + receipt.toString());
+    });
+}
+
+function requestConfirmDoc(myHash, index){
+    ULCDocKernel.methods.confirmDocument(myHash).send({from: INFO_ACCOUNT_LOADED})
+    .on('error',(error) => {
+        UI.updateTransactionTx(index, undefined);
+        UI.updateTransactionState(index, false);
+        sendNotification(TypeInfo.Critical, "Error during transaction", "The transaction has critical error. See console for more info.");
+        logMe(ULCDocModMasterPrefix, "Error while sending confirmDocument : ");
+        logMe(ULCDocModMasterPrefix, error, TypeInfo.critical);
+    })
+    .on('transactionHash', (hash) => {
+        UI.updateTransactionTx(index, formatTxURL(hash));
+    })
+    .on('receipt', (receipt) => {
+        UI.updateTransactionState(index, true);
+        logMe(ULCDocModMasterPrefix, "New receipt :" + receipt.toString());
+    });
+}
+
+function requestMultiConfirmDocs(myHashArray, indexArray){
+    ULCDocKernel.methods.confirmDocumentList(myHashArray).send({from: INFO_ACCOUNT_LOADED})
+    .on('error',(error) => {
+        for(index of indexArray){
+            UI.updateTransactionTx(index, undefined);
+            UI.updateTransactionState(index, false);
+        }
+        sendNotification(TypeInfo.Critical, "Error during transaction", "The transaction has critical error. See console for more info.");
+        logMe(ULCDocModMasterPrefix, "Error while sending confirmDocumentList : ");
+        logMe(ULCDocModMasterPrefix, error, TypeInfo.critical);
+    })
+    .on('transactionHash', (hash) => {
+        let url = formatTxURL(hash);
+        for(index of indexArray){
+            UI.updateTransactionTx(index,url);
+        }
+    })
+    .on('receipt', (receipt) => {
+        for(index of indexArray){
+            UI.updateTransactionState(index, true);
+        }
+        logMe(ULCDocModMasterPrefix, "New receipt :" + receipt.toString());
+    });
+}
+
+function requestMultiLightPushDocs(myHashArray, infoArray, indexArray){
+
+    let docFamilyArray = [];
+
+    for(element of infoArray){
+        docFamilyArray.push(element.get(elementReservedKeys.documentFamily));
+    }
+
+    ULCDocKernel.methods.lightPushDocumentList(myHashArray,docFamilyArray).send({from: INFO_ACCOUNT_LOADED})
+    .on('error',(error) => {
+        for(index of indexArray){
+            UI.updateTransactionTx(index, undefined);
+            UI.updateTransactionState(index, false);
+        }
+        sendNotification(TypeInfo.Critical, "Error during transaction", "The transaction has critical error. See console for more info.");
+        logMe(ULCDocModMasterPrefix, "Error while sending lightPushDocumentList : ");
+        logMe(ULCDocModMasterPrefix, error, TypeInfo.critical);
+    })
+    .on('transactionHash', (hash) => {
+        let url = formatTxURL(hash);
+        for(index of indexArray){
+            UI.updateTransactionTx(index,url);
+        }
+    })
+    .on('receipt', (receipt) => {
+        for(index of indexArray){
+            UI.updateTransactionState(index, true);
+        }
+        logMe(ULCDocModMasterPrefix, "New receipt :" + receipt.toString());
+    });
+}
+
 /**
-Function that prepare a request to sign a document
+Function that prepare a request to sign one document and choose the right way to sign
 @param {String} myHash the hash to be signed
 @param {Map} info the map with all specific info
 @param {Number} index the index for callback result
@@ -683,60 +752,97 @@ async function signDocument(myHash, info, index){
 
         //if we don't have info, then we just confirm document
         if(typeof info === 'undefined'){
-            ULCDocKernel.methods.confirmDocument(myHash).send({from: INFO_ACCOUNT_LOADED})
-            .on('error',(error) => {
-                UI.updateTransactionState(index, false);
-                sendNotification(TypeInfo.Critical, "Error during transaction", "The transaction has critical error. See console for more info.");
-                logMe(ULCDocModMasterPrefix, "Error while sending confirmDocument : ");
-                logMe(ULCDocModMasterPrefix, error, TypeInfo.critical);
-            })
-            .on('transactionHash', (hash) => {
-                UI.updateTransactionTx(index, formatTxURL(hash));
-            })
-            .on('receipt', (receipt) => {
-                UI.updateTransactionState(index, true);
-                logMe(ULCDocModMasterPrefix, "New receipt :" + receipt.toString());
-            });
+            requestConfirmDoc(myHash, index);
         }
         else {
-
-            //HERE ALL ELEMENT NULL MUST BE ""
-            let source = info.get(elementReservedKeys.source);
-            let document_family = info.get(elementReservedKeys.documentFamily);
-            let extraDataMap = info.get(elementReservedKeys.extraData);
-
-            let extraDataSerial = "";
-
-            if(typeof source === 'undefined') source = "";
-            if(typeof document_family === 'undefined') document_family = 0;
-            if(typeof extraDataMap !== 'undefined') extraDataSerial = extraDataFormat(extraDataMap);
-
-            ULCDocKernel.methods.pushDocument(myHash, source, document_family, extraDataSerial).send({from: INFO_ACCOUNT_LOADED})
-            .on('error',(error) => {
-                UI.updateTransactionState(index, false);
-                sendNotification(TypeInfo.Critical, "Error during transaction", "The transaction has critical error. See console for more info.");
-                logMe(ULCDocModMasterPrefix, "Error while sending pushDocument : ");
-                logMe(ULCDocModMasterPrefix, error, TypeInfo.critical);
-            })
-            .on('transactionHash', (hash) => {
-                UI.updateTransactionTx(index, formatTxURL(hash));
-            })
-            .on('receipt', (receipt) => {
-                UI.updateTransactionState(index, true);
-                logMe(ULCDocModMasterPrefix, "New receipt :" + receipt.toString());
-            });
-
+            requestPushDoc(myHash,info,index);
         }
     }
     else {
         logMe(ULCDocModMasterPrefix,"Error: invalid hash !");
-        sendNotification(TypeInfo.Critical, "Fatal Error", "Impossible to sign element : invalid hash");
+        sendNotification(TypeInfo.Critical, "Fatal Error", "Impossible to sign element " + myHash + ": invalid hash");
         UI.updateTransactionTx(index, undefined);
         UI.updateTransactionState(index, false);
     }
 
 
 }
+
+/**
+Function that prepare all requests and optimize number of transactions.
+@param {Array}{String} myHash the hash to be signed
+@param {Array}{Map} info the map with all specific info
+@param {Array}{Number} index the index for callback result
+*/
+async function signOptimisedDocuments(myHashArray, infoArray, indexArray){
+    //if just one doc, no need to use this function,  redirecting to simple signDocument.
+    if (myHashArray.length === 1) {
+        signDocument(myHashArray[0], infoArray[0], indexArray[0]);
+        return;
+    }
+
+    //empty 2D array (hash, index)
+    let confirmArray = [[],[]];
+
+    //empty 2D arrays (hash, info, index)
+    let lightPushArray = [[],[],[]];
+    let pushArray = [[],[],[]];
+
+    //We assume here all conditions are filled (if we force here then blockchain security will handle it)
+
+
+    //for each sign request
+    for(i in myHashArray){
+        if(isHashValidFormat(myHashArray[i])){
+            myHashArray[i] = "0x" + myHashArray[i] // just adjusting to be compatible with bytes32 format.
+            //need to set type of action.
+            if(typeof infoArray[i] === 'undefined'){
+                //no Info, simple confirmation then.
+                confirmArray[0].push(myHashArray[i]);
+                confirmArray[1].push(indexArray[i]);
+            }
+            else {
+                if(typeof infoArray[i].get(elementReservedKeys.source) === 'undefined' && typeof infoArray[i].get(elementReservedKeys.extraData) === 'undefined'){
+                    //no source and extra data mean no string array so we can call light pushDoc.
+                    lightPushArray[0].push(myHashArray[i]);
+                    lightPushArray[1].push(infoArray[i]);
+                    lightPushArray[2].push(indexArray[i]);
+                }
+                else {
+                    //else it gonna be simple pushing.
+                    pushArray[0].push(myHashArray[i]);
+                    pushArray[1].push(infoArray[i]);
+                    pushArray[2].push(indexArray[i]);
+                }
+            }
+        }
+        else {
+            logMe(ULCDocModMasterPrefix,"Error: invalid hash !");
+            sendNotification(TypeInfo.Critical, "Fatal Error", "Impossible to sign element " + myHashArray[i] +" : invalid hash");
+            UI.updateTransactionTx(indexArray[i], undefined);
+            UI.updateTransactionState(indexArray[i], false);
+        }
+    }
+    //now execute it.
+    //for gaz opti, better to call one by one signing if only one item.
+    if(confirmArray[0].length > 0){
+        confirmArray[0].length > 1 ? requestMultiConfirmDocs(confirmArray[0],confirmArray[1]) : requestConfirmDoc(confirmArray[0][0],confirmArray[1][0]);
+    }
+
+    if(lightPushArray[0].length > 0){
+        lightPushArray[0].length > 1 ? requestMultiLightPushDocs(lightPushArray[0],lightPushArray[1],lightPushArray[2]) : requestPushDoc(lightPushArray[0][0], lightPushArray[1][0], lightPushArray[2][0]);
+    }
+
+    if(pushArray[0].length > 0){
+        for (i in pushArray){
+            requestPushDoc(pushArray[0][i], pushArray[1][i], pushArray[2][i]);
+        }
+    }
+
+    logMe(ULCDocModMasterPrefix, "All requests sorted.")
+
+}
+
 
 /** @dev Function that check if the hash is signed by the kernel
 * @param  {String} myHash the hash to check
@@ -764,7 +870,7 @@ async function checkHash(myHash, index){
                         my_extras = formatExtraData(result["extra_data"]);
                         all_datas.set(elementReservedKeys.extraData, my_extras);
                     }
-                    all_datas.set(elementReservedKeys.date, result["signed_date"]);
+                    all_datas.set(elementReservedKeys.date, formatHumanReadableDate(Number(result["signed_date"])));
                     all_datas.set(elementReservedKeys.source,result["source"]);
                     all_datas.set(elementReservedKeys.documentFamily, result["document_family"]);
                     all_datas.set(elementReservedKeys.status, TypeElement.Signed);
@@ -796,81 +902,6 @@ async function checkHash(myHash, index){
         logMe(ULCDocModMasterPrefix,"CRITICAL : not valid hash !");
     }
 }
-
-/** @dev Function that check if the hash is correct SHA3-256 type
-* @param {String} check the hash to check
-* @return {Boolean} that is the result of the check. */
-
-function isHashValidFormat(check){
-    let re = /[0-9a-f]{64}/g;
-    let result = re.test(check);
-    logMe(ULCDocModMasterPrefix, "Hash to check=" + check + " | result=" + result.toString());
-    return result;
-}
-
-/** @dev function that deserialise extra_data field input
-*  @param {String} raw_extra_data the raw extra data
-* @return {Map} the map with extra_datas properties loaded */
-
-function formatExtraData(raw_extra_data){
-    logMe(ULCDocModMasterPrefix, "Raw data =" + raw_extra_data);
-    console.log(typeof raw_extra_data);
-    let extra_data_table = raw_extra_data.split(',');
-    let result = new Map();
-    extra_data_table.forEach(function(oneExtraDataCouple){
-        let oneExtraData = oneExtraDataCouple.split(":")
-        logMe(ULCDocModMasterPrefix,"New Couple detected !  [" + oneExtraData[0] + ":" + oneExtraData[1] + "]");
-        result.set(oneExtraData[0],oneExtraData[1]);
-    });
-    return result;
-}
-
-/** @TODO : Convert hexa info. **/
-
-
-/** @dev function that serialise extra_data field input
-*  @param {Map} mapExtraData with unserialised data
-* @return {String} serialized data */
-
-function extraDataFormat(mapExtraData){
-    //WE ASSUME ':,' char are not used.
-    let result = "";
-
-    for(key of mapExtraData.keys()){
-        result = result + key + ":" + mapExtraData.get(key) + ",";
-    }
-
-    result = result.substr(0, result.length-1);
-
-    logMe(ULCDocModMasterPrefix,"Extra data serialisation result : " + result);
-
-    return result;
-
-}
-
-function formatTxURL(txHash){
-    let finalUrl;
-
-    switch(CONF_TYPE_CONNECTION){
-        case TypeConnection.Mainnet:
-            finalUrl = "https://etherscan.io/tx/" + txHash;
-            break;
-        case TypeConnection.Ropsten:
-            finalUrl = "https://ropsten.etherscan.io/tx/" + txHash;
-            break;
-        case TypeConnection.Rinkeby:
-            finalUrl = "https://rinkeby.etherscan.io/tx/" + txHash;
-            break;
-        case TypeConnection.Kovan:
-            finalUrl = "https://kovan.etherscan.io/tx/" + txHash;
-            break;
-        default:
-            finalUrl = txHash;
-    }
-
-    return finalUrl;
-}
-
 
 /************
 *  LISTENERS*
