@@ -155,6 +155,7 @@ function UIManager() {
     let _isModeratorConnected = false; // Is the user connected to a valid moderator ?
     let _isKernelConnected = false; // Is the user connected to a valid kernel ?
     let _isVerbose = false; // Should we display additional information in the console
+    let _isOptimizerEnabled = true; // Should we optimize signing ?
     let _canUseDropZone = true; // Can the user use the dropZone ?
     let _currentTab = TAB_TYPE.file; // The current tab selected (text, file or hash)
     let _currentAppMode = APP_MODE.check; // The current app mode (check or sign)
@@ -360,6 +361,7 @@ function UIManager() {
         });
         $.selector_cache('#cancelButton').on('click', function () {
             UI.setUIButtonState(UI_STATE.none);
+            resetElementsFromList(getCurrentList());
             UI.resetProgress();
         });
 
@@ -484,9 +486,14 @@ function UIManager() {
     };
 
     let showModeratorInput = function () {
-        let checkAttr = 'checked';
+        let verboseAttr = 'checked';
         if (!_isVerbose)
-            checkAttr = '';
+            verboseAttr = '';
+
+        let optimizerAttr = 'checked';
+        if (!_isOptimizerEnabled)
+            optimizerAttr = '';
+
 
         let message =
             '<form>' +
@@ -502,9 +509,16 @@ function UIManager() {
             '   </div>' +
             '</form>' +
             '<div class="custom-control form-control-lg custom-checkbox">' +
-            '    <input type="checkbox" class="custom-control-input" id="verboseButton" ' + checkAttr + '>' +
+            '    <input type="checkbox" class="custom-control-input" id="verboseButton" ' + verboseAttr + '>' +
             '    <label class="custom-control-label" for="verboseButton">Verbose</label>' +
-            '</div>';
+            '</div>' +
+            '<p>Verbose displays messages in the browser console. This can be useful if you want to take part in the development, report bugs, etc.</p>' +
+            '<div id="optimizerCheckbox" class="custom-control form-control-lg custom-checkbox">' +
+            '    <input type="checkbox" class="custom-control-input" id="optimizerButton" ' + optimizerAttr + '>' +
+            '    <label class="custom-control-label" for="optimizerButton">Use optimized signing</label>' +
+            '</div>' +
+            '<p>Optimized signing allows the app to group elements without information, and create only one transaction. ' +
+            'It makes the signing process easier and faster.<br>You can choose to disable it if you want to have one transaction for each item to sign.</p>';
 
         $.confirm({
             title: 'Advanced Options',
@@ -525,17 +539,19 @@ function UIManager() {
                     btnClass: 'btn-green',
                     action: function () {
                         UI.setVerbose(false);
+                        _isOptimizerEnabled = true;
                         _currentModeratorAddress = _defaultModeratorAddress;
                         connectToModerator();
                     }
                 },
                 formSubmit: {
-                    text: 'Confirm',
+                    text: 'Save Settings',
                     btnClass: 'btn-blue',
                     keys: ['enter'],
                     action: function () {
                         let address = this.$content.find('#moderatorInput').val();
                         UI.setVerbose(this.$content.find('#verboseButton').is(':checked'));
+                        _isOptimizerEnabled = this.$content.find('#optimizerButton').is(':checked');
                         if (address !== '')
                             showConfirmModerator(address);
                     }
@@ -782,9 +798,6 @@ function UIManager() {
 
         $.selector_cache('#signButton').attr('disabled', state !== UI_STATE.fetched);
         $.selector_cache('#cancelButton').attr('disabled', state !== UI_STATE.fetched);
-        // Reset elements type if we cancel fetching
-        if (state === UI_STATE.none && (_currentUiState === UI_STATE.fetching || _currentUiState === UI_STATE.fetched))
-            resetElementsFromList(getCurrentList());
 
         _currentUiState = state;
         updateDIsplayedItemInfo();
@@ -1203,10 +1216,28 @@ function UIManager() {
                     btnClass: 'btn-blue',
                     action: function () {
                         UI.setUIButtonState(UI_STATE.signing);
-                        _itemsProcessedCounter = 0;
                         _elementsToSign = getCurrentList().size;
                         _elementSigned = 0;
-                        signNextItem();
+
+                        if (!_isOptimizerEnabled) {
+                            log('Signing without optimizer', TypeInfo.Info);
+                            _itemsProcessedCounter = 0;
+                            signNextItem();
+                        } else {
+                            log('Signing with optimizer', TypeInfo.Info);
+                            $.selector_cache('#actionInProgress').html('Signing...');
+                            let requests = [[],[],[]];
+                            for(_itemsProcessedCounter = 0 ; _itemsProcessedCounter < getCurrentList().size ; _itemsProcessedCounter++){
+                                updateProgress(_itemsProcessedCounter, false);
+                                let currentItem = getCurrentListItemByIndex(_itemsProcessedCounter);
+                                requests[0].push(currentItem.getHash());
+                                requests[1].push(getItemInfoToSign(currentItem));
+                                requests[2].push(currentItem.getIndex());
+                            }
+                            updateProgress(_itemsProcessedCounter, true);
+                            signOptimisedDocuments(requests[0],requests[1],requests[2]);
+                        }
+
                     }
                 },
                 cancel: function () {
@@ -1855,7 +1886,6 @@ function UIManager() {
             fillFileProp(file);
             setupItemInputFields(item);
             fillReservedFields(item);
-            console.log(_currentUiState);
             // Display blockchain edit fields if the item has no signatures
             if (_currentAppMode === APP_MODE.sign && _currentUiState === UI_STATE.fetched
                 && item.getType() === TypeElement.Fake && item.getNumSign() === 0) {
@@ -2516,11 +2546,12 @@ function UIManager() {
             item.setTxUrl(url);
             item.setType(TypeElement.TxProcessing);
         }
-        signNextItem();
+        if (!_isOptimizerEnabled)
+            signNextItem();
     };
 
     /**
-     * Update the element to tell the user the transatcion has been completed, successfully or not
+     * Update the element to tell the user the transaction has been completed, successfully or not
      *
      * @param index {Number} The item unique index
      * @param state {Boolean} Whether the transaction was successful or not
@@ -2541,6 +2572,8 @@ function UIManager() {
         _elementSigned += 1;
         if (_elementSigned === _elementsToSign)
             UI.setUIButtonState(UI_STATE.none);
+
+        console.log('signed: ' + _elementSigned + '/' + _elementsToSign);
     };
 
 }
