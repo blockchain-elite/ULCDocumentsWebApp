@@ -193,7 +193,7 @@ async function queryModerator(addressKernel){
             try {
                 queryResultDetailedInfo = await ULCDocMod.methods.Kernel_Info_Book(addressKernel).call();
 
-                moderatorInfoKernel.set(kernelReservedKeys.isOrganisation, queryResultDetailedInfo["isOrganisation"]);
+                moderatorInfoKernel.set(kernelReservedKeys.isOrganisation, queryResultIdentity["isOrganisation"]);
                 moderatorInfoKernel.set(kernelReservedKeys.url, queryResultDetailedInfo["url"]);
                 moderatorInfoKernel.set(kernelReservedKeys.mail, queryResultDetailedInfo["mail"]);
                 moderatorInfoKernel.set(kernelReservedKeys.img, queryResultDetailedInfo["imageURL"]);
