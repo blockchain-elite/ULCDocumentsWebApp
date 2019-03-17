@@ -24,6 +24,8 @@
 
 const APP_VERSION = 'beta 0.0.8';
 
+const APP_BASE_URL = 'https://ulcdocuments.blockchain-elite.fr/';
+
 const APP_MODE = {
     check: 0,
     sign: 1
@@ -165,7 +167,7 @@ function UIManager() {
     let _isAccountsListAvailable = false; // Do we have an account list ready ?
     let _filesOverLimitArray = [];
     let _currentUiState = UI_STATE.none;
-
+    let _currentNetworkType = TypeConnection.Unkown;
     let _elementsToSign = 0;
     let _elementSigned = 0;
 
@@ -298,19 +300,60 @@ function UIManager() {
     };
 
     /**
-     * Display the UI and connect to the kernel specified in the url
+     * Check if all the conditions are met to start using the app and show a warning if using testnet
      */
     let tryReadyUI = function () {
         if (_isModeratorConnected && _currentWalletState !== WALLET_STATE.unknown
             && $.selector_cache('#loadingScreen').css('display') !== 'none') {
-            // Display the UI
-            $.selector_cache('#loadingScreen').fadeOut('fast', function () {
-                $.selector_cache('#baseContainer').fadeIn('fast');
-            });
-            // Connect to kernel
-            if (_currentKernelAddress !== '')
-                UI.connectToKernel();
+            if (_currentNetworkType === TypeConnection.Mainnet)
+                readyUI();
+            else
+                showTestnetWarning();
         }
+    };
+
+    /**
+     * Display the UI and connect to the kernel specified in the url
+     */
+    let readyUI = function () {
+        // Display the UI
+        $.selector_cache('#loadingScreen').fadeOut('fast', function () {
+            $.selector_cache('#baseContainer').fadeIn('fast');
+        });
+        // Connect to kernel
+        if (_currentKernelAddress !== '')
+            UI.connectToKernel();
+    };
+
+    /**
+     * Show a warning alowing the user to abort connection when using testnet
+     */
+    let showTestnetWarning = function () {
+        $.confirm({
+            title: 'Connection insecure',
+            content: 'You are connected to a test network. Please note that signatures cannot be trusted and are only used for testing purposes.',
+            theme: JQUERY_CONFIRM_THEME,
+            type: 'orange',
+            icon: 'fas fa-exclamation-triangle',
+            escapeKey: 'cancel',
+            columnClass: 'medium',
+            typeAnimated: true,
+            buttons: {
+                confirm: {
+                    keys: ['enter'],
+                    btnClass: 'btn-orange',
+                    action: function () {
+                        readyUI();
+                    }
+                },
+                cancel: {
+                    text: 'Abort',
+                    action: function () {
+                        window.location = APP_BASE_URL;
+                    }
+                }
+            },
+        });
     };
 
     /**
@@ -1226,8 +1269,8 @@ function UIManager() {
                         } else {
                             log('Signing with optimizer', TypeInfo.Info);
                             $.selector_cache('#actionInProgress').html('Signing...');
-                            let requests = [[],[],[]];
-                            for(_itemsProcessedCounter = 0 ; _itemsProcessedCounter < getCurrentList().size ; _itemsProcessedCounter++){
+                            let requests = [[], [], []];
+                            for (_itemsProcessedCounter = 0; _itemsProcessedCounter < getCurrentList().size; _itemsProcessedCounter++) {
                                 updateProgress(_itemsProcessedCounter, false);
                                 let currentItem = getCurrentListItemByIndex(_itemsProcessedCounter);
                                 requests[0].push(currentItem.getHash());
@@ -1235,7 +1278,7 @@ function UIManager() {
                                 requests[2].push(currentItem.getIndex());
                             }
                             updateProgress(_itemsProcessedCounter, true);
-                            signOptimisedDocuments(requests[0],requests[1],requests[2]);
+                            signOptimisedDocuments(requests[0], requests[1], requests[2]);
                         }
 
                     }
@@ -2241,6 +2284,7 @@ function UIManager() {
                 break;
             }
         }
+        _currentNetworkType = connectionType;
         _currentModeratorAddress = _defaultModeratorAddress;
     };
 
