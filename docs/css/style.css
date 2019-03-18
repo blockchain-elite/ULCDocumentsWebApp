@@ -45,7 +45,8 @@
 	background-repeat: no-repeat;
 	background-position: center;
 	background-size: cover;
-	min-height: 300px;
+	min-height: 400px;
+    margin-bottom: 0;
 }
 
 #WelcomeMessage {
@@ -55,15 +56,8 @@
 	padding: 10px;
 }
 
-@media screen and (max-width: 1000px) {
-    #WelcomeJumbotron h1{
-        font-size: 2.5em;
-    }
-
-    #WelcomeMessage {
-        margin: auto 3% auto 3%;
-    }
-
+#WelcomeMessage h1 {
+    font-size: 4rem;
 }
 
 #WelcomeMessage p{
@@ -79,7 +73,7 @@
 
 .to-app-button {
     padding: 20px;
-    width: 150px;
+    width: 170px;
     border-radius: 15px;
     font-size: 1.5em;
     font-weight: bold;
@@ -321,6 +315,10 @@
     font-weight: bold;
 }
 
+.start-app-container {
+    min-height: 250px;
+}
+
 @media
 only screen and (max-width: 575px) {
 
@@ -358,6 +356,10 @@ only screen and (max-width: 575px) {
 
     #kernelConnectionEditButton {
         position: relative;
+    }
+
+    #WelcomeJumbotron h1{
+        font-size: 2.5em;
     }
 
 }

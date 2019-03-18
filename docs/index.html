@@ -34,7 +34,7 @@
 
 <div id="container">
     <!--NAVBAR-->
-    <nav class="navbar navbar-expand-xl navbar-dark shadow sticky-top bg-dark" >
+    <nav class="navbar navbar-expand-xl navbar-dark shadow sticky-top bg-dark">
         <a class="navbar-brand" href="index.html">ULC Documents</a>
 
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
@@ -45,63 +45,101 @@
             <ul class="navbar-nav mr-auto">
                 <li class="nav-item">
                     <a class="nav-link" href="https://www.blockchain-elite.fr/labs/"><img alt=""
-                                                                                     src="images/blockchain-elite-logo.svg"
-                                                                                     style="height: 25px;margin-right: 10px">BlockChain-Elite Labs</a>
+                                                                                          src="images/blockchain-elite-logo.svg"
+                                                                                          style="height: 25px;margin-right: 10px">BlockChain-Elite
+                        Labs</a>
                 </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#"><i class="fas fa-book" style="margin-right: 10px"></i>ReadTheDoc</a>
-                </li>
+                <!--<li class="nav-item">-->
+                    <!--<a class="nav-link" href="#"><i class="fas fa-book" style="margin-right: 10px"></i>ReadTheDoc</a>-->
+                <!--</li>-->
                 <li class="nav-item">
                     <a class="nav-link" href="https://github.com/blockchain-elite/ULCDocuments"><i class="fab fa-github"
-                                                                                              style="margin-right: 10px"></i>Github</a>
+                                                                                                   style="margin-right: 10px"></i>Github</a>
                 </li>
             </ul>
         </div>
     </nav>
     <div id="indexContainer">
-        <div class="jumbotron text-center text-light rounded-0 shadow-lg" id="WelcomeJumbotron">
+        <div class="jumbotron jarallax text-center text-light rounded-0" data-jarallax data-speed="0.4"
+             id="WelcomeJumbotron">
             <div id="WelcomeMessage">
-                <h1 class="display-4 font-weight-bold">The blockchain-based signature app</h1>
+                <h1>The Blockchain-based signature app</h1>
                 <p class="lead">Decentralized, Open Source, at minimal cost.</p>
             </div>
         </div>
+        <div class="shadow">
+            <div class="container py-4">
+                <div class="container alert-warning text-center p-3 shadow">
+                    <h2>
+                        <i class="fas fa-exclamation-triangle"></i>
+                        This app is currently in beta version
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </h2>
+                    <h4>Only use testnets to sign/check documents.</h4>
+                    <p>
+                        If you only want to check document signatures, the web app is automatically configured
+                        to work on the Ropsten testnet.
+                    </p>
+                </div>
 
-        <div class="container" style="margin-bottom:50px;">
-            <h2 class="text-center"> <i class="fas fa-exclamation-triangle"></i> This app is currently in beta version <i class="fas fa-exclamation-triangle"></i> </h2>
-            <p class="text-center font-weight-bold" style="font-size:1.5em;"> only use testnets to sign/check documents </p>
+                <div class="text-justify">
+                    <h2 class="mt-5">Get started</h2>
+                    <p>
+                        ULC Documents is a set of smart contracts in the Ethereum Blockchain, allowing a
+                        moral or physical person to virtually sign any type of document.
+                        Thanks to Blockchain technology, this system is very secure and reliable.
+                        <br>
+                        This web application allows you to interact with these smart contracts in order to check or sign
+                        files, raw text or directly hashes.
+                        ULC Documents is decentralised, open source and can be used without charges.
+                        <strong>You will only need to pay for Ethereum network costs when you will want to sign a
+                            document.</strong>
+                    </p>
+                </div>
 
-            <p>
-                If you are a simple user that want to check documents, the web app is automaticly configurated to connect on Ropsten testnet.
-                </p>
 
-            <h2 style="margin-top: 30px;"> Let's get started </h2>
-            <p class="text-justify"> ULC Documents is a set of smart contracts in the Ethereum Blockchain that allow  a moral or physical personn to virtually sign all type of documents with a blockchain level of security & reliability. This web application allow you to interact with theses smart contract to check or sign files, raw text or directly hashes.
-ULC Documents is decentralised, open source and can be used freely. <span class="font-weight-bold">You only pay Ethereum network costs when you want to sign something.</span></p>
-
-            <div class="row">
-                <div class="col-sm">
-                    <div class="card border-primary text-center mb-3 shadow">
-                        <div class="card-body">
-                            <h5 class="card-title">Check a signature</h5>
-                            <a href="ulcdoc_interactor.html#mode:check" class="btn btn-primary to-app-button">Check<span
-                                    class="far fa-check-square"
-                                    style="margin-left: 10px"></span></a>
+                <div class="row">
+                    <div class="col-sm">
+                        <div class="card border-primary text-center mb-3 shadow start-app-container">
+                            <div class="card-body">
+                                <h5 class="card-title">Check a signature</h5>
+                                <p class="text-muted">
+                                    You need to have the address of a kernel storing signatures to check document.
+                                    <a href="https://github.com/blockchain-elite/ULCDocuments#connection-to-a-kernel">
+                                        Please follow these instructions to connect to a kernel.
+                                    </a>
+                                </p>
+                                <a href="ulcdoc_interactor.html#mode:check"
+                                   class="btn btn-primary to-app-button">
+                                    Check
+                                    <i class="far fa-check-square" style="margin-left: 10px"></i>
+                                </a>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="col-sm">
-                    <div class="card border-success text-center mb-3 shadow">
-                        <div class="card-body">
-                            <h5 class="card-title">Sign a document</h5>
-                            <a href="ulcdoc_interactor.html#mode:sign" class="btn btn-success to-app-button">Sign<span
-                                    class="far fa-edit"
-                                    style="margin-left: 10px"></span></a>
+                    <div class="col-sm">
+                        <div class="card border-success text-center mb-3 shadow start-app-container">
+                            <div class="card-body">
+                                <h5 class="card-title">Sign a document</h5>
+                                <p class="text-muted">
+                                    You need to have an Ethereum wallet and to be owner of a kernel to sign documents.
+                                    <a href="https://github.com/blockchain-elite/ULCDocuments#setup-signing">
+                                        Please follow these instruction to setup a signing environment.
+                                    </a>
+                                </p>
+                                <a href="ulcdoc_interactor.html#mode:sign"
+                                   class="btn btn-success to-app-button">
+                                    Sign
+                                    <i class="far fa-edit" style="margin-left: 10px"></i>
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
+
 
     <!--FOOTER-->
     <footer class="p-0 shadow">
@@ -114,7 +152,8 @@ ULC Documents is decentralised, open source and can be used freely. <span class=
                         Blockchain Élite Labs</a> project.
                         <br>
                         Published under
-                        <a href="https://github.com/blockchain-elite/ULCDocuments/blob/master/LICENSE.txt" target="_blank">
+                        <a href="https://github.com/blockchain-elite/ULCDocuments/blob/master/LICENSE.txt"
+                           target="_blank">
                             GNU General Public License v3.0 licence.
                         </a>
                     </p>
@@ -149,5 +188,6 @@ ULC Documents is decentralised, open source and can be used freely. <span class=
 <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/js/bootstrap.min.js"
         integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k"
         crossorigin="anonymous"></script>
+<script src="https://unpkg.com/jarallax@1.10/dist/jarallax.min.js"></script>
 </body>
 </html>
