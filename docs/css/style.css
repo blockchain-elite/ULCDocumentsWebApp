@@ -55,6 +55,17 @@
 	padding: 10px;
 }
 
+@media screen and (max-width: 1000px) {
+    #WelcomeJumbotron h1{
+        font-size: 2.5em;
+    }
+
+    #WelcomeMessage {
+        margin: auto 3% auto 3%;
+    }
+
+}
+
 #WelcomeMessage p{
 	font-size: 1.8em;
 }
