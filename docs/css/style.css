@@ -40,6 +40,25 @@
     height: 700px;
 }
 
+#WelcomeJumbotron {
+	background-image: url('../images/bg_header.jpg');
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: cover;
+	min-height: 300px;
+}
+
+#WelcomeMessage {
+	background-color: rgba(0,0,0,0.3);
+	border-radius: 5px;
+	margin: auto 15% auto 15%;
+	padding: 10px;
+}
+
+#WelcomeMessage p{
+	font-size: 1.8em;
+}
+
 #loadingScreen div {
     width: 100%;
     font-size: 3rem;

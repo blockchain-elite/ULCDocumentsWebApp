@@ -13,6 +13,7 @@
 
 <!--ULCDOCUMENTS APP INDEX HTML-->
 <!--@author Arnaud VERGNET <arnaud.vergnet@netc.fr> -->
+<!--@author Adrien BARBANSON <Contact Form avaiable on Blockchain Elite Website-->
 <!--Dev Entity: Blockchain-Elite (https://www.blockchain-elite.fr/)-->
 
 <!DOCTYPE html>
@@ -33,7 +34,7 @@
 
 <div id="container">
     <!--NAVBAR-->
-    <nav class="navbar navbar-expand-xl navbar-dark shadow sticky-top bg-dark">
+    <nav class="navbar navbar-expand-xl navbar-dark shadow sticky-top bg-dark" >
         <a class="navbar-brand" href="index.html">ULC Documents</a>
 
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav"
@@ -43,9 +44,9 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav mr-auto">
                 <li class="nav-item">
-                    <a class="nav-link" href="https://www.blockchain-elite.fr/"><img alt=""
+                    <a class="nav-link" href="https://www.blockchain-elite.fr/labs/"><img alt=""
                                                                                      src="images/blockchain-elite-logo.svg"
-                                                                                     style="height: 25px;margin-right: 10px">BlockChain-Elite</a>
+                                                                                     style="height: 25px;margin-right: 10px">BlockChain-Elite Labs</a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link" href="#"><i class="fas fa-book" style="margin-right: 10px"></i>ReadTheDoc</a>
@@ -58,28 +59,30 @@
         </div>
     </nav>
     <div id="indexContainer">
-        <div class="jumbotron text-center text-light rounded-0 shadow-lg"
-             style="background-image: url('images/bg_header.jpg')">
-            <h1 class="display-4">ULC Documents!</h1>
-            <p class="lead">Ultra Low Cost Documents.</p>
-            <hr class="my-4">
-            <p> Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent eget sem eget elit imperdiet dapibus vitae
-                vel libero. Aliquam a nunc vitae neque varius tempor vel et arcu. Cras condimentum ex egestas urna semper
-                semper. Pellentesque maximus fermentum fringilla. Nam a libero id nibh feugiat blandit quis vitae turpis.
-                Curabitur egestas leo augue, vitae fringilla sem luctus a. Aliquam suscipit risus lacus, id ornare quam
-                pulvinar eu. Duis in ipsum nec purus congue ultrices ac in enim. Pellentesque elit urna, tristique id tellus
-                ut, maximus malesuada justo. Fusce rutrum et erat eu consequat. Sed consequat lectus eu arcu faucibus
-                posuere. Ut at orci hendrerit, bibendum nisi nec, hendrerit urna. Donec maximus mauris et libero blandit,
-                sed elementum ex blandit.</p>
+        <div class="jumbotron text-center text-light rounded-0 shadow-lg" id="WelcomeJumbotron">
+            <div id="WelcomeMessage">
+                <h1 class="display-4 font-weight-bold">The blockchain-based signature app</h1>
+                <p class="lead">Decentralized, Open Source, at minimal cost.</p>
+            </div>
         </div>
 
-        <div class="container">
+        <div class="container" style="margin-bottom:50px;">
+            <h2 class="text-center"> <i class="fas fa-exclamation-triangle"></i> This app is currently in beta version <i class="fas fa-exclamation-triangle"></i> </h2>
+            <p class="text-center font-weight-bold" style="font-size:1.5em;"> only use testnets to sign/check documents </p>
+
+            <p>
+                If you are a simple user that want to check documents, the web app is automaticly configurated to connect on Ropsten testnet.
+                </p>
+
+            <h2 style="margin-top: 30px;"> Let's get started </h2>
+            <p class="text-justify"> ULC Documents is a set of smart contracts in the Ethereum Blockchain that allow  a moral or physical personn to virtually sign all type of documents with a blockchain level of security & reliability. This web application allow you to interact with theses smart contract to check or sign files, raw text or directly hashes.
+ULC Documents is decentralised, open source and can be used freely. <span class="font-weight-bold">You only pay Ethereum network costs when you want to sign something.</span></p>
+
             <div class="row">
                 <div class="col-sm">
                     <div class="card border-primary text-center mb-3 shadow">
                         <div class="card-body">
                             <h5 class="card-title">Check a signature</h5>
-                            <p class="card-text">Check the authenticity of a document on the blockchain.</p>
                             <a href="ulcdoc_interactor.html#mode:check" class="btn btn-primary to-app-button">Check<span
                                     class="far fa-check-square"
                                     style="margin-left: 10px"></span></a>
@@ -90,33 +93,11 @@
                     <div class="card border-success text-center mb-3 shadow">
                         <div class="card-body">
                             <h5 class="card-title">Sign a document</h5>
-                            <p class="card-text">Sign a document to the blockchain.</p>
                             <a href="ulcdoc_interactor.html#mode:sign" class="btn btn-success to-app-button">Sign<span
                                     class="far fa-edit"
                                     style="margin-left: 10px"></span></a>
                         </div>
                     </div>
-                </div>
-                <div class="container">
-                    <h3>How it works</h3>
-                    <p>
-                        Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent eget sem eget elit imperdiet
-                        dapibus
-                        vitae
-                        vel libero. Aliquam a nunc vitae neque varius tempor vel et arcu. Cras condimentum ex egestas urna
-                        semper
-                        semper. Pellentesque maximus fermentum fringilla. Nam a libero id nibh feugiat blandit quis vitae
-                        turpis.
-                        Curabitur egestas leo augue, vitae fringilla sem luctus a. Aliquam suscipit risus lacus, id ornare
-                        quam
-                        pulvinar eu. Duis in ipsum nec purus congue ultrices ac in enim. Pellentesque elit urna, tristique
-                        id
-                        tellus
-                        ut, maximus malesuada justo. Fusce rutrum et erat eu consequat. Sed consequat lectus eu arcu
-                        faucibus
-                        posuere. Ut at orci hendrerit, bibendum nisi nec, hendrerit urna. Donec maximus mauris et libero
-                        blandit,
-                    </p>
                 </div>
             </div>
         </div>
