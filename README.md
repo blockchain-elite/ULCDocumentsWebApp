@@ -21,7 +21,7 @@ We can separate the project into two parts:
 * [Contribute to the Project](#contribute-to-the-project)
 * [Who is Behind the Project?](#who-is-behind-the-project)
 * [Licenses](#licenses)
- 
+
 ## What is Inside this Repo?
 In this repo you will find the source code for the *Web App* which communicates with the *Blockchain App*. The *Blockchain App* is currently *closed source*, and its source code will be released when we reach a stable Web App version.
 
@@ -70,7 +70,7 @@ To be able to sign, you must first:
 * Have [Metamask](https://metamask.io) installed and configured on your browser (make sure you are connected to the Ropsten network), or use Dapp compatible browser like [Mist](https://github.com/ethereum/mist).
 * Be the owner of a Kernel.
 
-Smart Contracts are not open source yet. A link to a form to get a free Kernel on Ropsten will be available soon if you want to participate in the Beta.
+**Smart Contracts are not open source yet.** To be able to participate in the beta, **please fill [this form](https://www.blockchain-elite.fr/labs/ulcdocuments-beta-register/)** in order to get a free Kernel.
 
 # Usage
 
