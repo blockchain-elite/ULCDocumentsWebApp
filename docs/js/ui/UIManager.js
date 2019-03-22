@@ -1350,13 +1350,13 @@ function UIManager() {
             let currentItem = getCurrentListItemByIndex(progress);
             switch (_currentTab) {
                 case TAB_TYPE.file:
-                    $.selector_cache('#fileInProgress').html(currentItem.getFile().name);
+                    $.selector_cache('#fileInProgress').text(currentItem.getFile().name);
                     break;
                 case TAB_TYPE.text:
-                    $.selector_cache('#fileInProgress').html(currentItem.getTitle());
+                    $.selector_cache('#fileInProgress').text(currentItem.getTitle());
                     break;
                 case TAB_TYPE.hash:
-                    $.selector_cache('#fileInProgress').html(currentItem.getTitle());
+                    $.selector_cache('#fileInProgress').text(currentItem.getTitle());
                     break;
             }
             let percent = 100 * progress / getCurrentList().size;
@@ -1494,40 +1494,40 @@ function UIManager() {
         }
 
         if (kernelInfo.has(kernelReservedKeys.name) && kernelInfo.get(kernelReservedKeys.name) !== "")
-            $.selector_cache("#kernelName").html(kernelInfo.get(kernelReservedKeys.name));
+            $.selector_cache("#kernelName").text(kernelInfo.get(kernelReservedKeys.name));
         else
-            $.selector_cache("#kernelName").html(kernelInfo.get('Kernel Information'));
+            $.selector_cache("#kernelName").text(kernelInfo.get('Kernel Information'));
 
         if (kernelInfo.has(kernelReservedKeys.isOrganisation) && kernelInfo.get(kernelReservedKeys.isOrganisation) === true)
-            $.selector_cache("#kernelOrganization").html('This entity is an organization');
+            $.selector_cache("#kernelOrganization").text('This entity is an organization');
         else
-            $.selector_cache("#kernelOrganization").html('This entity is not an organization');
+            $.selector_cache("#kernelOrganization").text('This entity is not an organization');
 
         if (kernelInfo.has(kernelReservedKeys.phone) && kernelInfo.get(kernelReservedKeys.phone) !== '')
-            $.selector_cache("#kernelPhone").html(kernelInfo.get(kernelReservedKeys.phone));
+            $.selector_cache("#kernelPhone").text(kernelInfo.get(kernelReservedKeys.phone));
         else
             $.selector_cache("#kernelPhoneContainer").hide();
 
         if (kernelInfo.has(kernelReservedKeys.physicalAddress) && kernelInfo.get(kernelReservedKeys.physicalAddress) !== '') {
-            $.selector_cache("#kernelAddress").html(kernelInfo.get(kernelReservedKeys.physicalAddress));
+            $.selector_cache("#kernelAddress").text(kernelInfo.get(kernelReservedKeys.physicalAddress));
             $.selector_cache("#kernelAddress").attr('href', OSM_QUERY_LINK + kernelInfo.get(kernelReservedKeys.physicalAddress));
         } else
             $.selector_cache("#kernelAddressContainer").hide();
 
         if (kernelInfo.has(kernelReservedKeys.url) && kernelInfo.get(kernelReservedKeys.url) !== "") {
             $.selector_cache("#kernelUrl").attr('href', kernelInfo.get(kernelReservedKeys.url));
-            $.selector_cache("#kernelUrl").html(kernelInfo.get(kernelReservedKeys.url));
+            $.selector_cache("#kernelUrl").text(kernelInfo.get(kernelReservedKeys.url));
         } else
             $.selector_cache("#kernelUrlContainer").hide();
 
         if (kernelInfo.has(kernelReservedKeys.mail) && kernelInfo.get(kernelReservedKeys.mail) !== "") {
             $.selector_cache("#kernelMail").attr('href', 'mailto:' + kernelInfo.get(kernelReservedKeys.mail));
-            $.selector_cache("#kernelMail").html(kernelInfo.get(kernelReservedKeys.mail));
+            $.selector_cache("#kernelMail").text(kernelInfo.get(kernelReservedKeys.mail));
         } else
             $.selector_cache("#kernelMailContainer").hide();
 
         if (kernelInfo.has(kernelReservedKeys.version) && kernelInfo.get(kernelReservedKeys.version) !== "")
-            $.selector_cache("#kernelVersion").html('Version ' + kernelInfo.get(kernelReservedKeys.version));
+            $.selector_cache("#kernelVersion").text('Version ' + kernelInfo.get(kernelReservedKeys.version));
         else
             $.selector_cache("#kernelVersion").hide();
     };
@@ -1539,9 +1539,9 @@ function UIManager() {
      */
     let setKernelConnectedAddress = function (kernelInfo) {
         if (kernelInfo.has(kernelReservedKeys.name))
-            $.selector_cache('#kernelConnectedAddress').html("Currently connected to : '<strong>" + kernelInfo.get(kernelReservedKeys.name) + "</strong>'");
+            $.selector_cache('#kernelConnectedAddress').text("Currently connected to : '<strong>" + kernelInfo.get(kernelReservedKeys.name) + "</strong>'");
         else
-            $.selector_cache('#kernelConnectedAddress').html("Currently connected to : '" + _currentKernelAddress + "'");
+            $.selector_cache('#kernelConnectedAddress').text("Currently connected to : '" + _currentKernelAddress + "'");
     };
 
     /**
@@ -1959,11 +1959,11 @@ function UIManager() {
     let fillFileProp = function (file) {
         if (file !== undefined) { // display file properties only if we have a file
             log('Displaying file properties', TypeInfo.Info);
-            $.selector_cache("#itemNameProp").html(file.name);
+            $.selector_cache("#itemNameProp").text(file.name);
             $.selector_cache("#itemTypeProp").attr('class', getMimeTypeIcon(file));
-            $.selector_cache("#fileSizeProp").html(humanFileSize(file.size));
+            $.selector_cache("#fileSizeProp").text(humanFileSize(file.size));
             let date = new Date(file.lastModified);
-            $.selector_cache("#fileDateProp").html(date);
+            $.selector_cache("#fileDateProp").text(date);
             $.selector_cache(".file-specific-info").show();
         } else
             $.selector_cache(".file-specific-info").hide();
@@ -1972,18 +1972,18 @@ function UIManager() {
     let fillReservedFields = function (item) {
         // display generic info
         if (item.getHash() !== '')
-            $.selector_cache("#itemHashProp").html(item.getHash());
+            $.selector_cache("#itemHashProp").text(item.getHash());
         else
-            $.selector_cache("#itemHashProp").html('Not yet calculated');
+            $.selector_cache("#itemHashProp").text('Not yet calculated');
         if (item.getType() !== TypeElement.Unknown) {
             $.selector_cache("#itemStatusProp").show();
-            $.selector_cache("#itemStatusProp").html(ITEM_STATE_TEXT[item.getType()]);
+            $.selector_cache("#itemStatusProp").text(ITEM_STATE_TEXT[item.getType()]);
         } else
             $.selector_cache("#itemStatusProp").hide();
 
         // Set the number of signatures needed
         if (item.getNeededSign() > 0 && item.getType() !== TypeElement.Unknown) {
-            $.selector_cache("#itemNumSignProp").html(item.getNumSign() + "/" + item.getNeededSign());
+            $.selector_cache("#itemNumSignProp").text(item.getNumSign() + "/" + item.getNeededSign());
             $.selector_cache("#itemNumSignContainer").show();
         } else
             $.selector_cache("#itemNumSignContainer").hide();
@@ -1997,7 +1997,7 @@ function UIManager() {
 
     let setupItemInputFields = function (item) {
         if (!(item instanceof FileListItem)) {
-            $.selector_cache("#itemNameProp").html(item.getTitle());
+            $.selector_cache("#itemNameProp").text(item.getTitle());
             if (item instanceof TextListItem) {
                 $.selector_cache("#itemTypeProp").attr('class', 'fas fa-align-left');
                 $.selector_cache("#itemTextInput").val(item.getText());
@@ -2045,14 +2045,18 @@ function UIManager() {
         $.selector_cache('#fileBlockchainEditInfoZone').hide();
         // Reset table
         $.selector_cache("#fileBlockchainInfoTable").html('');
+        let counter = 0;
         for (let [key, value] of item.getInformation()) {
+            counter++;
             if (key === elementReservedKeys.documentFamily)
                 value = getCompatibleFamily()[value]; // Get the document family string
             $.selector_cache("#fileBlockchainInfoTable").append(
                 "<tr>\n" +
-                "<th scope='row'>" + capitalizeFirstLetter(key) + "</th>\n" +
-                "<td>" + value + "</td>\n" +
+                "<th scope='row' id='blockchainFieldKey" + counter + "'></th>\n" +
+                "<td id='blockchainFieldValue" + counter + "'></td>\n" +
                 "</tr>");
+            $("#blockchainFieldKey" + counter).text(key);
+            $("#blockchainFieldValue" + counter).text(value); // Prevent XSS
         }
     };
 
@@ -2060,12 +2064,16 @@ function UIManager() {
         $.selector_cache("#fileBlockchainExtraDataZone").show();
         // Reset table
         $.selector_cache("#fileBlockchainExtraDataTable").html('');
+        let counter = 0;
         for (let [key, value] of item.getExtraData()) {
+            counter++;
             $.selector_cache("#fileBlockchainExtraDataTable").append(
                 "<tr>\n" +
-                "<th scope='row'>" + capitalizeFirstLetter(key) + "</th>\n" +
-                "<td>" + value + "</td>\n" +
+                "<th scope='row' id='blockchainExtraFieldKey" + counter + "'></th>\n" +
+                "<td id='blockchainExtraFieldValue" + counter + "'></td>\n" +
                 "</tr>");
+            $("#blockchainExtraFieldKey" + counter).text(key);
+            $("#blockchainExtraFieldValue" + counter).text(value); // Prevent XSS
         }
     };
 
@@ -2117,7 +2125,7 @@ function UIManager() {
         for (let i = 0; i < getCompatibleFamily().length; i++) {
             dropdownMenu.append("<button class='dropdown-item btn' id='dropdownButton" + i + "'>" + docFamilyArray[i] + "</button>");
             $("#dropdownButton" + i).on('click', function () {
-                dropdownButton.html(docFamilyArray[i]);
+                dropdownButton.text(docFamilyArray[i]);
                 if (i !== 0)
                     item.getInformation().set(elementReservedKeys.documentFamily, i);
                 else
@@ -2126,9 +2134,9 @@ function UIManager() {
         }
         // Set default value
         if (item.getInformation().has(elementReservedKeys.documentFamily))
-            dropdownButton.html(docFamilyArray[item.getInformation().get(elementReservedKeys.documentFamily)]);
+            dropdownButton.text(docFamilyArray[item.getInformation().get(elementReservedKeys.documentFamily)]);
         else
-            dropdownButton.html(docFamilyArray[0]);
+            dropdownButton.text(docFamilyArray[0]);
     };
 
     /**
@@ -2524,7 +2532,7 @@ function UIManager() {
                         rowOwnership = "Operator";
                     }
                     if (isFirstElem) { // This is the current account
-                        $.selector_cache('#accountState').html(rowOwnership);
+                        $.selector_cache('#accountState').text(rowOwnership);
                         $.selector_cache('#accountListHeader').attr('class', 'card-header ' + rowClass);
                         if (value) { // This account is an operator
                             $.selector_cache('#collapseAccounts').collapse('hide');
@@ -2617,3 +2625,6 @@ function UIManager() {
 
 let UI = new UIManager();
 UI.initUI();
+
+
+// separate UI into 3 parts : import, check, result

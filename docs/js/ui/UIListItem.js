@@ -361,11 +361,11 @@ class FileListItem extends ListItem {
     createEntry(isAnimated) {
         UI.createListItemFromTemplate(this.id, TAB_TYPE.file);
         super.createEntry($('#' + this.id), isAnimated);
-        this.$item.find(".uploaded-file-name").html(this.file.name);
+        this.$item.find(".uploaded-file-name").text(this.file.name);
         this.$item.find(".uploaded-file-icon").html(
             "<i style='font-size: 1.5rem;margin-right: 5px' class='" + getMimeTypeIcon(this.file) + "'></i>"
         );
-        this.$item.find(".uploaded-file-size").html(humanFileSize(this.file.size, false));
+        this.$item.find(".uploaded-file-size").text(humanFileSize(this.file.size, false));
 
     }
 
@@ -395,7 +395,7 @@ class TextListItem extends ListItem {
         UI.createListItemFromTemplate(this.id, TAB_TYPE.text);
         super.createEntry($('#' + this.id), isAnimated);
         this.textTitle = this.$item.find(".list-text-title");
-        this.textTitle.html("Text n°" + this.index);
+        this.textTitle.text("Text n°" + this.index);
         this.itemText = this.$item.find('.item-text');
         this.setText(this.savedText);
     }
@@ -411,16 +411,16 @@ class TextListItem extends ListItem {
             textToDsplay = textToDsplay.substr(0, 28);
             textToDsplay += '...'
         }
-        if (textToDsplay !== this.itemText.html())
-            this.itemText.html(textToDsplay);
+        if (textToDsplay !== this.itemText.text())
+            this.itemText.text(textToDsplay);
     }
 
     getTitle() {
-        return this.textTitle.html();
+        return this.textTitle.text();
     }
 
     setTitle(id) {
-        this.textTitle.html('Text n°' + id);
+        this.textTitle.text('Text n°' + id);
     }
 }
 
@@ -440,7 +440,7 @@ class HashListItem extends ListItem {
         UI.createListItemFromTemplate(this.id, TAB_TYPE.hash);
         super.createEntry($('#' + this.id), isAnimated);
         this.hashTitle = this.$item.find(".list-hash-title");
-        this.hashTitle.html("Hash n°" + this.index);
+        this.hashTitle.text("Hash n°" + this.index);
         this.itemHash = this.$item.find('.item-hash');
         this.setHash(this.hash);
     }
@@ -451,15 +451,15 @@ class HashListItem extends ListItem {
     }
 
     setHash(hash) {
-        this.itemHash.html(hash);
+        this.itemHash.text(hash);
         super.setHash(hash);
     }
 
     getTitle() {
-        return this.hashTitle.html();
+        return this.hashTitle.text();
     }
 
     setTitle(id) {
-        this.hashTitle.html('Hash n°' + id);
+        this.hashTitle.text('Hash n°' + id);
     }
 }
