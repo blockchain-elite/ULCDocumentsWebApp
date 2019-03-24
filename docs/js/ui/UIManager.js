@@ -919,7 +919,7 @@ function UIManager() {
         let message = 'The following files were larger than <strong>150MB</strong> and could not be imported:' +
             '<ul></ul>';
         for (let i = 0; i < _filesOverLimitArray.length; i++) {
-            message += '<li>' + _filesOverLimitArray[i] + '</li>';
+            message += '<li id="invalidSizeItem' + i + '"></li>';
         }
         message += '<br>Please make sure your files are smaller than <strong>150MB</strong> before importing them.';
         $.alert({
@@ -935,7 +935,15 @@ function UIManager() {
                 ok: {
                     keys: ['enter']
                 }
-            }
+            },
+            onContentReady: function () {
+                // when content is fetched & rendered in DOM
+                // fill in the name of the files (prevent XSS attacks on file name)
+                for (let i = 0; i < _filesOverLimitArray.length; i++) {
+                    this.$content.find('#invalidSizeItem' + i).text(_filesOverLimitArray[i]);
+                }
+
+            },
         });
     };
 
@@ -1151,10 +1159,7 @@ function UIManager() {
     let displayInvalidElementsError = function (invalidElements) {
         let message = 'Finished fetching information with some errors.<br>The following items cannot be signed:<ul></ul>';
         for (let i = 0; i < invalidElements.length; i++) {
-            if (_currentTab === TAB_TYPE.file) // Display the file name if we are in the file tab, or the item title
-                message += '<li>' + getCurrentListItem(invalidElements[i]).getFile().name + '</li>';
-            else
-                message += '<li>' + getCurrentListItem(invalidElements[i]).getTitle() + '</li>';
+            message += '<li id="invalidItem' + i + '"></li>';
         }
         message += '<br>Click on <strong>CONTINUE</strong> to remove the items above, you will then be able to select ' +
             'items in the list to fill in  signing information.' +
@@ -1187,7 +1192,18 @@ function UIManager() {
                 cancel: function () {
                     UI.setUIButtonState(UI_STATE.none);
                 },
-            }
+            },
+            onContentReady: function () {
+                // when content is fetched & rendered in DOM
+                // fill in the name of the files (prevent XSS attacks on file name)
+                for (let i = 0; i < invalidElements.length; i++) {
+                    if (_currentTab === TAB_TYPE.file) // Display the file name if we are in the file tab, or the item title
+                        this.$content.find('#invalidItem' + i).text(getCurrentListItem(invalidElements[i]).getFile().name);
+                    else
+                        this.$content.find('#invalidItem' + i).text(getCurrentListItem(invalidElements[i]).getTitle());
+                }
+
+            },
         });
     };
 
@@ -1538,9 +1554,11 @@ function UIManager() {
      * @param kernelInfo {Map} The information received from backend
      */
     let setKernelConnectedAddress = function (kernelInfo) {
-        if (kernelInfo.has(kernelReservedKeys.name))
-            $.selector_cache('#kernelConnectedAddress').text("Currently connected to : '<strong>" + kernelInfo.get(kernelReservedKeys.name) + "</strong>'");
-        else
+        if (kernelInfo.has(kernelReservedKeys.name)) {
+            $.selector_cache('#kernelConnectedAddress').html("Currently connected to : <strong><span id='moderatorName'></span></strong>");
+            $('#moderatorName').text(kernelInfo.get(kernelReservedKeys.name));
+
+        } else
             $.selector_cache('#kernelConnectedAddress').text("Currently connected to : '" + _currentKernelAddress + "'");
     };
 
