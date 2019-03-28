@@ -146,9 +146,9 @@
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav mr-auto">
                 <li class="nav-item">
-                    <a class="nav-link" target="_blank" href="https://www.blockchain-elite.fr/"><img alt=""
+                    <a class="nav-link" target="_blank" href="https://www.blockchain-elite.fr/labs/"><img alt=""
                                                                                                      src="images/blockchain-elite-logo.svg"
-                                                                                                     style="height: 25px;margin-right: 10px">BlockChain-Elite</a>
+                                                                                                     style="height: 25px;margin-right: 10px">BlockChain-Elite Labs</a>
                 </li>
                 <!--<li class="nav-item">-->
                 <!--<a class="nav-link" target="_blank" href="#"><i class="fas fa-book" style="margin-right: 10px"></i>ReadTheDoc</a>-->
@@ -399,53 +399,7 @@
                 </div>
                 <!--MAIN UI-->
                 <div class="mb-2" id="mainUIContainer">
-                    <!--ACTION BUTTON AND PROGRESS TAB-->
-                    <div class="card text-center shadow mb-2">
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-xl-3 my-1" id="actionButtonContainer">
-                                    <div id="actionButtons">
-                                        <button class="btn btn-primary btn-lg action-button" id="checkButton">
-                                            <span id="checkButtonText">Check</span>
-                                            <i class="far fa-check-square" id="checkButtonLogo"
-                                               style="margin-left: 10px"></i>
-                                        </button>
-                                        <div id="signActionButtonContainer">
-                                            <i class="fas fa-long-arrow-alt-right sign-next-step-logo mx-1"></i>
-                                            <div id="buttonsContainer">
-                                                <button class="btn btn-primary btn-lg action-button" id="signButton">
-                                                    Sign
-                                                    <i class="far fa-edit" id="signButtonLogo"
-                                                       style="margin-left: 10px"></i>
-                                                </button>
-                                                <button class="btn btn-warning btn-lg action-button mt-2"
-                                                        id="cancelButton">
-                                                    Cancel
-                                                    <i class="fas fa-times" style="margin-left: 10px"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
 
-                                </div>
-                                <div class="col-xl-9 my-1">
-                                    <p class="card-text" id="actionInProgress">
-                                        Not started
-                                    </p>
-                                    <p class="card-text" id="fileInProgress">
-                                        ...
-                                    </p>
-                                    <div class="progress" id="actionProgressHolder">
-                                        <div class="progress-bar progress-bar-striped progress-bar-animated"
-                                             role="progressbar" id="actionProgressBar" style="width: 0;"
-                                             aria-valuenow="0"
-                                             aria-valuemin="0" aria-valuemax="100">
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
                     <div class="row">
                         <div class="col-lg-4">
                             <!--ITEM LIST CARD-->
@@ -630,6 +584,54 @@
                                         </div>
                                     </div>
 
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!--ACTION BUTTON AND PROGRESS TAB-->
+                    <div class="card text-center shadow mb-2">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-xl-3 my-1" id="actionButtonContainer">
+                                    <div id="actionButtons">
+                                        <button class="btn btn-primary btn-lg action-button" id="checkButton">
+                                            <span id="checkButtonText">Check</span>
+                                            <i class="far fa-check-square" id="checkButtonLogo"
+                                               style="margin-left: 10px"></i>
+                                        </button>
+                                        <div id="signActionButtonContainer">
+                                            <i class="fas fa-long-arrow-alt-right sign-next-step-logo mx-1"></i>
+                                            <div id="buttonsContainer">
+                                                <button class="btn btn-primary btn-lg action-button" id="signButton">
+                                                    Sign
+                                                    <i class="far fa-edit" id="signButtonLogo"
+                                                       style="margin-left: 10px"></i>
+                                                </button>
+                                                <button class="btn btn-warning btn-lg action-button mt-2"
+                                                        id="cancelButton">
+                                                    Cancel
+                                                    <i class="fas fa-times" style="margin-left: 10px"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                </div>
+                                <div class="col-xl-9 my-1">
+                                    <p class="card-text" id="actionInProgress">
+                                        Not started
+                                    </p>
+                                    <p class="card-text" id="fileInProgress">
+                                        ...
+                                    </p>
+                                    <div class="progress" id="actionProgressHolder">
+                                        <div class="progress-bar progress-bar-striped progress-bar-animated"
+                                             role="progressbar" id="actionProgressBar" style="width: 0;"
+                                             aria-valuenow="0"
+                                             aria-valuemin="0" aria-valuemax="100">
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
