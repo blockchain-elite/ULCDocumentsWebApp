@@ -34,7 +34,7 @@ However, a beta version of the ABI files (which handle communication with the bl
 
 This app uses two main [Smart Contracts](https://en.wikipedia.org/wiki/Smart_contract): The Kernel and the Moderator.
 
-**The Smart Contract documentation is still a work in progress.**
+**The Smart Contract documentation is available [here](https://ulcdocumentscore.readthedocs.io/en/latest/index.html).**
 
 * To be able to sign documents, you must own a **Kernel**. The Kernel is the address where your signatures are stored. It is the main part of the Blockchain Application. It handles multi-operator signing, multi-owner administration and so on. Every moral/physical person can have his own Kernel.
 
