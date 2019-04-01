@@ -1,4 +1,4 @@
-# ULCDocuments
+# ULCDocuments Web Application
 
 ![ULCDocuments logo](docs/images/ULCD_banner.png)
 
