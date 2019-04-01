@@ -1,5 +1,7 @@
 # ULCDocuments
 
+![ULCDocuments logo](docs/images/ULCD_banner.png)
+
 ULCDocuments is a free and open source project aimed at giving everyone a tool to sign all type of files permanently on the Ethereum Blockchain.
 
 ULC is the acronym for **U**ltra **L**ow **C**ost, because signing documents on the blockchain is very cheap.
