@@ -291,6 +291,16 @@ async function updateKernelObject(addressKernel, moderatorInfoKernel){
         sendNotification(TypeInfo.Critical,"Error reading kernel", "Impossible to find security property : number signatures needed");
     }
 
+    try {
+        INFO_HASH_NEEDED = await ULCDocKernel.methods.HASH_ALGORITHM().call();
+    }catch(error){
+        logMe(ULCDocModMasterPrefix, "Impossible to read HASH_ALGORITHM", TypeInfo.Critical);
+        logMe(ULCDocModMasterPrefix, error);
+        sendNotification(TypeInfo.Critical,"Error reading kernel", "Impossible to find security property : hash-algorithm needed");
+    }
+
+
+
 
 
     try {
@@ -437,7 +447,15 @@ function checkFile(myFile, index){
     var reader = new FileReader();
     reader.onload = function (event) {
         var data = event.target.result;
-        var hash = CryptoJS.SHA3(data,{ outputLength:256 }).toString();
+        let hash = "-1";
+        if(INFO_HASH_NEEDED === "SHA3-256"){
+            hash = CryptoJS.SHA3(data,{ outputLength:256 }).toString();
+        }
+        else {
+            logMe(ULCDocModMasterPrefix, "Error : Impossible to select correct hash method.", TypeInfo.Critical;);
+            sendNotification(TypeInfo.Critical,"Fatal Error when hashing element.");
+            return;
+        }
         logMe(ULCDocModMasterPrefix,"Success Hashed !");
         UI.updateElementHash(index, hash);
         checkHash(hash,index);
@@ -451,7 +469,15 @@ function checkFile(myFile, index){
 
 function checkText(myText, index){
     logMe(ULCDocModMasterPrefix,"New text asked !");
-    hash = CryptoJS.SHA3(myText,{ outputLength:256 }).toString();
+    let hash = "-1";
+    if(INFO_HASH_NEEDED === "SHA3-256"){
+        hash = CryptoJS.SHA3(myText,{ outputLength:256 }).toString();
+    }
+    else {
+        logMe(ULCDocModMasterPrefix, "Error : Impossible to select correct hash method.", TypeInfo.Critical;);
+        sendNotification(TypeInfo.Critical,"Fatal Error when hashing element.");
+        return;
+    }
     UI.updateElementHash(index, hash);
     checkHash(hash,index);
 }
@@ -531,7 +557,15 @@ function fetchFile(myFile, index){
     let reader = new FileReader();
     reader.onload = function (event) {
         let data = event.target.result;
-        let hash = CryptoJS.SHA3(data,{ outputLength:256 }).toString();
+        let hash = "-1";
+        if(INFO_HASH_NEEDED === "SHA3-256"){
+            hash = CryptoJS.SHA3(data,{ outputLength:256 }).toString();
+        }
+        else {
+            logMe(ULCDocModMasterPrefix, "Error : Impossible to select correct hash method.", TypeInfo.Critical;);
+            sendNotification(TypeInfo.Critical,"Fatal Error when hashing element.");
+            return;
+        }
         logMe(ULCDocModMasterPrefix,"Success Hashed !");
         UI.updateElementHash(index, hash);
         fetchHash(hash,index);
@@ -545,7 +579,15 @@ function fetchFile(myFile, index){
 */
 function fetchText(myText, index){
     logMe(ULCDocModMasterPrefix,"New text fetched !");
-    let hash = CryptoJS.SHA3(myText,{ outputLength:256 }).toString();
+    let hash = "-1";
+    if(INFO_HASH_NEEDED === "SHA3-256"){
+        hash = CryptoJS.SHA3(myText,{ outputLength:256 }).toString();
+    }
+    else {
+        logMe(ULCDocModMasterPrefix, "Error : Impossible to select correct hash method.", TypeInfo.Critical;);
+        sendNotification(TypeInfo.Critical,"Fatal Error when hashing element.");
+        return;
+    }
     UI.updateElementHash(index, hash);
     fetchHash(hash,index);
 }
@@ -629,6 +671,12 @@ function getCompatibleFamily() {
     return KERNEL_FAMILY_AVAIABLE;
 }
 
+/**
+    @return {String}the hash algorithm that the kernel Handles
+* */
+function getHashAlgorithm(){
+    return INFO_HASH_NEEDED;
+}
 
 function requestPushDoc(myHash, info, index){
 
