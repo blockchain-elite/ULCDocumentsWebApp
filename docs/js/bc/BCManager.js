@@ -21,7 +21,7 @@
 *  CONST PART*
 **************/
 const kernelVersionCompatibility = [4];
-const moderatorVersionCompatibility = [2];
+const moderatorVersionCompatibility = [3];
 const hashMethodsCompatibility = ["SHA3-256"];
 
 //TODO: Handle "HASH_ALGORITHM" info & compatibility
@@ -179,7 +179,7 @@ async function queryModerator(addressKernel){
     let moderatorInfoKernel = new Map();
 
     try {
-        let queryResultIdentity = await ULCDocMod.methods.Kernel_Identity_Book(addressKernel).call();
+        let queryResultIdentity = await ULCDocMod.methods.KERNEL_IDENTITY_BOOK(addressKernel).call();
 
         if(queryResultIdentity["isRevoked"]){
             moderatorInfoKernel.set(kernelReservedKeys.status, resultQueryStatus.revoked);
@@ -192,7 +192,7 @@ async function queryModerator(addressKernel){
 
             //we update detailed info
             try {
-                queryResultDetailedInfo = await ULCDocMod.methods.Kernel_Info_Book(addressKernel).call();
+                queryResultDetailedInfo = await ULCDocMod.methods.KERNEL_INFO_BOOK(addressKernel).call();
 
                 moderatorInfoKernel.set(kernelReservedKeys.isOrganisation, queryResultIdentity["isOrganisation"]);
                 moderatorInfoKernel.set(kernelReservedKeys.url, queryResultDetailedInfo["url"]);
@@ -332,30 +332,30 @@ async function updateModeratorInfo(testULCDocMod){
     mod_info.set(moderatorReservedKeys.status, TypeInfo.Good);
 
     try {
-        let result = await testULCDocMod.methods.Moderator_URL().call();
+        let result = await testULCDocMod.methods.MODERATOR_URL().call();
         mod_info.set(moderatorReservedKeys.contact, result);
     }catch(error){
-        logMe(ULCDocModMasterPrefix,"error while reaching Moderator_URL",TypeInfo.Critical);
+        logMe(ULCDocModMasterPrefix,"error while reaching MODERATOR_URL",TypeInfo.Critical);
         logMe(ULCDocModMasterPrefix,error);
         sendNotification(TypeInfo.Critical, "Critical error", "Error reaching moderator contact info.");
         mod_info.set(moderatorReservedKeys.status, TypeInfo.Critical);
     }
 
     try {
-        let result = await testULCDocMod.methods.Register_URL().call();
+        let result = await testULCDocMod.methods.REGISTER_URL().call();
         mod_info.set(moderatorReservedKeys.register, result);
     }catch(error){
-        logMe(ULCDocModMasterPrefix,"error while reaching Register_URL",TypeInfo.Critical);
+        logMe(ULCDocModMasterPrefix,"error while reaching REGISTER_URL",TypeInfo.Critical);
         logMe(ULCDocModMasterPrefix,error);
         sendNotification(TypeInfo.Critical, "Critical error", "Error reaching moderator contact info.");
         mod_info.set(moderatorReservedKeys.status, TypeInfo.Critical);
     }
 
     try {
-        let result = await testULCDocMod.methods.SearchKernel_URL().call();
+        let result = await testULCDocMod.methods.SEARCH_KERNEL_URL().call();
         mod_info.set(moderatorReservedKeys.search, result);
     }catch(error){
-        logMe(ULCDocModMasterPrefix,"error while reaching SearchKernel_URL",TypeInfo.Critical);
+        logMe(ULCDocModMasterPrefix,"error while reaching SEARCH_KERNEL_URL",TypeInfo.Critical);
         logMe(ULCDocModMasterPrefix,error);
         sendNotification(TypeInfo.Critical, "Critical error", "Error reaching moderator search info.");
         mod_info.set(moderatorReservedKeys.status, TypeInfo.Critical);
@@ -387,7 +387,7 @@ async function updateModeratorAddress(addressModerator){
         let moderatorVersion;
 
         try {
-            moderatorVersion = await testULCDocMod.methods.Moderator_Version().call();
+            moderatorVersion = await testULCDocMod.methods.Contract_Version().call();
         }catch(error){
             sendNotification(TypeInfo.Critical, "Error Moderator Loading", "Impossible to reach Moderator Version Info.");
             logMe(ULCDocModMasterPrefix, "Error while reaching moderator version : " + error, TypeInfo.Critical);

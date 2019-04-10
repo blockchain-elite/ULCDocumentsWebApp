@@ -23,7 +23,7 @@ const UIManagerPrefix = "UI";
 const ULCDocModMasterPrefix = "MASTER";
 
 const officialBlockchainEliteModerator = "0x0"; //not published yet
-const ropstenBlockchainEliteModerator = "0x4Ad22344fFD31ce4E21397bBaD8FE0816d977a0a"; // V2.1
+const ropstenBlockchainEliteModerator = "0xafAC243f4ECfa5E91EF0aB0f43A5235D74D67dBe"; // V3
 const devBlockchainEliteModerator = "0x0"; //internal node related.
 
 const TypeInfo = {

@@ -84,72 +84,6 @@ ULCDocModABI = [
     "type": "function"
   },
   {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "name": "Kernel_Book_Keys",
-    "outputs": [
-      {
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "Kernel_Identity_Book",
-    "outputs": [
-      {
-        "name": "initialized",
-        "type": "bool"
-      },
-      {
-        "name": "confirmed",
-        "type": "bool"
-      },
-      {
-        "name": "isRevoked",
-        "type": "bool"
-      },
-      {
-        "name": "isOrganisation",
-        "type": "bool"
-      },
-      {
-        "name": "version",
-        "type": "uint256"
-      },
-      {
-        "name": "revoked_date",
-        "type": "uint256"
-      },
-      {
-        "name": "name",
-        "type": "string"
-      },
-      {
-        "name": "revoked_reason",
-        "type": "string"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "constant": false,
     "inputs": [
       {
@@ -161,6 +95,20 @@ ULCDocModABI = [
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "MODERATOR_URL",
+    "outputs": [
+      {
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -246,6 +194,24 @@ ULCDocModABI = [
     "constant": false,
     "inputs": [
       {
+        "name": "_index",
+        "type": "uint256"
+      },
+      {
+        "name": "_kernelAddress",
+        "type": "address"
+      }
+    ],
+    "name": "transferedKernelIdentity",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
         "name": "_ULCDocKernelAddress",
         "type": "address"
       },
@@ -258,20 +224,6 @@ ULCDocModABI = [
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "constant": true,
-    "inputs": [],
-    "name": "Register_URL",
-    "outputs": [
-      {
-        "name": "",
-        "type": "string"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -366,6 +318,20 @@ ULCDocModABI = [
     "type": "function"
   },
   {
+    "constant": true,
+    "inputs": [],
+    "name": "REGISTER_URL",
+    "outputs": [
+      {
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "constant": false,
     "inputs": [],
     "name": "clearKill",
@@ -376,11 +342,36 @@ ULCDocModABI = [
   },
   {
     "constant": true,
-    "inputs": [],
-    "name": "Moderator_URL",
-    "outputs": [
+    "inputs": [
       {
         "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "KERNEL_INFO_BOOK",
+    "outputs": [
+      {
+        "name": "url",
+        "type": "string"
+      },
+      {
+        "name": "mail",
+        "type": "string"
+      },
+      {
+        "name": "physicalAddress",
+        "type": "string"
+      },
+      {
+        "name": "imageURL",
+        "type": "string"
+      },
+      {
+        "name": "phone",
+        "type": "string"
+      },
+      {
+        "name": "extra_data",
         "type": "string"
       }
     ],
@@ -450,6 +441,20 @@ ULCDocModABI = [
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "Contract_Version",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint8"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -524,11 +529,44 @@ ULCDocModABI = [
   },
   {
     "constant": true,
-    "inputs": [],
-    "name": "SearchKernel_URL",
-    "outputs": [
+    "inputs": [
       {
         "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "KERNEL_IDENTITY_BOOK",
+    "outputs": [
+      {
+        "name": "initialized",
+        "type": "bool"
+      },
+      {
+        "name": "confirmed",
+        "type": "bool"
+      },
+      {
+        "name": "isRevoked",
+        "type": "bool"
+      },
+      {
+        "name": "isOrganisation",
+        "type": "bool"
+      },
+      {
+        "name": "version",
+        "type": "uint256"
+      },
+      {
+        "name": "revoked_date",
+        "type": "uint256"
+      },
+      {
+        "name": "name",
+        "type": "string"
+      },
+      {
+        "name": "revoked_reason",
         "type": "string"
       }
     ],
@@ -583,45 +621,6 @@ ULCDocModABI = [
     "type": "function"
   },
   {
-    "constant": true,
-    "inputs": [
-      {
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "name": "Kernel_Info_Book",
-    "outputs": [
-      {
-        "name": "url",
-        "type": "string"
-      },
-      {
-        "name": "mail",
-        "type": "string"
-      },
-      {
-        "name": "physicalAddress",
-        "type": "string"
-      },
-      {
-        "name": "imageURL",
-        "type": "string"
-      },
-      {
-        "name": "phone",
-        "type": "string"
-      },
-      {
-        "name": "extra_data",
-        "type": "string"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
     "constant": false,
     "inputs": [
       {
@@ -656,6 +655,20 @@ ULCDocModABI = [
     ],
     "payable": false,
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "_newContractAddress",
+        "type": "address"
+      }
+    ],
+    "name": "requestUpgradeSmartContract",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -697,12 +710,17 @@ ULCDocModABI = [
   },
   {
     "constant": true,
-    "inputs": [],
-    "name": "Moderator_Version",
-    "outputs": [
+    "inputs": [
       {
         "name": "",
         "type": "uint256"
+      }
+    ],
+    "name": "KERNEL_BOOK_KEYS",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
       }
     ],
     "payable": false,
@@ -724,17 +742,17 @@ ULCDocModABI = [
     "type": "function"
   },
   {
-    "constant": false,
-    "inputs": [
+    "constant": true,
+    "inputs": [],
+    "name": "SEARCH_KERNEL_URL",
+    "outputs": [
       {
-        "name": "_newModerator",
-        "type": "address"
+        "name": "",
+        "type": "string"
       }
     ],
-    "name": "setUpgradeModerator",
-    "outputs": [],
     "payable": false,
-    "stateMutability": "nonpayable",
+    "stateMutability": "view",
     "type": "function"
   },
   {
