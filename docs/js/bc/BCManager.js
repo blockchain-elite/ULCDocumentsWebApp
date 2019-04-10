@@ -20,11 +20,11 @@
 /*************
 *  CONST PART*
 **************/
-const kernelVersionCompatibility = [3];
-const moderatorVersionCompatibility = [2];
+const kernelVersionCompatibility = [4];
+const moderatorVersionCompatibility = [3];
 const hashMethodsCompatibility = ["SHA3-256"];
 
-//TODO: Handle "Hash_Algorithm" info & compatibility
+//TODO: Handle "HASH_ALGORITHM" info & compatibility
 
 /*************
 *  GLOBAL VAR*
@@ -43,6 +43,7 @@ var ULCDocKernel;
 
 var INFO_SIGNATURES_NEEDED;
 var INFO_ACCOUNT_LOADED;
+var INFO_HASH_NEEDED;
 var KERNEL_FAMILY_AVAIABLE;
 
 var web3js;
@@ -125,8 +126,8 @@ async function isKernelCompatible(addressKernel){
     let ULCDocKernelTest = new web3js.eth.Contract(ULCDocKernelABI, addressKernel);
 
     try {
-        kernelVersion = await ULCDocKernelTest.methods.Kernel_Version().call();
-        kernelHashFormat = await ULCDocKernelTest.methods.Hash_Algorithm().call();
+        kernelVersion = await ULCDocKernelTest.methods.Contract_Version().call();
+        kernelHashFormat = await ULCDocKernelTest.methods.HASH_ALGORITHM().call();
     }catch(error){
         sendNotification(TypeInfo.Critical, "Error Kernel Loading", "Impossible to reach Kernel Compatibility Info.");
         logMe(ULCDocModMasterPrefix, "Error while reaching kernel version : " + error, TypeInfo.Critical);
@@ -178,7 +179,7 @@ async function queryModerator(addressKernel){
     let moderatorInfoKernel = new Map();
 
     try {
-        let queryResultIdentity = await ULCDocMod.methods.Kernel_Identity_Book(addressKernel).call();
+        let queryResultIdentity = await ULCDocMod.methods.KERNEL_IDENTITY_BOOK(addressKernel).call();
 
         if(queryResultIdentity["isRevoked"]){
             moderatorInfoKernel.set(kernelReservedKeys.status, resultQueryStatus.revoked);
@@ -191,7 +192,7 @@ async function queryModerator(addressKernel){
 
             //we update detailed info
             try {
-                queryResultDetailedInfo = await ULCDocMod.methods.Kernel_Info_Book(addressKernel).call();
+                queryResultDetailedInfo = await ULCDocMod.methods.KERNEL_INFO_BOOK(addressKernel).call();
 
                 moderatorInfoKernel.set(kernelReservedKeys.isOrganisation, queryResultIdentity["isOrganisation"]);
                 moderatorInfoKernel.set(kernelReservedKeys.url, queryResultDetailedInfo["url"]);
@@ -290,17 +291,22 @@ async function updateKernelObject(addressKernel, moderatorInfoKernel){
         sendNotification(TypeInfo.Critical,"Error reading kernel", "Impossible to find security property : number signatures needed");
     }
 
+    try {
+        INFO_HASH_NEEDED = await ULCDocKernel.methods.HASH_ALGORITHM().call();
+    }catch(error){
+        logMe(ULCDocModMasterPrefix, "Impossible to read HASH_ALGORITHM", TypeInfo.Critical);
+        logMe(ULCDocModMasterPrefix, error);
+        sendNotification(TypeInfo.Critical,"Error reading kernel", "Impossible to find security property : hash-algorithm needed");
+    }
+
+
+
+
 
     try {
-        let familyLength = await ULCDocKernel.methods.getDocFamilySize().call();
-        familyLength = Number(familyLength);
-        let i = 0;
-        KERNEL_FAMILY_AVAIABLE = new Array();
-
-        while(i < familyLength){
-            KERNEL_FAMILY_AVAIABLE[i] = await ULCDocKernel.methods.document_family_registred(i).call();
-            i++;
-        }
+      //use stringified version will reduce significativly number of .call() so reduce time to load a Kernel.
+        let stringifiedDocFamily = await ULCDocKernel.methods.DOC_FAMILY_STRINGIFIED().call();
+        KERNEL_FAMILY_AVAIABLE = stringifiedDocFamily.split(",");
     }catch(error){
         logMe(ULCDocModMasterPrefix, "Impossible to read docFamily", TypeInfo.Critical);
         logMe(ULCDocModMasterPrefix, error);
@@ -326,30 +332,30 @@ async function updateModeratorInfo(testULCDocMod){
     mod_info.set(moderatorReservedKeys.status, TypeInfo.Good);
 
     try {
-        let result = await testULCDocMod.methods.Moderator_URL().call();
+        let result = await testULCDocMod.methods.MODERATOR_URL().call();
         mod_info.set(moderatorReservedKeys.contact, result);
     }catch(error){
-        logMe(ULCDocModMasterPrefix,"error while reaching Moderator_URL",TypeInfo.Critical);
+        logMe(ULCDocModMasterPrefix,"error while reaching MODERATOR_URL",TypeInfo.Critical);
         logMe(ULCDocModMasterPrefix,error);
         sendNotification(TypeInfo.Critical, "Critical error", "Error reaching moderator contact info.");
         mod_info.set(moderatorReservedKeys.status, TypeInfo.Critical);
     }
 
     try {
-        let result = await testULCDocMod.methods.Register_URL().call();
+        let result = await testULCDocMod.methods.REGISTER_URL().call();
         mod_info.set(moderatorReservedKeys.register, result);
     }catch(error){
-        logMe(ULCDocModMasterPrefix,"error while reaching Register_URL",TypeInfo.Critical);
+        logMe(ULCDocModMasterPrefix,"error while reaching REGISTER_URL",TypeInfo.Critical);
         logMe(ULCDocModMasterPrefix,error);
         sendNotification(TypeInfo.Critical, "Critical error", "Error reaching moderator contact info.");
         mod_info.set(moderatorReservedKeys.status, TypeInfo.Critical);
     }
 
     try {
-        let result = await testULCDocMod.methods.SearchKernel_URL().call();
+        let result = await testULCDocMod.methods.SEARCH_KERNEL_URL().call();
         mod_info.set(moderatorReservedKeys.search, result);
     }catch(error){
-        logMe(ULCDocModMasterPrefix,"error while reaching SearchKernel_URL",TypeInfo.Critical);
+        logMe(ULCDocModMasterPrefix,"error while reaching SEARCH_KERNEL_URL",TypeInfo.Critical);
         logMe(ULCDocModMasterPrefix,error);
         sendNotification(TypeInfo.Critical, "Critical error", "Error reaching moderator search info.");
         mod_info.set(moderatorReservedKeys.status, TypeInfo.Critical);
@@ -381,7 +387,7 @@ async function updateModeratorAddress(addressModerator){
         let moderatorVersion;
 
         try {
-            moderatorVersion = await testULCDocMod.methods.Moderator_Version().call();
+            moderatorVersion = await testULCDocMod.methods.Contract_Version().call();
         }catch(error){
             sendNotification(TypeInfo.Critical, "Error Moderator Loading", "Impossible to reach Moderator Version Info.");
             logMe(ULCDocModMasterPrefix, "Error while reaching moderator version : " + error, TypeInfo.Critical);
@@ -441,7 +447,15 @@ function checkFile(myFile, index){
     var reader = new FileReader();
     reader.onload = function (event) {
         var data = event.target.result;
-        var hash = CryptoJS.SHA3(data,{ outputLength:256 }).toString();
+        let hash = "-1";
+        if(INFO_HASH_NEEDED === "SHA3-256"){
+            hash = CryptoJS.SHA3(data,{ outputLength:256 }).toString();
+        }
+        else {
+            logMe(ULCDocModMasterPrefix, "Error : Impossible to select correct hash method.", TypeInfo.Critical);
+            sendNotification(TypeInfo.Critical,"Fatal Error when hashing element.");
+            return;
+        }
         logMe(ULCDocModMasterPrefix,"Success Hashed !");
         UI.updateElementHash(index, hash);
         checkHash(hash,index);
@@ -455,7 +469,15 @@ function checkFile(myFile, index){
 
 function checkText(myText, index){
     logMe(ULCDocModMasterPrefix,"New text asked !");
-    hash = CryptoJS.SHA3(myText,{ outputLength:256 }).toString();
+    let hash = "-1";
+    if(INFO_HASH_NEEDED === "SHA3-256"){
+        hash = CryptoJS.SHA3(myText,{ outputLength:256 }).toString();
+    }
+    else {
+        logMe(ULCDocModMasterPrefix, "Error : Impossible to select correct hash method.", TypeInfo.Critical);
+        sendNotification(TypeInfo.Critical,"Fatal Error when hashing element.");
+        return;
+    }
     UI.updateElementHash(index, hash);
     checkHash(hash,index);
 }
@@ -535,7 +557,15 @@ function fetchFile(myFile, index){
     let reader = new FileReader();
     reader.onload = function (event) {
         let data = event.target.result;
-        let hash = CryptoJS.SHA3(data,{ outputLength:256 }).toString();
+        let hash = "-1";
+        if(INFO_HASH_NEEDED === "SHA3-256"){
+            hash = CryptoJS.SHA3(data,{ outputLength:256 }).toString();
+        }
+        else {
+            logMe(ULCDocModMasterPrefix, "Error : Impossible to select correct hash method.", TypeInfo.Critical);
+            sendNotification(TypeInfo.Critical,"Fatal Error when hashing element.");
+            return;
+        }
         logMe(ULCDocModMasterPrefix,"Success Hashed !");
         UI.updateElementHash(index, hash);
         fetchHash(hash,index);
@@ -549,7 +579,15 @@ function fetchFile(myFile, index){
 */
 function fetchText(myText, index){
     logMe(ULCDocModMasterPrefix,"New text fetched !");
-    let hash = CryptoJS.SHA3(myText,{ outputLength:256 }).toString();
+    let hash = "-1";
+    if(INFO_HASH_NEEDED === "SHA3-256"){
+        hash = CryptoJS.SHA3(myText,{ outputLength:256 }).toString();
+    }
+    else {
+        logMe(ULCDocModMasterPrefix, "Error : Impossible to select correct hash method.", TypeInfo.Critical);
+        sendNotification(TypeInfo.Critical,"Fatal Error when hashing element.");
+        return;
+    }
     UI.updateElementHash(index, hash);
     fetchHash(hash,index);
 }
@@ -567,7 +605,7 @@ async function fetchHash(myHash, index){
         logMe(ULCDocModMasterPrefix,"Valid hash, asking kernel...");
 
         try{
-            let result = await ULCDocKernel.methods.Signatures_Book(myHash).call();
+            let result = await ULCDocKernel.methods.SIGNATURES_BOOK(myHash).call();
 
             if(result["revoked"]){
                 all_datas.set(elementReservedKeys.status, TypeElement.Revoked);
@@ -633,6 +671,12 @@ function getCompatibleFamily() {
     return KERNEL_FAMILY_AVAIABLE;
 }
 
+/**
+    @return {String}the hash algorithm that the kernel Handles
+* */
+function getHashAlgorithm(){
+    return INFO_HASH_NEEDED;
+}
 
 function requestPushDoc(myHash, info, index){
 
@@ -856,7 +900,7 @@ async function checkHash(myHash, index){
         logMe(ULCDocModMasterPrefix,"Valid hash, asking kernel...");
 
         try{
-            let result = await ULCDocKernel.methods.Signatures_Book(myHash).call();
+            let result = await ULCDocKernel.methods.SIGNATURES_BOOK(myHash).call();
             logMe(ULCDocModMasterPrefix,"Kernel response OK, reading info...");
 
             if(result["signed"]){ //if the hash is valid
@@ -889,7 +933,7 @@ async function checkHash(myHash, index){
             }
         }catch(error){
             sendNotification(TypeInfo.Critical, "Error Reading Kernel", "Impossible to read kernel base !");
-            logMe(ULCDocModMasterPrefix,"CRITICAL: Unkown error when reaching Signatures_Book(hash)",TypeInfo.Critical);
+            logMe(ULCDocModMasterPrefix,"CRITICAL: Unkown error when reaching SIGNATURES_BOOK(hash)",TypeInfo.Critical);
             logMe(ULCDocModMasterPrefix,error);
             all_datas.set(elementReservedKeys.status, TypeElement.Invalid);
             UI.updateElement(index, all_datas);
