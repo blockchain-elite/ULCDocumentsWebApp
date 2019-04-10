@@ -43,7 +43,7 @@ This app uses two main [Smart Contracts](https://en.wikipedia.org/wiki/Smart_con
 
 * After creating your Kernel, you can then choose to be referenced on a **Moderator**. This Moderator will then be able to certify your kernel's identity to users connecting to it. Otherwise, users will only see your Kernel address.
 
-> For security reason, it is safer to only use Kernels that are registered on a trustworthy Moderator (such as the **[Blockchain-Elite Moderator](https://ropsten.etherscan.io/address/0x4ad22344ffd31ce4e21397bbad8fe0816d977a0a)** on **Ropsten Testnet**, which is configured by default on the web app).
+> For security reason, it is safer to only use Kernels that are registered on a trustworthy Moderator (such as the **[Blockchain-Elite Moderator](https://ropsten.etherscan.io/address/0x99ca872d7ce6ceb69cd859b744d4d3598be69bfe)** on **Ropsten Testnet**, which is configured by default on the web app).
 
 > **Warning!** Because we are in beta, the default moderator address might change over time. But don't worry, the Web App will be updated to take into account those changes.
 
