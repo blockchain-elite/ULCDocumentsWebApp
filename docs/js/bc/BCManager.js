@@ -305,7 +305,7 @@ async function updateKernelObject(addressKernel, moderatorInfoKernel){
 
     try {
       //use stringified version will reduce significativly number of .call() so reduce time to load a Kernel.
-        let stringifiedDocFamily = await ULCDocKernel.methods.stringifyDocFamily().call();
+        let stringifiedDocFamily = await ULCDocKernel.methods.DOC_FAMILY_STRINGIFIED().call();
         KERNEL_FAMILY_AVAIABLE = stringifiedDocFamily.split(",");
     }catch(error){
         logMe(ULCDocModMasterPrefix, "Impossible to read docFamily", TypeInfo.Critical);
@@ -452,7 +452,7 @@ function checkFile(myFile, index){
             hash = CryptoJS.SHA3(data,{ outputLength:256 }).toString();
         }
         else {
-            logMe(ULCDocModMasterPrefix, "Error : Impossible to select correct hash method.", TypeInfo.Critical;);
+            logMe(ULCDocModMasterPrefix, "Error : Impossible to select correct hash method.", TypeInfo.Critical);
             sendNotification(TypeInfo.Critical,"Fatal Error when hashing element.");
             return;
         }
@@ -474,7 +474,7 @@ function checkText(myText, index){
         hash = CryptoJS.SHA3(myText,{ outputLength:256 }).toString();
     }
     else {
-        logMe(ULCDocModMasterPrefix, "Error : Impossible to select correct hash method.", TypeInfo.Critical;);
+        logMe(ULCDocModMasterPrefix, "Error : Impossible to select correct hash method.", TypeInfo.Critical);
         sendNotification(TypeInfo.Critical,"Fatal Error when hashing element.");
         return;
     }
@@ -562,7 +562,7 @@ function fetchFile(myFile, index){
             hash = CryptoJS.SHA3(data,{ outputLength:256 }).toString();
         }
         else {
-            logMe(ULCDocModMasterPrefix, "Error : Impossible to select correct hash method.", TypeInfo.Critical;);
+            logMe(ULCDocModMasterPrefix, "Error : Impossible to select correct hash method.", TypeInfo.Critical);
             sendNotification(TypeInfo.Critical,"Fatal Error when hashing element.");
             return;
         }
@@ -584,7 +584,7 @@ function fetchText(myText, index){
         hash = CryptoJS.SHA3(myText,{ outputLength:256 }).toString();
     }
     else {
-        logMe(ULCDocModMasterPrefix, "Error : Impossible to select correct hash method.", TypeInfo.Critical;);
+        logMe(ULCDocModMasterPrefix, "Error : Impossible to select correct hash method.", TypeInfo.Critical);
         sendNotification(TypeInfo.Critical,"Fatal Error when hashing element.");
         return;
     }
