@@ -52,7 +52,7 @@ function UIItemDetailsManager() {
             '</p>\n' +
             '<form class="form-group" id="itemTextInputContainer">\n' +
             '<label for="itemTextInput">Enter your text here: </label>\n' +
-            '<textarea id="itemTextInput" class="form-control"></textarea>\n' +
+            '<textarea id="itemTextInput" class="form-control" rows="5"></textarea>\n' +
             '</form>\n' +
             '<form class="form-group" id="itemHashInputContainer">\n' +
             '<label for="itemHashInput">Enter your hash here: </label>\n' +
@@ -156,6 +156,7 @@ function UIItemDetailsManager() {
      */
     this.displayFileProps = function (item) {
         itemPropPopup.onOpenBefore = function() {
+            $('textarea').autoResize();
             UI.getItemDetailsManager().setupItemPopup(item);
         };
         itemPropPopup.buttons = {
