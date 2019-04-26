@@ -34,9 +34,9 @@ function UIItemDetailsManager() {
             '<span>Last Modified: </span>\n' +
             '<span id="fileDateProp">##DATE</span>\n' +
             '</p>\n' +
-            '<textarea id="itemTextInput" class="form-control" rows="5" placeholder="Enter your text here:"></textarea>\n' +
-            '<input id="itemHashInput" class="form-control" placeholder="Enter your text here:">\n' +
-            '<p class="text-muted" id="itemHashContainer">Hash: <span\n' +
+            '<textarea id="itemTextInput" class="form-control" rows="5" placeholder="Enter your text here..."></textarea>\n' +
+            '<input id="itemHashInput" class="form-control" placeholder="Enter your hash here...">\n' +
+            '<p class="text-muted" id="itemHashContainer"><span id="itemHashType"></span><span\n' +
             'id="itemHashProp">HASH</span>\n' +
             '</p>\n' +
             '<a id="itemTxUrlProp" href="" target="_blank">\n' +
@@ -131,6 +131,7 @@ function UIItemDetailsManager() {
     this.displayFileProps = function (item) {
         itemPropPopup.onOpenBefore = function() {
             $('textarea').autoResize();
+            $('#itemHashType').text(getHashAlgorithm() + ': ');
             UI.getItemDetailsManager().setupItemPopup(item);
         };
         let type = getJConfirmTypeFromColorCLass(item.getCardColor());
@@ -158,7 +159,6 @@ function UIItemDetailsManager() {
                 }
             },
         };
-
         itemPropPopup.icon = icon;
         itemPropPopup.title = title;
         itemPropPopup.type = type;
@@ -224,10 +224,15 @@ function UIItemDetailsManager() {
 
     let fillReservedFields = function (item) {
         // display generic info
-        if (item.getHash() !== '')
-            $("#itemHashProp").text(item.getHash());
-        else
-            $("#itemHashProp").text('Not yet calculated');
+        if (UI.getCurrentTab() !== TAB_TYPE.hash) {
+            if (item.getHash() !== '')
+                $("#itemHashProp").text(item.getHash());
+            else
+                $("#itemHashProp").text('not yet calculated');
+        } else {
+            $('#itemHashContainer').hide();
+        }
+
         if (item.getType() !== TypeElement.Unknown)
             $("#itemStatusProp").text(ITEM_STATE_TEXT[item.getType()]).show();
         else
@@ -248,9 +253,7 @@ function UIItemDetailsManager() {
     let setupItemInputFields = function (item) {
         if (!(item instanceof FileListItem)) {
             if (item instanceof TextListItem) {
-                $("#itemTextInput").show();
                 $("#itemHashInput").hide();
-
                 $("#itemTextInput").off('change keyup paste').val(item.getText()).on('change keyup paste', function () { // Remove previous event handlers
                     item.setText($("#itemTextInput").val());
                     if (item.getType() !== TypeElement.Unknown) {
@@ -260,10 +263,9 @@ function UIItemDetailsManager() {
                         UI.resetProgress();
                         UI.setUIButtonState(UI_STATE.none);
                     }
-                });
+                }).show();
             } else { // We have a hash
                 $("#itemTextInput").hide();
-                $("#itemHashInput").show();
                 $("#itemHashInput").off('change keyup paste').val(item.getHash()).on('change keyup paste', function () { // Remove previous event handlers
                     item.setHash($("#itemHashInput").val());
                     if (item.getType() !== TypeElement.Unknown) {
@@ -272,7 +274,7 @@ function UIItemDetailsManager() {
                         UI.resetProgress();
                         UI.setUIButtonState(UI_STATE.none);
                     }
-                });
+                }).show();
             }
         } else {
             $("#itemTextInput").hide();

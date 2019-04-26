@@ -440,7 +440,7 @@ class HashListItem extends ListItem {
         UI.createListItemFromTemplate(this.id, TAB_TYPE.hash);
         super.createEntry($('#' + this.id), isAnimated);
         this.hashTitle = this.$item.find(".list-hash-title");
-        this.hashTitle.text("Hash n°" + this.index);
+        this.hashTitle.text(getHashAlgorithm() + " n°" + this.index);
         this.itemHash = this.$item.find('.item-hash');
         this.setHash(this.hash);
     }
@@ -460,6 +460,6 @@ class HashListItem extends ListItem {
     }
 
     setTitle(id) {
-        this.hashTitle.text('Hash n°' + id);
+        this.hashTitle.text(getHashAlgorithm() +' n°' + id);
     }
 }
