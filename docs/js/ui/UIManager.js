@@ -82,6 +82,7 @@ const COLOR_CLASSES = {
 
 const ITEM_STATE_TEXT = {}; // Text based on item state to display in the UI
 ITEM_STATE_TEXT[TypeElement.Unknown] = 'Awaiting user';
+ITEM_STATE_TEXT[TypeElement.Computing] = 'Computing Hash...';
 ITEM_STATE_TEXT[TypeElement.Loading] = 'Asking Blockchain...';
 ITEM_STATE_TEXT[TypeElement.Signed] = 'Signed';
 ITEM_STATE_TEXT[TypeElement.Fake] = 'Not signed';
@@ -567,7 +568,10 @@ function UIManager() {
             cleanList(); // remove invalid test/hash entries before checking
         if (!isCurrentItemListEmpty()) {
             for (let item of getCurrentList().values()) {
-                item.setType(TypeElement.Loading);
+                if (_currentTab !== TAB_TYPE.hash) // We do not compute the hash if the user entered it
+                    item.setType(TypeElement.Computing);
+                else
+                    item.setType(TypeElement.Loading);
             }
             if (_currentAppMode === APP_MODE.check) {
                 UI.setUIButtonState(UI_STATE.checking);
@@ -888,8 +892,10 @@ function UIManager() {
             let currentItem = getCurrentListItemByIndex(_itemsProcessedCounter);
             if (_currentAppMode === APP_MODE.check) {
                 $.selector_cache('#actionInProgress').html('Checking...');
-                if (currentItem.getHash() !== '')
+                if (currentItem.getHash() !== '') {
+                    currentItem.setType(TypeElement.Loading);
                     checkHash(currentItem.getHash(), currentItem.getIndex());
+                }
                 else {
                     switch (_currentTab) {
                         case TAB_TYPE.file:
@@ -1799,7 +1805,9 @@ function UIManager() {
      * @param hash {String} The hash to display.
      */
     this.updateElementHash = function (index, hash) {
-        getCurrentListItem(index).setHash(hash);
+        let item = getCurrentListItem(index);
+        item.setType(TypeElement.Loading); // We have the hash, we can start asking blockchain
+        item.setHash(hash);
     };
 
     /**

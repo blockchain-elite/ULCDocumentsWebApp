@@ -50,11 +50,12 @@ const TypeElement = {
   Invalid: 4, //an error occured when asking the kernel
   Pending : 5, // Process to sign the document is started but not OK
     /* UI RELATED */
-  Loading : 6, // loading object
-  TxProcessing: 7, // The transaction is being processed
-  TransactionSuccess: 8, // The transaction was a success
-  TransactionFailure: 9,  // The transaction failed
-  Unknown : 10 // Object not yet checked
+  Computing : 6, // computing hash
+  Loading : 7, // loading object
+  TxProcessing: 8, // The transaction is being processed
+  TransactionSuccess: 9, // The transaction was a success
+  TransactionFailure: 10,  // The transaction failed
+  Unknown : 11 // Object not yet checked
 };
 
 // Special keys used in moderator info Map
