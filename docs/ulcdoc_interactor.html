@@ -195,10 +195,17 @@
 
         <div class="card shadow" id="kernelInfoHeader">
             <div class="row">
-                <div class="col-8" style="display: flex;">
+                <div class="col-6" style="display: flex;">
                     <i id="kernelConnectionInfoIcon" class="fas fa-question"
                        style="width: 20px;font-size: 1.1em; margin: auto 0;"></i>
                     <span id="kernelConnectedAddress" style="margin: auto 0">Not connected</span>
+                </div>
+                <div class="col-2">
+                    <button class="btn btn-primary"
+                            id="kernelConnectionShareButton">
+                        <i class="fas fa-share" style="width: 20px"></i>
+                        Share this Kernel
+                    </button>
                 </div>
                 <div class="col-2">
                     <button class="btn btn-primary"

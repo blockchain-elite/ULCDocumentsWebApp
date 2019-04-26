@@ -492,6 +492,17 @@ function UIManager() {
         $.selector_cache('#kernelConnectionShowMoreButton').on('click', function () {
             _kernelManager.showKernelInfo();
         });
+        $.selector_cache('#kernelConnectionShareButton').on('click', function () {
+            let linkContainer = document.createElement('input');
+            let link = window.location.href;
+            document.body.appendChild(linkContainer);
+            linkContainer.value = link;
+            linkContainer.select();
+            document.execCommand('copy');
+            document.body.removeChild(linkContainer);
+            sendNotification(TypeInfo.Good, 'Link Copied', 'The link to this page has been copied in your clipboard.')
+        });
+
         $.selector_cache('#advancedOptionsButton').on('click', function () {
             $.confirm({
                 title: 'Are you sure?',

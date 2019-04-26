@@ -178,6 +178,7 @@ function UIKernelManager() {
             $.selector_cache('#kernelInfoEmptyZone').hide();
             $.selector_cache('#kernelConnectionEditButton').show();
             $.selector_cache('#kernelConnectionShowMoreButton').show();
+            $.selector_cache('#kernelConnectionShareButton').show();
             _currentKernelInfo = result;
             setKernelConnectedAddress(result);
         } else {
@@ -185,12 +186,14 @@ function UIKernelManager() {
             $.selector_cache('#kernelInfoEmptyZone').show();
             $.selector_cache('#kernelConnectionEditButton').hide();
             $.selector_cache('#kernelConnectionShowMoreButton').hide();
+            $.selector_cache('#kernelConnectionShareButton').hide();
 
             let errorText = "Not connected";
             switch (errorType) {
                 case TypeInfo.Warning:
                     errorText = 'Connection could not be verified by moderator';
                     $.selector_cache('#kernelConnectionEditButton').show();
+                    $.selector_cache('#kernelConnectionShareButton').show();
                     break;
                 case TypeInfo.Critical:
                     errorText = 'Connection could not be established, please enter a valid address below:';
