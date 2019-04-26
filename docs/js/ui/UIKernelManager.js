@@ -62,10 +62,9 @@ function UIKernelManager() {
             theme: JQUERY_CONFIRM_THEME,
             columnClass: 'xlarge',
             icon: 'fas fa-info-circle',
-            escapeKey: 'cancel',
+            escapeKey: 'ok',
             typeAnimated: true,
             onOpenBefore: function () {
-                // when content is fetched
                 setKernelReservedFields(_currentKernelInfo);
                 setKernelExtraData(_currentKernelInfo);
             },
@@ -76,7 +75,7 @@ function UIKernelManager() {
      * Show a dialog to enter a new kernel address
      */
     this.showKernelInput = function () {
-        let checkedAttr = UI.getAppMode() === APP_MODE.sign ? 'checked' : '';
+        let checkedAttr = UI.getCurrentAppMode() === APP_MODE.sign ? 'checked' : '';
         $.confirm({
             title: 'Change kernel address',
             content: '' +

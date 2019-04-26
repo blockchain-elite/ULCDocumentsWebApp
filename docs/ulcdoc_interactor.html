@@ -293,7 +293,7 @@
                 <div class="mb-2" id="mainUIContainer">
 
                     <div class="row" id="filesRow">
-                        <div class="col-lg-4">
+                        <div class="col-lg">
                             <!--ITEM LIST CARD-->
                             <div class="card shadow mb-4" id="fileListCard">
                                 <div class="card-header">
@@ -336,183 +336,43 @@
                                 </div>
                             </div>
                         </div>
-                        <!--FILE DETAILS CARD-->
-                        <div class="col-lg-8 mb-2">
-                            <div class="card shadow" id="fileDetailsCard">
-                                <div class="card-header">
-                                    <h5>Details</h5>
-                                </div>
-                                <div class="card-body" id="detailsBody">
-                                    <div id="detailsEmptyZone">
-                                        <div class="text-muted text-center align-items-center">
-                                            <h3 class="mx-auto">Click on a file to show its details</h3>
-                                        </div>
-                                    </div>
-
-                                    <div id="detailsZone" style="display: none">
-                                        <div class="card mb-4 shadow" id="generalInfoBody">
-                                            <div class="card-header">
-                                                <h6 class="text-center">General Information</h6>
-                                            </div>
-                                            <div class="card-body">
-                                                <h2 class="text-center">
-                                                    <span class="text-muted">
-                                                        <i id="itemTypeProp" class="far fa-file"></i>
-                                                    </span>
-
-                                                    <span id="itemNameProp">#NAME</span>
-                                                    <span class="file-specific-info text-muted">
-                                                         (<span id="fileSizeProp">#SIZE</span>)
-                                                    </span>
-                                                </h2>
-                                                <h5 class="text-center">
-                                                    <span id="itemStatusProp">#STATUS</span>
-                                                    <span id="itemNumSignContainer" class="text-muted">
-                                                         :
-                                                        <span id="itemNumSignProp">#SIGNATURES</span>
-                                                    </span>
-                                                </h5>
-                                                <p class="text-center text-muted file-specific-info">
-                                                    <span>Last Modified: </span>
-                                                    <span id="fileDateProp">##DATE</span>
-                                                </p>
-                                                <form class="form-group" id="itemTextInputContainer">
-                                                    <label for="itemTextInput">Enter your text here: </label>
-                                                    <textarea id="itemTextInput" class="form-control"></textarea>
-                                                </form>
-                                                <form class="form-group" id="itemHashInputContainer">
-                                                    <label for="itemHashInput">Enter your hash here: </label>
-                                                    <input id="itemHashInput" class="form-control" placeholder="0x...">
-                                                </form>
-                                            </div>
-                                            <div class="card-footer">
-                                                <p class="text-muted" id="itemHashContainer">Hash: <span
-                                                        id="itemHashProp">HASH</span>
-                                                </p>
-                                                <a id="itemTxUrlProp" href="" target="_blank">
-                                                    <button class="btn btn-primary">
-                                                        <i class="fas fa-external-link-alt"></i>
-                                                        See Transaction on Etherscan
-                                                    </button>
-                                                </a>
-                                            </div>
-                                        </div>
-                                        <div class="card mb-4 shadow" id="fileBlockchainInfoCard">
-                                            <div class="card-header">
-                                                <h6 class="text-center">Blockchain Information</h6>
-                                            </div>
-                                            <div class="card-body" id="fileBlockchainInfoBody">
-                                                <div id="fileBlockchainInfoZone">
-                                                    <h4 class="text-center">Blockchain Info</h4>
-                                                    <table class="table">
-                                                        <tbody id="fileBlockchainInfoTable">
-                                                        </tbody>
-                                                    </table>
-                                                    <div id="fileBlockchainExtraDataZone">
-                                                        <h4 class="text-center">Extra Data</h4>
-                                                        <table class="table">
-                                                            <tbody id="fileBlockchainExtraDataTable">
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
-                                                </div>
-                                                <div id="fileBlockchainEditInfoZone">
-                                                    <h4 class="text-center">Edit Blockchain Info</h4>
-                                                    <table class="table">
-                                                        <tbody id="fileBlockchainEditInfoTable">
-                                                        <tr>
-                                                            <th>Source</th>
-                                                            <td><input class="form-control" type="text"
-                                                                       id="infoSourceInput" placeholder="Enter a value">
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <th>Document Type</th>
-                                                            <td>
-                                                                <div class="dropdown">
-                                                                    <button class="btn btn-info dropdown-toggle"
-                                                                            type="button" id="docFamilyDropdownButton"
-                                                                            data-toggle="dropdown" aria-haspopup="true"
-                                                                            aria-expanded="false">
-                                                                        Dropdown button
-                                                                    </button>
-                                                                    <div class="dropdown-menu"
-                                                                         aria-labelledby="docFamilyDropdown"
-                                                                         id="docFamilyDropdownMenu">
-                                                                    </div>
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                        </tbody>
-                                                    </table>
-                                                    <h4 class="text-center">Extra Data</h4>
-                                                    <table class="table editExtraDataTable">
-                                                        <tbody id="fileBlockchainEditExtraDataTable">
-                                                        </tbody>
-                                                    </table>
-                                                    <button class="btn btn-info" id="editExtraDataAddButton"
-                                                            data-toggle="tooltip" data-placement="bottom"
-                                                            title="Add more extra data fields">
-                                                        Add Fields
-                                                        <i class="fas fa-plus" style="margin-left: 10px"></i>
-                                                    </button>
-                                                    <button class="btn btn-danger" id="editExtraDataClearButton"
-                                                            data-toggle="tooltip" data-placement="bottom"
-                                                            title="Remove all extra data fields" style="float: right;">
-                                                        Clear
-                                                        <i class="fas fa-trash" style="margin-left: 10px"></i>
-                                                    </button>
-                                                </div>
-                                                <div id="fileBlockchainInfoEmptyZone">
-                                                    <div class="container-fluid d-flex">
-                                                        <div class="container-fluid justify-content-center align-self-center text-center">
-                                                            <h3 id="fileBlockchainInfoEmptyText">
-                                                                Click on check to get information from the blockchain
-                                                            </h3>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!--ACTION BUTTON AND PROGRESS TAB-->
-                    <div class="card text-center shadow mb-2" id="buttonsCard">
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-xl-3 my-1" id="actionButtonContainer">
-                                    <div id="actionButtons">
-                                        <button class="btn btn-primary btn-lg action-button" id="checkButton">
-                                            <span id="checkButtonText">Check</span>
-                                            <i class="far fa-check-square" id="checkButtonLogo"
-                                               style="margin-left: 10px"></i>
-                                        </button>
-                                        <div id="signActionButtonContainer">
-                                            <i class="fas fa-long-arrow-alt-right sign-next-step-logo mx-1"></i>
-                                            <div id="buttonsContainer">
-                                                <button class="btn btn-primary btn-lg action-button" id="signButton">
-                                                    Sign
-                                                    <i class="far fa-edit" id="signButtonLogo"
+                        <div class="col-lg" style="display: flex;">
+                            <!--ACTION BUTTON AND PROGRESS TAB-->
+                            <div class="card text-center shadow" id="buttonsCard">
+                                <div class="card-body">
+                                    <div class="row">
+                                        <div class="col-xl my-1" id="actionButtonContainer">
+                                            <div id="actionButtons">
+                                                <button class="btn btn-primary btn-lg action-button" id="checkButton">
+                                                    <span id="checkButtonText">Check</span>
+                                                    <i class="far fa-check-square" id="checkButtonLogo"
                                                        style="margin-left: 10px"></i>
                                                 </button>
-                                                <button class="btn btn-warning btn-lg action-button mt-2"
-                                                        id="cancelButton">
-                                                    Cancel
-                                                    <i class="fas fa-times" style="margin-left: 10px"></i>
-                                                </button>
+                                                <div id="signActionButtonContainer">
+                                                    <i class="fas fa-long-arrow-alt-right sign-next-step-logo mx-1"></i>
+                                                    <div id="buttonsContainer">
+                                                        <button class="btn btn-primary btn-lg action-button"
+                                                                id="signButton">
+                                                            Sign
+                                                            <i class="far fa-edit" id="signButtonLogo"
+                                                               style="margin-left: 10px"></i>
+                                                        </button>
+                                                        <button class="btn btn-warning btn-lg action-button mt-2"
+                                                                id="cancelButton">
+                                                            Cancel
+                                                            <i class="fas fa-times" style="margin-left: 10px"></i>
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div class="col-xl my-1" style="display: flex">
+                                            <div id="actionTextContainer" style="margin: auto">
+                                                <div class="card-text" id="actionInProgress"></div>
+                                                <div class="card-text" id="fileInProgress"></div>
                                             </div>
                                         </div>
                                     </div>
-
-                                </div>
-                                <div class="col-xl-9 my-1">
-                                    <span class="card-text" id="actionInProgress"></span>
-                                    <span class="card-text" id="fileInProgress"></span>
                                     <div class="progress" id="actionProgressHolder">
                                         <div class="progress-bar progress-bar-striped progress-bar-animated"
                                              role="progressbar" id="actionProgressBar" style="width: 0;"
@@ -695,6 +555,7 @@
 <script src="js/ui/UIUtils.js"></script>
 <script src="js/ui/UIKernelManager.js"></script>
 <script src="js/ui/UIModeratorManager.js"></script>
+<script src="js/ui/UIItemDetailsManager.js"></script>
 <script src="js/ui/UIManager.js"></script>
 <!-- BLOCKCHAIN RELATED -->
 <script src="js/abi/ULCDocKernel_ABI.js"></script>

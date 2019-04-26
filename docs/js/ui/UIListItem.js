@@ -79,7 +79,7 @@ class ListItem {
     setTxUrl(url) {
         this.txUrl = url;
         if (this.isSelected())
-            UI.displayFileProps(this.index);
+            UI.getItemDetailsManager().setupItemPopup(this);
     }
 
     /**
@@ -154,7 +154,7 @@ class ListItem {
     setInformation(information) {
         this.information = new Map (information);
         if (this.isSelected()) {
-            UI.displayFileProps(this.index);
+            UI.getItemDetailsManager().setupItemPopup(this);
         }
     }
 
@@ -176,7 +176,7 @@ class ListItem {
     setExtraData(extraData) {
         this.extraData = new Map (extraData);
         if (this.isSelected()) {
-            UI.displayFileProps(this.index);
+            UI.getItemDetailsManager().setupItemPopup(this);
         }
     }
 
@@ -197,7 +197,7 @@ class ListItem {
     setHash(hash) {
         this.hash = hash;
         if (this.isSelected()) {
-            UI.displayFileProps(this.index);
+            UI.getItemDetailsManager().setupItemPopup(this);
         }
     }
 
@@ -218,7 +218,7 @@ class ListItem {
     setSelected(state) {
         if (state && !this.isSelected()) {
             this.$item.addClass(this.FILE_SELECTED_CLASS);
-            UI.displayFileProps(this.index);
+            UI.getItemDetailsManager().displayFileProps(this);
 
         } else if (!state)
             this.$item.removeClass(this.FILE_SELECTED_CLASS);
@@ -309,7 +309,7 @@ class ListItem {
         this.cardColor = cardColor;
         this.type = type;
         if (this.isSelected())
-            UI.displayFileProps(this.index);
+            UI.getItemDetailsManager().setupItemPopup(this);
     }
 
     getType() {

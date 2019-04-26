@@ -124,25 +124,6 @@ function UIManager() {
         _itemList.get(key).set(TAB_TYPE.hash, new Map());
     }
 
-    let _blockchainErrorMsg = new Map();
-    _blockchainErrorMsg.set(APP_MODE.check, new Map());
-    _blockchainErrorMsg.set(APP_MODE.sign, new Map());
-
-    _blockchainErrorMsg.get(APP_MODE.check).set(TypeElement.Fake, ['This item is not signed', COLOR_CLASSES.danger]);
-    _blockchainErrorMsg.get(APP_MODE.check).set(TypeElement.Unknown, ['Click on check to display blockchain information', COLOR_CLASSES.info]);
-    _blockchainErrorMsg.get(APP_MODE.check).set(TypeElement.Invalid, ['An error occurred', COLOR_CLASSES.secondary]);
-    _blockchainErrorMsg.get(APP_MODE.check).set(TypeElement.Loading, ['Asking blockchain...', COLOR_CLASSES.info]);
-
-    _blockchainErrorMsg.get(APP_MODE.sign).set(TypeElement.Signed, ['This item is already signed', COLOR_CLASSES.danger]);
-    _blockchainErrorMsg.get(APP_MODE.sign).set(TypeElement.Pending, ['You already signed this item', COLOR_CLASSES.danger]);
-    _blockchainErrorMsg.get(APP_MODE.sign).set(TypeElement.Revoked, ['This item has been revoked and cannot be signed again', COLOR_CLASSES.danger]);
-    _blockchainErrorMsg.get(APP_MODE.sign).set(TypeElement.Unknown, ['Click on fetch to start editing blockchain information', COLOR_CLASSES.info]);
-    _blockchainErrorMsg.get(APP_MODE.sign).set(TypeElement.Invalid, ['An error occurred', COLOR_CLASSES.secondary]);
-    _blockchainErrorMsg.get(APP_MODE.sign).set(TypeElement.Loading, ['Asking blockchain...', COLOR_CLASSES.info]);
-    _blockchainErrorMsg.get(APP_MODE.sign).set(TypeElement.TxProcessing, ['Waiting for blockchain...', COLOR_CLASSES.info]);
-    _blockchainErrorMsg.get(APP_MODE.sign).set(TypeElement.TransactionSuccess, ['Signature successfully sent!', COLOR_CLASSES.success]);
-    _blockchainErrorMsg.get(APP_MODE.sign).set(TypeElement.TransactionFailure, ['Signature failed!', COLOR_CLASSES.danger]);
-
     const WALLET_STATE = {
         unknown: 0,
         injected: 1,
@@ -151,6 +132,7 @@ function UIManager() {
 
     let _kernelManager = new UIKernelManager();
     let _moderatorManager = new UIModeratorManager();
+    let _itemDetailsManager = new UIItemDetailsManager();
 
     let _uniqueIdCounter = 0; // unique id referencing a list item (file, text or hash)
     let _itemsProcessedCounter = 0; // The number of items in the current list (file text or hash) that have been checked
@@ -670,7 +652,7 @@ function UIManager() {
         $.selector_cache('#cancelButton').attr('disabled', state !== UI_STATE.fetched);
 
         _currentUiState = state;
-        updateDIsplayedItemInfo();
+        updateDisplayedItemInfo();
     };
 
     /**
@@ -832,7 +814,6 @@ function UIManager() {
                 UI.setUIButtonState(UI_STATE.none);
                 UI.resetProgress();
                 _uniqueIdCounter += 1;
-                listItemClick(item.getIndex());
             };
             reader.onerror = function () { // file is invalid
                 sendNotification(TypeInfo.Critical, "Error", "Could not read file '" + file.name + "'");
@@ -970,10 +951,10 @@ function UIManager() {
             UI.setUIButtonState(UI_STATE.fetched);
     };
 
-    let updateDIsplayedItemInfo = function () {
+    let updateDisplayedItemInfo = function () {
         for (let i of getCurrentList().values()) {
             if (i.isSelected())
-                UI.displayFileProps(i.getIndex());
+                _itemDetailsManager.setupItemPopup(i);
         }
     };
 
@@ -1309,7 +1290,6 @@ function UIManager() {
      */
     let fileListResetSelection = function () {
         $(".file-selected").removeClass('file-selected'); // unselect all items
-        UI.displayFileProps(undefined);
     };
 
     /**
@@ -1416,6 +1396,10 @@ function UIManager() {
         return _kernelManager;
     };
 
+    this.getItemDetailsManager = function () {
+        return _itemDetailsManager;
+    };
+
     /**
      * Set the app verbose mode.
      * Display a message indicating its state not matter the verbose mode.
@@ -1442,8 +1426,16 @@ function UIManager() {
      *
      * @return {APP_MODE} the current app mode
      */
-    this.getAppMode = function () {
+    this.getCurrentAppMode = function () {
         return _currentAppMode;
+    };
+
+    this.getCurrentTab = function () {
+        return _currentTab;
+    };
+
+    this.getCurrentUIState = function () {
+        return _currentUiState;
     };
 
     /**
@@ -1509,324 +1501,7 @@ function UIManager() {
             UI.updateCheckButtonState();
             UI.setUIButtonState(UI_STATE.none);
         }
-        if (isSelected) {
-            UI.displayFileProps(undefined);
-        }
         updateDisplayIds(_currentTab);
-    };
-
-    /**
-     * Display file properties in the details card.
-     *
-     * @param index {Number} The file unique index.
-     */
-    this.displayFileProps = function (index) {
-        let item = getCurrentListItem(index);
-        setBlockchainInfoErrorText('', COLOR_CLASSES.none); // reset color
-        if (item !== undefined) {
-            $.selector_cache('#detailsEmptyZone').hide();
-            $.selector_cache('#detailsZone').show();
-            setDOMColor($.selector_cache('#generalInfoBody'), item.getCardColor());
-            let file = undefined;
-            if (_currentTab === TAB_TYPE.file)
-                file = item.getFile();
-            fillFileProp(file);
-            setupItemInputFields(item);
-            fillReservedFields(item);
-            // Display blockchain edit fields if the item has no signatures
-            if (_currentAppMode === APP_MODE.sign && _currentUiState === UI_STATE.fetched
-                && item.getType() === TypeElement.Fake && item.getNumSign() === 0) {
-                log('Displaying Blockchain edit fields', TypeInfo.Info);
-                $.selector_cache('#fileBlockchainInfoEmptyZone').hide();
-                $.selector_cache('#fileBlockchainInfoZone').hide();
-                $.selector_cache('#fileBlockchainEditInfoZone').show();
-                // Reset table
-                $.selector_cache("#fileBlockchainEditExtraDataTable").html('');
-                setupSourceInputField(item);
-                createDocFamilyDropDown(item);
-                createSavedInputFields(item);
-                setupExtraDataControlButtons(item);
-            } else if (item.getInformation() !== undefined && item.getInformation().size) {
-                fillBlockchainInfoFields(item);
-                if (item.getExtraData() !== undefined && item.getExtraData().size)
-                    fillBlockchainExtraDataFields(item);
-                else
-                    $.selector_cache("#fileBlockchainExtraDataZone").hide();
-            } else {
-                // No blockchain information to display
-                $.selector_cache('#fileBlockchainInfoEmptyZone').show();
-                $.selector_cache('#fileBlockchainInfoZone').hide();
-                $.selector_cache('#fileBlockchainEditInfoZone').hide();
-                setBlockchainInfoMessage(item);
-            }
-        } else {
-            $.selector_cache('#detailsEmptyZone').show();
-            $.selector_cache('#detailsZone').hide();
-        }
-        $('[data-toggle="tooltip"]').tooltip(); // Enable created tooltips
-    };
-
-    /**
-     * Fill in the file property fields if we have a valid file
-     *
-     * @param file {File} The file to display information from
-     */
-    let fillFileProp = function (file) {
-        if (file !== undefined) { // display file properties only if we have a file
-            log('Displaying file properties', TypeInfo.Info);
-            $.selector_cache("#itemNameProp").text(file.name);
-            $.selector_cache("#itemTypeProp").attr('class', getMimeTypeIcon(file));
-            $.selector_cache("#fileSizeProp").text(humanFileSize(file.size));
-            let date = new Date(file.lastModified);
-            $.selector_cache("#fileDateProp").text(date);
-            $.selector_cache(".file-specific-info").show();
-        } else
-            $.selector_cache(".file-specific-info").hide();
-    };
-
-    let fillReservedFields = function (item) {
-        // display generic info
-        if (item.getHash() !== '')
-            $.selector_cache("#itemHashProp").text(item.getHash());
-        else
-            $.selector_cache("#itemHashProp").text('Not yet calculated');
-        if (item.getType() !== TypeElement.Unknown) {
-            $.selector_cache("#itemStatusProp").show();
-            $.selector_cache("#itemStatusProp").text(ITEM_STATE_TEXT[item.getType()]);
-        } else
-            $.selector_cache("#itemStatusProp").hide();
-
-        // Set the number of signatures needed
-        if (item.getNeededSign() > 0 && item.getType() !== TypeElement.Unknown) {
-            $.selector_cache("#itemNumSignProp").text(item.getNumSign() + "/" + item.getNeededSign());
-            $.selector_cache("#itemNumSignContainer").show();
-        } else
-            $.selector_cache("#itemNumSignContainer").hide();
-        // Set the Tx url if available
-        if (item.getTxUrl() !== '') {
-            $.selector_cache("#itemTxUrlProp").attr('href', item.getTxUrl());
-            $.selector_cache("#itemTxUrlProp").show();
-        } else
-            $.selector_cache("#itemTxUrlProp").hide();
-    };
-
-    let setupItemInputFields = function (item) {
-        if (!(item instanceof FileListItem)) {
-            $.selector_cache("#itemNameProp").text(item.getTitle());
-            if (item instanceof TextListItem) {
-                $.selector_cache("#itemTypeProp").attr('class', 'fas fa-align-left');
-                $.selector_cache("#itemTextInput").val(item.getText());
-                $.selector_cache("#itemTextInputContainer").show();
-                $.selector_cache("#itemHashInputContainer").hide();
-                $.selector_cache("#itemTextInput").off('change keyup paste'); // Remove previous event handlers
-                $.selector_cache("#itemTextInput").on('change keyup paste', function () {
-                    item.setText($.selector_cache("#itemTextInput").val());
-                    if (item.getType() !== TypeElement.Unknown) {
-                        item.reset();
-                        item.setHash('');
-                        UI.displayFileProps(item.getIndex());
-                        UI.resetProgress();
-                        UI.setUIButtonState(UI_STATE.none);
-                    }
-                });
-                $.selector_cache("#itemTextInput").focus();
-            } else { // We have a hash
-                $.selector_cache("#itemTypeProp").attr('class', 'fas fa-hashtag');
-                $.selector_cache("#itemTextInputContainer").hide();
-                $.selector_cache("#itemHashInput").val(item.getHash());
-                $.selector_cache("#itemHashInputContainer").show();
-                $.selector_cache("#itemHashInput").off('change keyup paste'); // Remove previous event handlers
-                $.selector_cache("#itemHashInput").on('change keyup paste', function () {
-                    item.setHash($.selector_cache("#itemHashInput").val());
-                    if (item.getType() !== TypeElement.Unknown) {
-                        item.reset();
-                        UI.displayFileProps(item.getIndex());
-                        UI.resetProgress();
-                        UI.setUIButtonState(UI_STATE.none);
-                    }
-                });
-                $.selector_cache("#itemHashInput").focus();
-            }
-        } else {
-            $.selector_cache("#itemTextInputContainer").hide();
-            $.selector_cache("#itemHashInputContainer").hide();
-        }
-    };
-
-    let fillBlockchainInfoFields = function (item) {
-        log('Displaying Blockchain information', TypeInfo.Info);
-        $.selector_cache('#fileBlockchainInfoEmptyZone').hide();
-        $.selector_cache('#fileBlockchainInfoZone').show();
-        $.selector_cache('#fileBlockchainEditInfoZone').hide();
-        // Reset table
-        $.selector_cache("#fileBlockchainInfoTable").html('');
-        let counter = 0;
-        for (let [key, value] of item.getInformation()) {
-            counter++;
-            if (key === elementReservedKeys.documentFamily)
-                value = getCompatibleFamily()[value]; // Get the document family string
-            $.selector_cache("#fileBlockchainInfoTable").append(
-                "<tr>\n" +
-                "<th scope='row' id='blockchainFieldKey" + counter + "'></th>\n" +
-                "<td id='blockchainFieldValue" + counter + "'></td>\n" +
-                "</tr>");
-            $("#blockchainFieldKey" + counter).text(key);
-            $("#blockchainFieldValue" + counter).text(value); // Prevent XSS
-        }
-    };
-
-    let fillBlockchainExtraDataFields = function (item) {
-        $.selector_cache("#fileBlockchainExtraDataZone").show();
-        // Reset table
-        $.selector_cache("#fileBlockchainExtraDataTable").html('');
-        let counter = 0;
-        for (let [key, value] of item.getExtraData()) {
-            counter++;
-            $.selector_cache("#fileBlockchainExtraDataTable").append(
-                "<tr>\n" +
-                "<th scope='row' id='blockchainExtraFieldKey" + counter + "'></th>\n" +
-                "<td id='blockchainExtraFieldValue" + counter + "'></td>\n" +
-                "</tr>");
-            $("#blockchainExtraFieldKey" + counter).text(key);
-            $("#blockchainExtraFieldValue" + counter).text(value); // Prevent XSS
-        }
-    };
-
-    let setBlockchainInfoMessage = function (item) {
-        let message = _blockchainErrorMsg.get(_currentAppMode).get(item.getType());
-        if (message !== undefined)
-            setBlockchainInfoErrorText(message[0], message[1]);
-        else
-            setBlockchainInfoErrorText('', COLOR_CLASSES.none);
-    };
-
-    let setBlockchainInfoErrorText = function (text, color) {
-        $.selector_cache('#fileBlockchainInfoEmptyText').html(text);
-        setDOMColor($.selector_cache('#fileBlockchainInfoCard'), color);
-    };
-
-    /**
-     *
-     * @param item {ListItem}
-     */
-    let setupSourceInputField = function (item) {
-        if (item.getInformation().has(elementReservedKeys.source))
-            $.selector_cache("#infoSourceInput").val(item.getInformation().get(elementReservedKeys.source));
-        else
-            $.selector_cache("#infoSourceInput").val('');
-
-        $.selector_cache("#infoSourceInput").off('change keyup paste');
-        $.selector_cache("#infoSourceInput").on('change keyup paste', function () {
-            let val = $.selector_cache("#infoSourceInput").val();
-            if (val !== '')
-                item.getInformation().set(elementReservedKeys.source, val);
-            else
-                item.getInformation().delete(elementReservedKeys.source);
-        });
-    };
-
-    /**
-     * Generate the dropdown menu based on kernel document family.
-     *
-     * @param item {ListItem} The item we are editing
-     */
-    let createDocFamilyDropDown = function (item) {
-        let dropdownButton = $.selector_cache("#docFamilyDropdownButton");
-        let dropdownMenu = $.selector_cache("#docFamilyDropdownMenu");
-        let docFamilyArray = getCompatibleFamily();
-        // clear menu
-        dropdownMenu.html('');
-        // Generate dropdown menu entries
-        for (let i = 0; i < getCompatibleFamily().length; i++) {
-            dropdownMenu.append("<button class='dropdown-item btn' id='dropdownButton" + i + "'>" + docFamilyArray[i] + "</button>");
-            $("#dropdownButton" + i).on('click', function () {
-                dropdownButton.text(docFamilyArray[i]);
-                if (i !== 0)
-                    item.getInformation().set(elementReservedKeys.documentFamily, i);
-                else
-                    item.getInformation().delete(elementReservedKeys.documentFamily);
-            });
-        }
-        // Set default value
-        if (item.getInformation().has(elementReservedKeys.documentFamily))
-            dropdownButton.text(docFamilyArray[item.getInformation().get(elementReservedKeys.documentFamily)]);
-        else
-            dropdownButton.text(docFamilyArray[0]);
-    };
-
-    /**
-     * Create input fields with values from the item.
-     * @param item {ListItem} The list item to take values from
-     */
-    let createSavedInputFields = function (item) {
-        item.clearCustomExtraData();
-        $.selector_cache('#fileBlockchainEditExtraDataTable').html(''); // Clear the list to recreate it
-        if (item.getCustomExtraData().length === 0)
-            createNewInputFields(item, 0, '', '');
-        else {
-            for (let i = 0; i < item.getCustomExtraData().length; i++) {
-                if (item.getCustomExtraData()[i] !== undefined) {
-                    createNewInputFields(item, i, item.getCustomExtraData()[i][0], item.getCustomExtraData()[i][1])
-                }
-            }
-        }
-
-    };
-
-    /**
-     * Create a new input fields in the edit blockchain zone.
-     *
-     * @param item {ListItem} The list item we are editing
-     * @param index {Number} The index of the last input field created
-     * @param key {String} The default value for the key input field
-     * @param value {String} The default value for the value input field
-     */
-    let createNewInputFields = function (item, index, key, value) {
-        $.selector_cache("#fileBlockchainEditExtraDataTable").append(
-            "<tr id='inputRowExtra" + index + "'>\n" +
-            "<th><input class='form-control' id='inputKeyExtra" + index + "' type='text' placeholder='Enter a key'></th>\n" +
-            "<td><textarea class='form-control' id='inputValueExtra" + index + "' placeholder='Enter a value'></textarea></td>\n" +
-            "<td><button class='btn btn-danger delete-extra-button' id='inputDeleteExtra" + index + "'" +
-            " data-toggle='tooltip' data-placement='bottom' title='Delete this row'>" +
-            "<i class='fas fa-trash'></i></button></td>\n" +
-            "</tr>");
-        let inputKey = $("#inputKeyExtra" + index);
-        let inputValue = $("#inputValueExtra" + index);
-        $("#inputDeleteExtra" + index).on('click', function () {
-            item.setCustomExtraData(index, undefined);
-            $("#inputRowExtra" + index).remove();
-        });
-        inputKey.val(key);
-        inputValue.val(value);
-        item.setCustomExtraData(index, [key, value]);
-        inputKey.on('change keyup paste', function () {
-            item.setCustomExtraData(index, [inputKey.val(), inputValue.val()]);
-        });
-        inputValue.on('change keyup paste', function () {
-            item.setCustomExtraData(index, [inputKey.val(), inputValue.val()]);
-        });
-    };
-
-    /**
-     * Setup event handlers for blockchain edit buttons
-     * @param item {ListItem} The list item we are editing
-     */
-    let setupExtraDataControlButtons = function (item) {
-        // Reset event handlers
-        $.selector_cache("#editExtraDataAddButton").off('click');
-        $.selector_cache("#editExtraDataClearButton").off('click');
-        // Set event handlers
-        $.selector_cache("#editExtraDataAddButton").on('click', function () {
-            createNewInputFields(item, item.getCustomExtraData().length, '', '');
-        });
-        $.selector_cache("#editExtraDataClearButton").on('click', function () {
-            for (let i = 0; i < item.getCustomExtraData().length; i++) {
-                if (item.getCustomExtraData()[i] !== undefined)
-                    $("#inputRowExtra" + i).remove();
-            }
-            item.clearCustomExtraData();
-            createNewInputFields(item, 0, '', '');
-        });
     };
 
     /**
@@ -1837,6 +1512,7 @@ function UIManager() {
         log('Successfully Loaded');
         _kernelManager = new UIKernelManager();
         _moderatorManager = new UIModeratorManager();
+        _itemDetailsManager = new UIItemDetailsManager();
         setAppVersion();
         setDefaultFieldValues();
         detectAppMode();
@@ -1850,7 +1526,6 @@ function UIManager() {
             resetTabZone(TAB_TYPE[i]);
         }
         $('[data-toggle="tooltip"]').tooltip(); // enable Popper.js tooltips
-        UI.displayFileProps(undefined);
         registerEvents();
         UI.resetProgress();
         this.updateAccounts(undefined);
