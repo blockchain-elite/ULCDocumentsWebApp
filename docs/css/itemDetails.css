@@ -18,7 +18,6 @@
 */
 
 #detailsBody {
-    height: 650px;
     padding: 0;
     display: flex;
     overflow-y: auto;

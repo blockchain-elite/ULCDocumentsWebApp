@@ -95,9 +95,6 @@
     height: inherit;
 }
 
-#checkButton.btn-primary {
-    height: 100px;
-}
 
 .sign-next-step-logo {
     font-size: 2em;
@@ -130,7 +127,6 @@
 }
 
 #fileContainer {
-    height: 600px;
     overflow-y: auto;
     transition: 0.3s;
 }
@@ -174,7 +170,7 @@
 }
 
 #actionProgressHolder {
-    height: 3rem;
+    height: 2rem;
     font-size: 1.2em;
 }
 
@@ -217,12 +213,6 @@
     margin-bottom: 20px;
 }
 
-#kernelConnectionEditButton {
-    position: absolute;
-    right: 0;
-    margin: 10px;
-}
-
 .custom-checkbox {
     line-height: 30px;
 }
@@ -244,6 +234,16 @@
     max-height: 100%;
     max-width: 100%;
     margin: auto;
+}
+
+#kernelInfoHeader {
+    height: 50px;
+    margin: 20px auto;
+    display: flex;
+}
+
+#kernelInfoHeader .row {
+    margin: auto 0;
 }
 
 #kernelInfoBody {
@@ -292,13 +292,17 @@
     display: flex;
 }
 
-#mainCardBody {
-    min-height: 1050px;
-}
-
 #kernelAddressInput {
     max-width: 600px;
     margin: auto;
+}
+
+#mainUIContainer {
+    height: 100%;
+}
+
+#filesRow {
+    height: calc(100% - 160px);
 }
 
 #kernelInput, #moderatorInput {
@@ -317,6 +321,12 @@
 
 .start-app-container {
     min-height: 250px;
+}
+
+
+
+#fileDetailsCard, #fileListCard {
+    height: 100%;
 }
 
 @media

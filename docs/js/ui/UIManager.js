@@ -156,6 +156,7 @@ function UIManager() {
     let _currentModeratorAddress; // The current moderator address the user is connected to
     let _isModeratorConnected = false; // Is the user connected to a valid moderator ?
     let _isKernelConnected = false; // Is the user connected to a valid kernel ?
+    let _currentKernelInfo = new Map();
     let _isVerbose = false; // Should we display additional information in the console
     let _isOptimizerEnabled = true; // Should we optimize signing ?
     let _canUseDropZone = true; // Can the user use the dropZone ?
@@ -502,6 +503,9 @@ function UIManager() {
         $.selector_cache('#kernelConnectionEditButton').on('click', function () {
             showKernelInput();
         });
+        $.selector_cache('#kernelConnectionShowMoreButton').on('click', function () {
+            showKernelInfo();
+        });
         $.selector_cache('#advancedOptionsButton').on('click', function () {
             $.confirm({
                 title: 'Are you sure?',
@@ -637,6 +641,59 @@ function UIManager() {
         _isModeratorConnected = false;
         setModeratorConnectionLoading(true);
         updateModeratorAddress(_currentModeratorAddress); // Call to ULCDocMaster
+    };
+
+    let showKernelInfo = function () {
+        $.alert({
+            title: 'Kernel Information',
+            content: '<div class="row" id="kernelInfoZone">\n' +
+                '<div class="col" id="kernelInfoCol">\n' +
+                '<div class="mr-4" id="kernelImgContainer">\n' +
+                '<img class="my-auto" src="images/img_placeholder.jpg" alt="Kernel Image"\n' +
+                'id="kernelImg">\n' +
+                '</div>\n' +
+                '<div class="pl-4 border-left border-dark" id="kernelInfoText">\n' +
+                '<h4 id="kernelName">Kernel Info</h4>\n' +
+                '<p id="kernelOrganization">#ORGA</p>\n' +
+                '<p id="kernelPhoneContainer">\n' +
+                '<i class="fas fa-phone" style="width: 20px"></i>\n' +
+                '<span id="kernelPhone">#PHONE</span>\n' +
+                '</p>\n' +
+                '<p id="kernelAddressContainer">\n' +
+                '<i class="fas fa-map-marker-alt" style="width: 20px"></i>\n' +
+                '<a id="kernelAddress" href="" target="_blank">#Address</a>\n' +
+                '</p>\n' +
+                '<p id="kernelUrlContainer">\n' +
+                '<i class="fas fa-globe" style="width: 20px"></i>\n' +
+                '<a href="" target="_blank" id="kernelUrl"></a>\n' +
+                '</p>\n' +
+                '<p id="kernelMailContainer">\n' +
+                '<i class="fas fa-envelope" style="width: 20px"></i>\n' +
+                '<a href="" id="kernelMail"></a>\n' +
+                '</p>\n' +
+                '<p class="text-muted" id="kernelVersion"></p>\n' +
+                '</div>\n' +
+                '</div>\n' +
+                '<div class="col" id="kernelAdditionalInfoZone">\n' +
+                '<h4 class="text-center">Additional Information</h4>\n' +
+                '<table class="table">\n' +
+                '<tbody id="kernelExtraDataTable">\n' +
+                '</tbody>\n' +
+                '</table>\n' +
+                '</div>\n' +
+                '</div>',
+            type: 'blue',
+            theme: JQUERY_CONFIRM_THEME,
+            columnClass: 'xlarge',
+            icon: 'fas fa-info-circle',
+            escapeKey: 'cancel',
+            typeAnimated: true,
+            onOpenBefore: function () {
+                // when content is fetched
+                setKernelReservedFields(_currentKernelInfo);
+                setKernelExtraData(_currentKernelInfo);
+            },
+        });
     };
 
     /**
@@ -1442,47 +1499,46 @@ function UIManager() {
      * @param errorType {TypeInfo} Type of the error.
      */
     let setKernelInfo = function (result, errorType) {
-        $.selector_cache("#kernelInfoBody").fadeOut('fast', function () {
-            $.selector_cache('#kernelInputForm').hide();
-            $.selector_cache('#kernelLoadingIcon').hide();
-            if (result !== undefined) {
-                log('Setting kernel info', TypeInfo.Info);
-                $.selector_cache('#kernelInfoZone').show();
-                $.selector_cache('#kernelInfoEmptyZone').hide();
-                $.selector_cache('#kernelConnectionEditButton').show();
-                setKernelReservedFields(result);
-                setKernelConnectedAddress(result);
-                setKernelExtraData(result);
-            } else {
-                $.selector_cache('#kernelInfoZone').hide();
-                $.selector_cache('#kernelInfoEmptyZone').show();
-                $.selector_cache('#kernelConnectionEditButton').hide();
+        $.selector_cache('#kernelInputForm').hide();
+        $.selector_cache('#kernelLoadingIcon').hide();
+        if (result !== undefined) {
+            log('Setting kernel info', TypeInfo.Info);
+            $.selector_cache('#kernelInfoZone').show();
+            $.selector_cache('#kernelInfoEmptyZone').hide();
+            $.selector_cache('#kernelConnectionEditButton').show();
+            $.selector_cache('#kernelConnectionShowMoreButton').show();
+            _currentKernelInfo = result;
+            setKernelConnectedAddress(result);
+        } else {
+            $.selector_cache('#kernelInfoZone').hide();
+            $.selector_cache('#kernelInfoEmptyZone').show();
+            $.selector_cache('#kernelConnectionEditButton').hide();
+            $.selector_cache('#kernelConnectionShowMoreButton').hide();
 
-                let errorText = "Not connected";
-                switch (errorType) {
-                    case TypeInfo.Warning:
-                        errorText = 'Connection could not be verified by moderator';
-                        $.selector_cache('#kernelConnectionEditButton').show();
-                        break;
-                    case TypeInfo.Critical:
-                        errorText = 'Connection could not be established, please enter a valid address below:';
-                        $.selector_cache('#kernelInputForm').show();
-                        break;
-                    case TypeInfo.Info:
-                        errorText = 'Loading...';
-                        $.selector_cache('#kernelLoadingIcon').show();
-                        break;
-                    default:
-                        errorText = 'Not connected, please enter a kernel address below';
-                        $.selector_cache('#kernelInputForm').show();
-                        break;
-                }
-                updateKernelButtonsState();
-                $.selector_cache("#kernelInfoEmptyText").html(errorText);
+            let errorText = "Not connected";
+            switch (errorType) {
+                case TypeInfo.Warning:
+                    errorText = 'Connection could not be verified by moderator';
+                    $.selector_cache('#kernelConnectionEditButton').show();
+                    break;
+                case TypeInfo.Critical:
+                    errorText = 'Connection could not be established, please enter a valid address below:';
+                    $.selector_cache('#kernelConnectionEditButton').show();
+                    $.selector_cache('#kernelInputForm').show();
+                    break;
+                case TypeInfo.Info:
+                    errorText = 'Loading...';
+                    $.selector_cache('#kernelLoadingIcon').show();
+                    break;
+                default:
+                    errorText = 'Not connected, please enter a kernel address below';
+                    $.selector_cache('#kernelConnectionEditButton').show();
+                    $.selector_cache('#kernelInputForm').show();
+                    break;
             }
-            $.selector_cache("#kernelInfoBody").fadeIn('fast');
-        });
-
+            updateKernelButtonsState();
+            $.selector_cache("#kernelInfoEmptyText").html(errorText);
+        }
     };
 
     /**
@@ -1502,50 +1558,50 @@ function UIManager() {
      */
     let setKernelReservedFields = function (kernelInfo) {
         if (kernelInfo.has(kernelReservedKeys.img) && kernelInfo.get(kernelReservedKeys.img) !== "") {
-            $.selector_cache("#kernelImg").hide();
-            $.selector_cache("#kernelImg").attr('src', kernelInfo.get(kernelReservedKeys.img));
+            $("#kernelImg").hide();
+            $("#kernelImg").attr('src', kernelInfo.get(kernelReservedKeys.img));
             onImgLoad("#kernelImg", function () {
-                $.selector_cache("#kernelImg").fadeIn('fast');
+                $("#kernelImg").fadeIn('fast');
             });
         }
 
         if (kernelInfo.has(kernelReservedKeys.name) && kernelInfo.get(kernelReservedKeys.name) !== "")
-            $.selector_cache("#kernelName").text(kernelInfo.get(kernelReservedKeys.name));
+            $("#kernelName").text(kernelInfo.get(kernelReservedKeys.name));
         else
-            $.selector_cache("#kernelName").text(kernelInfo.get('Kernel Information'));
+            $("#kernelName").text(kernelInfo.get('Kernel Information'));
 
         if (kernelInfo.has(kernelReservedKeys.isOrganisation) && kernelInfo.get(kernelReservedKeys.isOrganisation) === true)
-            $.selector_cache("#kernelOrganization").text('This entity is an organization');
+            $("#kernelOrganization").text('This entity is an organization');
         else
-            $.selector_cache("#kernelOrganization").text('This entity is not an organization');
+            $("#kernelOrganization").text('This entity is not an organization');
 
         if (kernelInfo.has(kernelReservedKeys.phone) && kernelInfo.get(kernelReservedKeys.phone) !== '')
-            $.selector_cache("#kernelPhone").text(kernelInfo.get(kernelReservedKeys.phone));
+            $("#kernelPhone").text(kernelInfo.get(kernelReservedKeys.phone));
         else
-            $.selector_cache("#kernelPhoneContainer").hide();
+            $("#kernelPhoneContainer").hide();
 
         if (kernelInfo.has(kernelReservedKeys.physicalAddress) && kernelInfo.get(kernelReservedKeys.physicalAddress) !== '') {
-            $.selector_cache("#kernelAddress").text(kernelInfo.get(kernelReservedKeys.physicalAddress));
-            $.selector_cache("#kernelAddress").attr('href', OSM_QUERY_LINK + kernelInfo.get(kernelReservedKeys.physicalAddress));
+            $("#kernelAddress").text(kernelInfo.get(kernelReservedKeys.physicalAddress));
+            $("#kernelAddress").attr('href', OSM_QUERY_LINK + kernelInfo.get(kernelReservedKeys.physicalAddress));
         } else
-            $.selector_cache("#kernelAddressContainer").hide();
+            $("#kernelAddressContainer").hide();
 
         if (kernelInfo.has(kernelReservedKeys.url) && kernelInfo.get(kernelReservedKeys.url) !== "") {
-            $.selector_cache("#kernelUrl").attr('href', kernelInfo.get(kernelReservedKeys.url));
-            $.selector_cache("#kernelUrl").text(kernelInfo.get(kernelReservedKeys.url));
+            $("#kernelUrl").attr('href', kernelInfo.get(kernelReservedKeys.url));
+            $("#kernelUrl").text(kernelInfo.get(kernelReservedKeys.url));
         } else
-            $.selector_cache("#kernelUrlContainer").hide();
+            $("#kernelUrlContainer").hide();
 
         if (kernelInfo.has(kernelReservedKeys.mail) && kernelInfo.get(kernelReservedKeys.mail) !== "") {
-            $.selector_cache("#kernelMail").attr('href', 'mailto:' + kernelInfo.get(kernelReservedKeys.mail));
-            $.selector_cache("#kernelMail").text(kernelInfo.get(kernelReservedKeys.mail));
+            $("#kernelMail").attr('href', 'mailto:' + kernelInfo.get(kernelReservedKeys.mail));
+            $("#kernelMail").text(kernelInfo.get(kernelReservedKeys.mail));
         } else
-            $.selector_cache("#kernelMailContainer").hide();
+            $("#kernelMailContainer").hide();
 
         if (kernelInfo.has(kernelReservedKeys.version) && kernelInfo.get(kernelReservedKeys.version) !== "")
-            $.selector_cache("#kernelVersion").text('Version ' + kernelInfo.get(kernelReservedKeys.version));
+            $("#kernelVersion").text('Version ' + kernelInfo.get(kernelReservedKeys.version));
         else
-            $.selector_cache("#kernelVersion").hide();
+            $("#kernelVersion").hide();
     };
 
     /**
@@ -1569,7 +1625,7 @@ function UIManager() {
      */
     let setKernelExtraData = function (kernelInfo) {
         if (kernelInfo.get(kernelReservedKeys.extraData) !== undefined && kernelInfo.get(kernelReservedKeys.extraData).size) {
-            let $kernelExtraDataTable = $.selector_cache("#kernelExtraDataTable");
+            let $kernelExtraDataTable = $("#kernelExtraDataTable");
             for (let [key, value] of kernelInfo.get(kernelReservedKeys.extraData)) {
                 $kernelExtraDataTable.append(
                     "<tr>\n" +
@@ -1578,7 +1634,7 @@ function UIManager() {
                     "</tr>");
             }
         } else
-            $.selector_cache("#kernelAdditionalInfoZone").hide();
+            $("#kernelAdditionalInfoZone").hide();
     };
 
 
@@ -1839,6 +1895,11 @@ function UIManager() {
             }
         }
         return finalItem;
+    };
+
+    let setupDOMDimensions = function () {
+        let height = $(window).height() - 200; // Header + kernel connection
+        $.selector_cache("#mainCard").css('height', height);
     };
 
     /* *********************************************************
@@ -2236,12 +2297,13 @@ function UIManager() {
      * Initialize the UI with default value.
      */
     this.initUI = function () {
-        this.setVerbose(false);
+        this.setVerbose(true);
         log('Successfully Loaded');
         setAppVersion();
         setDefaultFieldValues();
         detectAppMode();
         setUIMode(_currentAppMode, true);
+        setupDOMDimensions();
         UI.updateCheckButtonState();
         UI.setUIButtonState(UI_STATE.none);
         setKernelInfo(undefined, undefined);
@@ -2395,7 +2457,6 @@ function UIManager() {
         _isAccountsListAvailable = false; // Kernel operators may change
         resetAllElements(); // Element signatures are different from each kernel
         setKernelConnectionLoading(false);
-        $.selector_cache('#collapseSignature').collapse('show');
         switch (connectionStatus) {
             case TypeInfo.Good:
                 $.selector_cache('#kernelConnectionInfoIcon').attr('class', 'fas fa-check-circle text-success');
