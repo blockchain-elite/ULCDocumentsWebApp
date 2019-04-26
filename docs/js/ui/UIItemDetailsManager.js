@@ -21,24 +21,8 @@ function UIItemDetailsManager() {
 
 
     let itemPropPopup = $.alert({
-        title: 'Item Information',
         content:
             '<div id="detailsZone">\n' +
-            '<div class="card mb-4" id="generalInfoBody">\n' +
-            '<div class="card-header">\n' +
-            '<h6 class="text-center">General Information</h6>\n' +
-            '</div>\n' +
-            '<div class="card-body">\n' +
-            '<h2 class="text-center">\n' +
-            '<span class="text-muted">\n' +
-            '<i id="itemTypeProp" class="far fa-file"></i>\n' +
-            '</span>\n' +
-            '\n' +
-            '<span id="itemNameProp">#NAME</span>\n' +
-            '<span class="file-specific-info text-muted">\n' +
-            '(<span id="fileSizeProp">#SIZE</span>)\n' +
-            '</span>\n' +
-            '</h2>\n' +
             '<h5 class="text-center">\n' +
             '<span id="itemStatusProp">#STATUS</span>\n' +
             '<span id="itemNumSignContainer" class="text-muted">\n' +
@@ -50,16 +34,8 @@ function UIItemDetailsManager() {
             '<span>Last Modified: </span>\n' +
             '<span id="fileDateProp">##DATE</span>\n' +
             '</p>\n' +
-            '<form class="form-group" id="itemTextInputContainer">\n' +
-            '<label for="itemTextInput">Enter your text here: </label>\n' +
-            '<textarea id="itemTextInput" class="form-control" rows="5"></textarea>\n' +
-            '</form>\n' +
-            '<form class="form-group" id="itemHashInputContainer">\n' +
-            '<label for="itemHashInput">Enter your hash here: </label>\n' +
-            '<input id="itemHashInput" class="form-control" placeholder="0x...">\n' +
-            '</form>\n' +
-            '</div>\n' +
-            '<div class="card-footer">\n' +
+            '<textarea id="itemTextInput" class="form-control" rows="5" placeholder="Enter your text here:"></textarea>\n' +
+            '<input id="itemHashInput" class="form-control" placeholder="Enter your text here:">\n' +
             '<p class="text-muted" id="itemHashContainer">Hash: <span\n' +
             'id="itemHashProp">HASH</span>\n' +
             '</p>\n' +
@@ -69,19 +45,17 @@ function UIItemDetailsManager() {
             'See Transaction on Etherscan\n' +
             '</button>\n' +
             '</a>\n' +
-            '</div>\n' +
-            '</div>\n' +
-            '<div class="card mb-4" id="fileBlockchainInfoCard">\n' +
-            '<div class="card-header">\n' +
-            '<h6 class="text-center">Blockchain Information</h6>\n' +
-            '</div>\n' +
-            '<div class="card-body" id="fileBlockchainInfoBody">\n' +
+            '<div class="mt-5" id="fileBlockchainInfoCard">\n' +
+
             '<div id="fileBlockchainInfoZone">\n' +
-            '<h4 class="text-center">Blockchain Info</h4>\n' +
-            '<table class="table">\n' +
-            '<tbody id="fileBlockchainInfoTable">\n' +
-            '</tbody>\n' +
-            '</table>\n' +
+            '<div class="row" style="margin: 0">' +
+            '<div class="col">\n' +
+            '<h4 class="text-center">Blockchain Information</h4>\n' +
+            '<p id="fileBlockchainDate"></p>' +
+            '<p id="fileBlockchainSource"></p>' +
+            '<p id="fileBlockchainFamily"></p>' +
+            '</div>\n' +
+            '<div class="col">\n' +
             '<div id="fileBlockchainExtraDataZone">\n' +
             '<h4 class="text-center">Extra Data</h4>\n' +
             '<table class="table">\n' +
@@ -90,6 +64,9 @@ function UIItemDetailsManager() {
             '</table>\n' +
             '</div>\n' +
             '</div>\n' +
+            '</div>\n' +
+            '</div>\n' +
+
             '<div id="fileBlockchainEditInfoZone">\n' +
             '<h4 class="text-center">Edit Blockchain Info</h4>\n' +
             '<table class="table">\n' +
@@ -138,12 +115,9 @@ function UIItemDetailsManager() {
             '</button>\n' +
             '</div>\n' +
             '</div>\n' +
-            '</div>\n' +
             '</div>',
-        type: 'blue',
         theme: JQUERY_CONFIRM_THEME,
         columnClass: 'xlarge',
-        icon: 'fas fa-info-circle',
         escapeKey: 'ok',
         typeAnimated: true,
         lazyOpen: true,
@@ -159,22 +133,41 @@ function UIItemDetailsManager() {
             $('textarea').autoResize();
             UI.getItemDetailsManager().setupItemPopup(item);
         };
+        let type = getJConfirmTypeFromColorCLass(item.getCardColor());
+        let btnType = '';
+        if (type !== '')
+            btnType = 'btn-' + type;
+        let icon = '';
+        let title = '';
+        if (UI.getCurrentTab() === TAB_TYPE.file) {
+            icon = getMimeTypeIcon(item.getFile());
+            title = item.getFile().name + ' <span class="text-muted">(' + humanFileSize(item.getFile().size) + ')</span>';
+        } else if (UI.getCurrentTab() === TAB_TYPE.text) {
+            icon = 'fas fa-align-left';
+            title = item.getTitle();
+        } else {
+            icon = 'fas fa-hashtag';
+            title = item.getTitle();
+        }
         itemPropPopup.buttons = {
             ok: {
                 keys: ['enter'],
-                btnClass: 'btn-blue',
+                btnClass: btnType,
                 action: function () {
                     item.setSelected(false);
                 }
             },
         };
+
+        itemPropPopup.icon = icon;
+        itemPropPopup.title = title;
+        itemPropPopup.type = type;
         itemPropPopup.open();
     };
 
     this.setupItemPopup = function (item) {
         setBlockchainInfoErrorText('', COLOR_CLASSES.none); // reset color
         if (item !== undefined) {
-            setDOMColor($('#generalInfoBody'), item.getCardColor());
             let file = undefined;
             if (UI.getCurrentTab() === TAB_TYPE.file)
                 file = item.getFile();
@@ -222,9 +215,6 @@ function UIItemDetailsManager() {
     let fillFileProp = function (file) {
         if (file !== undefined) { // display file properties only if we have a file
             logMe(UIManagerPrefix, 'Displaying file properties', TypeInfo.Info);
-            $("#itemNameProp").text(file.name);
-            $("#itemTypeProp").attr('class', getMimeTypeIcon(file));
-            $("#fileSizeProp").text(humanFileSize(file.size));
             let date = new Date(file.lastModified);
             $("#fileDateProp").text(date);
             $(".file-specific-info").show();
@@ -257,11 +247,9 @@ function UIItemDetailsManager() {
 
     let setupItemInputFields = function (item) {
         if (!(item instanceof FileListItem)) {
-            $("#itemNameProp").text(item.getTitle());
             if (item instanceof TextListItem) {
-                $("#itemTypeProp").attr('class', 'fas fa-align-left');
-                $("#itemTextInputContainer").show();
-                $("#itemHashInputContainer").hide();
+                $("#itemTextInput").show();
+                $("#itemHashInput").hide();
 
                 $("#itemTextInput").off('change keyup paste').val(item.getText()).on('change keyup paste', function () { // Remove previous event handlers
                     item.setText($("#itemTextInput").val());
@@ -274,9 +262,8 @@ function UIItemDetailsManager() {
                     }
                 });
             } else { // We have a hash
-                $("#itemTypeProp").attr('class', 'fas fa-hashtag');
-                $("#itemTextInputContainer").hide();
-                $("#itemHashInputContainer").show();
+                $("#itemTextInput").hide();
+                $("#itemHashInput").show();
                 $("#itemHashInput").off('change keyup paste').val(item.getHash()).on('change keyup paste', function () { // Remove previous event handlers
                     item.setHash($("#itemHashInput").val());
                     if (item.getType() !== TypeElement.Unknown) {
@@ -288,28 +275,21 @@ function UIItemDetailsManager() {
                 });
             }
         } else {
-            $("#itemTextInputContainer").hide();
-            $("#itemHashInputContainer").hide();
+            $("#itemTextInput").hide();
+            $("#itemHashInput").hide();
         }
     };
 
     let fillBlockchainInfoFields = function (item) {
         logMe(UIManagerPrefix, 'Displaying Blockchain information', TypeInfo.Info);
-        let infoTable = $("#fileBlockchainInfoTable");
-        infoTable.html(''); // Reset table
-        let counter = 0;
-        for (let [key, value] of item.getInformation()) {
-            counter++;
-            if (key === elementReservedKeys.documentFamily)
-                value = getCompatibleFamily()[value]; // Get the document family string
-            infoTable.append(
-                "<tr>\n" +
-                "<th scope='row' id='blockchainFieldKey" + counter + "'></th>\n" +
-                "<td id='blockchainFieldValue" + counter + "'></td>\n" +
-                "</tr>");
-            $("#blockchainFieldKey" + counter).text(key);
-            $("#blockchainFieldValue" + counter).text(value); // Prevent XSS
-        }
+        $('#fileBlockchainDate').text('Signed on ' + item.getInformation().get(elementReservedKeys.date));
+        if (item.getInformation()[elementReservedKeys.source] !== '')
+            $('#fileBlockchainSource').text('No source provided.');
+        else
+            $('#fileBlockchainSource').text('Source: ' + item.getInformation().get(elementReservedKeys.date));
+
+        let family = getCompatibleFamily()[item.getInformation().get(elementReservedKeys.documentFamily)]; // Get the document family string
+        $('#fileBlockchainFamily').text('Signed as:' + family);
     };
 
     let fillBlockchainExtraDataFields = function (item) {

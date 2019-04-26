@@ -279,8 +279,6 @@ let onImgLoad = function(selector, callback){
     });
 };
 
-
-
 let isValueInObject = function (val, object) {
     let isIn = false;
     for (let i of Object.keys(object)) {
@@ -290,4 +288,31 @@ let isValueInObject = function (val, object) {
         }
     }
     return isIn;
+};
+
+/**
+ *
+ * @param colorClass {COLOR_CLASSES}
+ * @return {String}
+ */
+let getJConfirmTypeFromColorCLass = function (colorClass) {
+    let type = '';
+    switch (colorClass) {
+        case COLOR_CLASSES.info:
+            type = 'blue';
+            break;
+        case COLOR_CLASSES.danger:
+            type = 'red';
+            break;
+        case COLOR_CLASSES.success:
+            type = 'green';
+            break;
+        case COLOR_CLASSES.warning:
+            type = 'orange';
+            break;
+        default:
+            type = '';
+            break;
+    }
+    return type;
 };
