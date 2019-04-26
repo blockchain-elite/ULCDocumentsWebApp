@@ -278,3 +278,16 @@ let onImgLoad = function(selector, callback){
         }
     });
 };
+
+
+
+let isValueInObject = function (val, object) {
+    let isIn = false;
+    for (let i of Object.keys(object)) {
+        if (object[i] === val) {
+            isIn = true;
+            break;
+        }
+    }
+    return isIn;
+};

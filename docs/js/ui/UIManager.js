@@ -149,14 +149,11 @@ function UIManager() {
         infura: 2
     };
 
+    let _kernelManager = new UIKernelManager();
+    let _moderatorManager = new UIModeratorManager();
+
     let _uniqueIdCounter = 0; // unique id referencing a list item (file, text or hash)
     let _itemsProcessedCounter = 0; // The number of items in the current list (file text or hash) that have been checked
-    let _currentKernelAddress = ""; // The current kernel address the user is connected to
-    let _defaultModeratorAddress;
-    let _currentModeratorAddress; // The current moderator address the user is connected to
-    let _isModeratorConnected = false; // Is the user connected to a valid moderator ?
-    let _isKernelConnected = false; // Is the user connected to a valid kernel ?
-    let _currentKernelInfo = new Map();
     let _isVerbose = false; // Should we display additional information in the console
     let _isOptimizerEnabled = true; // Should we optimize signing ?
     let _canUseDropZone = true; // Can the user use the dropZone ?
@@ -230,7 +227,7 @@ function UIManager() {
      * @param type {APP_MODE} Sign or check type
      * @param firstRun {Boolean} Should we fadeIN/Out ?
      */
-    let setUIMode = function (type, firstRun) {
+    this.setUIMode = function (type, firstRun) {
         log('switching to ' + HASH_APP_MODE[type]);
         if (!firstRun) {
             $.selector_cache('#mainCardBody').fadeOut('fast', function () {
@@ -272,11 +269,11 @@ function UIManager() {
             $.selector_cache('#checkButtonText').html('Fetch');
             $.selector_cache('#signActionButtonContainer').show();
             $.selector_cache('#accountsCard').show();
-            if (_isKernelConnected)
+            if (_kernelManager.isConnected())
                 askForAccounts();
         }
         recreateAppModeItemList();
-        updateMainUIState();
+        UI.updateMainUIState();
         UI.resetProgress();
         fileListResetSelection();
         UI.updateCheckButtonState();
@@ -295,8 +292,8 @@ function UIManager() {
     let setDefaultFieldValues = function () {
         let kernelAddress = getUrlHashParameter(HASH_PARAM_NAMES.kernelAddress);
         if (kernelAddress !== undefined) {
-            _currentKernelAddress = kernelAddress;
-            $.selector_cache('#kernelAddressInput').val(_currentKernelAddress);
+            _kernelManager.setCurrentAddress(kernelAddress);
+            $.selector_cache('#kernelAddressInput').val(_kernelManager.getCurrentAddress());
         }
     };
 
@@ -304,7 +301,7 @@ function UIManager() {
      * Check if all the conditions are met to start using the app and show a warning if using testnet
      */
     let tryReadyUI = function () {
-        if (_isModeratorConnected && _currentWalletState !== WALLET_STATE.unknown
+        if (_moderatorManager.isConnected() && _currentWalletState !== WALLET_STATE.unknown
             && $.selector_cache('#loadingScreen').css('display') !== 'none') {
             if (_currentNetworkType === TypeConnection.Mainnet)
                 readyUI();
@@ -322,7 +319,7 @@ function UIManager() {
             $.selector_cache('#baseContainer').fadeIn('fast');
         });
         // Connect to kernel
-        if (_currentKernelAddress !== '')
+        if (_kernelManager.getCurrentAddress() !== '')
             UI.connectToKernel();
     };
 
@@ -376,9 +373,15 @@ function UIManager() {
     };
 
     this.connectToKernel = function () {
-        setKernelConnectionLoading(true);
-        setUrlHashParameter(HASH_PARAM_NAMES.kernelAddress, _currentKernelAddress);
-        updateKernelAddress(_currentKernelAddress); // Call to ULCDocMaster
+        _kernelManager.setKernelConnectionLoading(true);
+        setUrlHashParameter(HASH_PARAM_NAMES.kernelAddress, _kernelManager.getCurrentAddress());
+        updateKernelAddress(_kernelManager.getCurrentAddress()); // Call to ULCDocMaster
+    };
+
+    this.connectToModerator = function () {
+        _moderatorManager.setConnected(false);
+        _moderatorManager.setModeratorConnectionLoading(true);
+        updateModeratorAddress(_moderatorManager.getCurrentAddress()); // Call to ULCDocMaster
     };
 
     /**
@@ -388,7 +391,7 @@ function UIManager() {
         for (let key of Object.keys(APP_MODE)) {
             $modeButtons[APP_MODE[key]].on('click', function () {
                 if (!$modeButtons[APP_MODE[key]].hasClass('active')) // Do not change if we are already in this mode
-                    setUIMode(APP_MODE[key], false);
+                    UI.setUIMode(APP_MODE[key], false);
             });
         }
         $.selector_cache('#clearItemListButton').on('click', function () { // Remove all items from the list in the current tab
@@ -410,7 +413,7 @@ function UIManager() {
         });
 
         $.selector_cache('#kernelAddressInputConnect').on('click', function () {
-            _currentKernelAddress = $.selector_cache('#kernelAddressInput').val();
+            _kernelManager.setCurrentAddress($.selector_cache('#kernelAddressInput').val());
             UI.connectToKernel();
         });
 
@@ -501,10 +504,10 @@ function UIManager() {
             });
         }
         $.selector_cache('#kernelConnectionEditButton').on('click', function () {
-            showKernelInput();
+            _kernelManager.showKernelInput();
         });
         $.selector_cache('#kernelConnectionShowMoreButton').on('click', function () {
-            showKernelInfo();
+            _kernelManager.showKernelInfo();
         });
         $.selector_cache('#advancedOptionsButton').on('click', function () {
             $.confirm({
@@ -521,7 +524,7 @@ function UIManager() {
                         keys: ['enter'],
                         btnClass: 'btn-orange',
                         action: function () {
-                            showModeratorInput();
+                            _moderatorManager.showModeratorInput();
                         }
                     },
                     cancel: function () {
@@ -529,239 +532,6 @@ function UIManager() {
                     },
                 }
             });
-        });
-    };
-
-    let showModeratorInput = function () {
-        let verboseAttr = 'checked';
-        if (!_isVerbose)
-            verboseAttr = '';
-
-        let optimizerAttr = 'checked';
-        if (!_isOptimizerEnabled)
-            optimizerAttr = '';
-
-
-        let message =
-            '<form>' +
-            '   <div class="form-group">' +
-            '       <label>Current moderator address:</label>' +
-            '       <label>' + _currentModeratorAddress + '</label>' +
-            '   </div>' +
-            '   <div class="form-group">' +
-            '       <label>New moderator address:</label>' +
-            '       <input  type="text" class="form-control"' +
-            '       id="moderatorInput"' +
-            '       placeholder="Enter Address Here"/>' +
-            '   </div>' +
-            '</form>' +
-            '<div class="custom-control form-control-lg custom-checkbox">' +
-            '    <input type="checkbox" class="custom-control-input" id="verboseButton" ' + verboseAttr + '>' +
-            '    <label class="custom-control-label" for="verboseButton">Verbose</label>' +
-            '</div>' +
-            '<p>Verbose displays messages in the browser console. This can be useful if you want to take part in the development, report bugs, etc.</p>' +
-            '<div id="optimizerCheckbox" class="custom-control form-control-lg custom-checkbox">' +
-            '    <input type="checkbox" class="custom-control-input" id="optimizerButton" ' + optimizerAttr + '>' +
-            '    <label class="custom-control-label" for="optimizerButton">Use optimized signing</label>' +
-            '</div>' +
-            '<p>Optimized signing allows the app to group elements without information, and create only one transaction. ' +
-            'It makes the signing process easier and faster.<br>You can choose to disable it if you want to have one transaction for each item to sign.</p>';
-
-        $.confirm({
-            title: 'Advanced Options',
-            content: message,
-            type: 'orange',
-            theme: JQUERY_CONFIRM_THEME,
-            columnClass: 'medium',
-            icon: 'fas fa-cog',
-            escapeKey: 'cancel',
-            typeAnimated: true,
-            onContentReady: function () {
-                // when content is fetched & rendered in DOM
-                $("#moderatorInput").focus(); // Focus the input for faster copy/paste
-            },
-            buttons: {
-                default: {
-                    text: 'Use Default Settings',
-                    btnClass: 'btn-green',
-                    action: function () {
-                        UI.setVerbose(false);
-                        _isOptimizerEnabled = true;
-                        _currentModeratorAddress = _defaultModeratorAddress;
-                        connectToModerator();
-                    }
-                },
-                formSubmit: {
-                    text: 'Save Settings',
-                    btnClass: 'btn-blue',
-                    keys: ['enter'],
-                    action: function () {
-                        let address = this.$content.find('#moderatorInput').val();
-                        UI.setVerbose(this.$content.find('#verboseButton').is(':checked'));
-                        _isOptimizerEnabled = this.$content.find('#optimizerButton').is(':checked');
-                        if (address !== '')
-                            showConfirmModerator(address);
-                    }
-                },
-                cancel: function () {
-                    // Close
-                },
-            },
-        });
-    };
-
-    let showConfirmModerator = function (address) {
-        $.confirm({
-            title: 'Security consideration',
-            content: "Do you really want to change authority?<br/>" +
-                "This may lead to security issues. Continue only if you trust the new authority.",
-            type: 'orange',
-            theme: JQUERY_CONFIRM_THEME,
-            columnClass: 'medium',
-            icon: 'fas fa-exclamation-triangle',
-            escapeKey: 'cancel',
-            typeAnimated: true,
-            buttons: {
-                confirm: {
-                    keys: ['enter'],
-                    btnClass: 'btn-orange',
-                    action: function () {
-                        _currentModeratorAddress = address;
-                        connectToModerator();
-                    }
-                },
-                cancel: function () {
-                    // Close
-                }
-            }
-        });
-    };
-
-    let connectToModerator = function () {
-        _isModeratorConnected = false;
-        setModeratorConnectionLoading(true);
-        updateModeratorAddress(_currentModeratorAddress); // Call to ULCDocMaster
-    };
-
-    let showKernelInfo = function () {
-        $.alert({
-            title: 'Kernel Information',
-            content: '<div class="row" id="kernelInfoZone">\n' +
-                '<div class="col" id="kernelInfoCol">\n' +
-                '<div class="mr-4" id="kernelImgContainer">\n' +
-                '<img class="my-auto" src="images/img_placeholder.jpg" alt="Kernel Image"\n' +
-                'id="kernelImg">\n' +
-                '</div>\n' +
-                '<div class="pl-4 border-left border-dark" id="kernelInfoText">\n' +
-                '<h4 id="kernelName">Kernel Info</h4>\n' +
-                '<p id="kernelOrganization">#ORGA</p>\n' +
-                '<p id="kernelPhoneContainer">\n' +
-                '<i class="fas fa-phone" style="width: 20px"></i>\n' +
-                '<span id="kernelPhone">#PHONE</span>\n' +
-                '</p>\n' +
-                '<p id="kernelAddressContainer">\n' +
-                '<i class="fas fa-map-marker-alt" style="width: 20px"></i>\n' +
-                '<a id="kernelAddress" href="" target="_blank">#Address</a>\n' +
-                '</p>\n' +
-                '<p id="kernelUrlContainer">\n' +
-                '<i class="fas fa-globe" style="width: 20px"></i>\n' +
-                '<a href="" target="_blank" id="kernelUrl"></a>\n' +
-                '</p>\n' +
-                '<p id="kernelMailContainer">\n' +
-                '<i class="fas fa-envelope" style="width: 20px"></i>\n' +
-                '<a href="" id="kernelMail"></a>\n' +
-                '</p>\n' +
-                '<p class="text-muted" id="kernelVersion"></p>\n' +
-                '</div>\n' +
-                '</div>\n' +
-                '<div class="col" id="kernelAdditionalInfoZone">\n' +
-                '<h4 class="text-center">Additional Information</h4>\n' +
-                '<table class="table">\n' +
-                '<tbody id="kernelExtraDataTable">\n' +
-                '</tbody>\n' +
-                '</table>\n' +
-                '</div>\n' +
-                '</div>',
-            type: 'blue',
-            theme: JQUERY_CONFIRM_THEME,
-            columnClass: 'xlarge',
-            icon: 'fas fa-info-circle',
-            escapeKey: 'cancel',
-            typeAnimated: true,
-            onOpenBefore: function () {
-                // when content is fetched
-                setKernelReservedFields(_currentKernelInfo);
-                setKernelExtraData(_currentKernelInfo);
-            },
-        });
-    };
-
-    /**
-     * Show a dialog to enter a new kernel address
-     */
-    let showKernelInput = function () {
-        let checkedAttr = _currentAppMode === APP_MODE.sign ? 'checked' : '';
-        $.confirm({
-            title: 'Change kernel address',
-            content: '' +
-                '<form>' +
-                '<div class="form-group">' +
-                '<label>Current kernel address:</label>' +
-                '<label>' + _currentKernelAddress + '</label>' +
-                '</div>' +
-                '<div class="form-group">' +
-                '<label>New kernel address:</label>' +
-                '<input  type="text" class="form-control"' +
-                ' id="kernelInput"' +
-                ' placeholder="Enter Address Here"/>' +
-                '</div>' +
-                '</form>' +
-                '<div class="custom-control form-control-lg custom-checkbox">' +
-                '    <input type="checkbox" class="custom-control-input" id="enableSignButton"' + checkedAttr + '>' +
-                '    <label class="custom-control-label" for="enableSignButton">Enable signing for this kernel</label>' +
-                '</div>',
-            type: 'blue',
-            theme: JQUERY_CONFIRM_THEME,
-            columnClass: 'medium',
-            icon: 'fas fa-edit',
-            escapeKey: 'cancel',
-            typeAnimated: true,
-            onContentReady: function () {
-                // when content is fetched & rendered in DOM
-                $("#kernelInput").focus(); // Focus the input for faster copy/paste
-            },
-            buttons: {
-                formSubmit: {
-                    text: 'Connect',
-                    btnClass: 'btn-blue',
-                    keys: ['enter'],
-                    action: function () {
-                        let address = this.$content.find('#kernelInput').val();
-                        if (address === '') {
-                            $.alert({
-                                    title: 'error',
-                                    content: 'Please enter a value',
-                                    type: 'red',
-                                    theme: JQUERY_CONFIRM_THEME,
-                                    icon: 'fas fa-exclamation',
-                                    escapeKey: 'ok',
-                                    typeAnimated: true,
-                                }
-                            );
-                            return false;
-                        }
-                        if (this.$content.find('#enableSignButton').is(':checked')) {
-                            $.selector_cache("#signTab").show();
-                            setUIMode(APP_MODE.sign, false);
-                        }
-                        _currentKernelAddress = address;
-                        UI.connectToKernel();
-                    }
-                },
-                cancel: function () {
-                    //close
-                },
-            },
         });
     };
 
@@ -855,7 +625,7 @@ function UIManager() {
      *
      * @param state {Boolean} To enable or disable the buttons
      */
-    let setConnectionButtonLockedState = function (state) {
+    this.setConnectionButtonLockedState = function (state) {
         $.selector_cache('#advancedOptionsButton').attr('disabled', state);
         $.selector_cache('#kernelConnectionEditButton').attr('disabled', state);
     };
@@ -871,7 +641,7 @@ function UIManager() {
         let isWorking = state !== UI_STATE.none;
         setUITabsState(isWorking);
         // Lock connection change
-        setConnectionButtonLockedState(isWorking);
+        UI.setConnectionButtonLockedState(isWorking);
         setActionButtonIcon(state);
 
         // Lock item management
@@ -1003,7 +773,6 @@ function UIManager() {
             },
         });
     };
-
 
     /**
      * Check if the given file is valid.
@@ -1445,283 +1214,20 @@ function UIManager() {
     };
 
     /**
-     * Enable or disable the kernel connecting UI.
-     *
-     * @param state {Boolean} Whether to enable the UI
-     */
-    let setKernelConnectionLoading = function (state) {
-        log('Setting kernel connecting UI to: ' + state, TypeInfo.Info);
-        setConnectionButtonLockedState(state);
-        UI.updateCheckButtonState();
-        if (state) { // Instantly display connecting
-            _isKernelConnected = false;
-            updateMainUIState();
-            $.selector_cache('#kernelConnectedAddress').html('Connection in progress...');
-            setDOMColor($.selector_cache('#kernelInfoHeader'), COLOR_CLASSES.secondary);
-            $.selector_cache('#kernelConnectionInfoIcon').attr('class', 'fas fa-circle-notch fa-spin fa-fw');
-            $.selector_cache('#kernelConnectionLoadingIcon').attr('class', 'fas fa-circle-notch fa-spin fa-fw');
-            setKernelInfo(undefined, TypeInfo.Info);
-        } else {
-            $.selector_cache('#kernelConnectionLoadingIcon').attr('class', 'fas fa-arrow-right');
-        }
-    };
-
-    /**
-     * Enable or disable the moderator connecting UI.
-     *
-     * @param state {Boolean} Whether to enable the UI
-     */
-    let setModeratorConnectionLoading = function (state) {
-        log('Setting moderator connecting UI to: ' + state, TypeInfo.Info);
-        // Disable the input while we connect
-        setConnectionButtonLockedState(state);
-        UI.updateCheckButtonState();
-        if (state) { // Instantly display connecting
-            _isKernelConnected = false;
-            _isModeratorConnected = false;
-            updateMainUIState();
-            $.selector_cache('#moderatorConnectedAddress').html('Connection in progress...');
-            setDOMColor($.selector_cache('#moderatorInfoHeader'), COLOR_CLASSES.secondary);
-        }
-        if (state) {
-            $.selector_cache('#moderatorConnectionInfoIcon').attr('class', 'fas fa-circle-notch fa-spin fa-fw');
-            $.selector_cache('#moderatorConnectionLoadingIcon').attr('class', 'fas fa-circle-notch fa-spin fa-fw');
-        } else {
-            $.selector_cache('#moderatorConnectionLoadingIcon').attr('class', 'fas fa-arrow-right');
-        }
-    };
-
-    /**
-     * Fill the kernel info table with information from result.
-     * Display an error if result is undefined.
-     *
-     * @param result {Map} Result dictionary or undefined to use the error text.
-     * @param errorType {TypeInfo} Type of the error.
-     */
-    let setKernelInfo = function (result, errorType) {
-        $.selector_cache('#kernelInputForm').hide();
-        $.selector_cache('#kernelLoadingIcon').hide();
-        if (result !== undefined) {
-            log('Setting kernel info', TypeInfo.Info);
-            $.selector_cache('#kernelInfoZone').show();
-            $.selector_cache('#kernelInfoEmptyZone').hide();
-            $.selector_cache('#kernelConnectionEditButton').show();
-            $.selector_cache('#kernelConnectionShowMoreButton').show();
-            _currentKernelInfo = result;
-            setKernelConnectedAddress(result);
-        } else {
-            $.selector_cache('#kernelInfoZone').hide();
-            $.selector_cache('#kernelInfoEmptyZone').show();
-            $.selector_cache('#kernelConnectionEditButton').hide();
-            $.selector_cache('#kernelConnectionShowMoreButton').hide();
-
-            let errorText = "Not connected";
-            switch (errorType) {
-                case TypeInfo.Warning:
-                    errorText = 'Connection could not be verified by moderator';
-                    $.selector_cache('#kernelConnectionEditButton').show();
-                    break;
-                case TypeInfo.Critical:
-                    errorText = 'Connection could not be established, please enter a valid address below:';
-                    $.selector_cache('#kernelConnectionEditButton').show();
-                    $.selector_cache('#kernelInputForm').show();
-                    break;
-                case TypeInfo.Info:
-                    errorText = 'Loading...';
-                    $.selector_cache('#kernelLoadingIcon').show();
-                    break;
-                default:
-                    errorText = 'Not connected, please enter a kernel address below';
-                    $.selector_cache('#kernelConnectionEditButton').show();
-                    $.selector_cache('#kernelInputForm').show();
-                    break;
-            }
-            updateKernelButtonsState();
-            $.selector_cache("#kernelInfoEmptyText").html(errorText);
-        }
-    };
-
-    /**
-     * Display kernel buttons linking to moderator if the user is an operator of the current kernel
-     */
-    let updateKernelButtonsState = function () {
-        if (_isAccountOperator && _isKernelConnected)
-            $.selector_cache("#kernelButtons").show();
-        else
-            $.selector_cache("#kernelButtons").hide();
-    };
-
-    /**
-     * Set the value for the reserved Kernel fields
-     *
-     * @param kernelInfo {Map} The information received from backend
-     */
-    let setKernelReservedFields = function (kernelInfo) {
-        if (kernelInfo.has(kernelReservedKeys.img) && kernelInfo.get(kernelReservedKeys.img) !== "") {
-            $("#kernelImg").hide();
-            $("#kernelImg").attr('src', kernelInfo.get(kernelReservedKeys.img));
-            onImgLoad("#kernelImg", function () {
-                $("#kernelImg").fadeIn('fast');
-            });
-        }
-
-        if (kernelInfo.has(kernelReservedKeys.name) && kernelInfo.get(kernelReservedKeys.name) !== "")
-            $("#kernelName").text(kernelInfo.get(kernelReservedKeys.name));
-        else
-            $("#kernelName").text(kernelInfo.get('Kernel Information'));
-
-        if (kernelInfo.has(kernelReservedKeys.isOrganisation) && kernelInfo.get(kernelReservedKeys.isOrganisation) === true)
-            $("#kernelOrganization").text('This entity is an organization');
-        else
-            $("#kernelOrganization").text('This entity is not an organization');
-
-        if (kernelInfo.has(kernelReservedKeys.phone) && kernelInfo.get(kernelReservedKeys.phone) !== '')
-            $("#kernelPhone").text(kernelInfo.get(kernelReservedKeys.phone));
-        else
-            $("#kernelPhoneContainer").hide();
-
-        if (kernelInfo.has(kernelReservedKeys.physicalAddress) && kernelInfo.get(kernelReservedKeys.physicalAddress) !== '') {
-            $("#kernelAddress").text(kernelInfo.get(kernelReservedKeys.physicalAddress));
-            $("#kernelAddress").attr('href', OSM_QUERY_LINK + kernelInfo.get(kernelReservedKeys.physicalAddress));
-        } else
-            $("#kernelAddressContainer").hide();
-
-        if (kernelInfo.has(kernelReservedKeys.url) && kernelInfo.get(kernelReservedKeys.url) !== "") {
-            $("#kernelUrl").attr('href', kernelInfo.get(kernelReservedKeys.url));
-            $("#kernelUrl").text(kernelInfo.get(kernelReservedKeys.url));
-        } else
-            $("#kernelUrlContainer").hide();
-
-        if (kernelInfo.has(kernelReservedKeys.mail) && kernelInfo.get(kernelReservedKeys.mail) !== "") {
-            $("#kernelMail").attr('href', 'mailto:' + kernelInfo.get(kernelReservedKeys.mail));
-            $("#kernelMail").text(kernelInfo.get(kernelReservedKeys.mail));
-        } else
-            $("#kernelMailContainer").hide();
-
-        if (kernelInfo.has(kernelReservedKeys.version) && kernelInfo.get(kernelReservedKeys.version) !== "")
-            $("#kernelVersion").text('Version ' + kernelInfo.get(kernelReservedKeys.version));
-        else
-            $("#kernelVersion").hide();
-    };
-
-    /**
-     * Set the current connected kernel name, or address if not referenced by moderator
-     *
-     * @param kernelInfo {Map} The information received from backend
-     */
-    let setKernelConnectedAddress = function (kernelInfo) {
-        if (kernelInfo.has(kernelReservedKeys.name)) {
-            $.selector_cache('#kernelConnectedAddress').html("Currently connected to : <strong><span id='moderatorName'></span></strong>");
-            $('#moderatorName').text(kernelInfo.get(kernelReservedKeys.name));
-
-        } else
-            $.selector_cache('#kernelConnectedAddress').text("Currently connected to : '" + _currentKernelAddress + "'");
-    };
-
-    /**
-     * Set the extra data for the kernel
-     *
-     * @param kernelInfo {Map} The information received from backend
-     */
-    let setKernelExtraData = function (kernelInfo) {
-        if (kernelInfo.get(kernelReservedKeys.extraData) !== undefined && kernelInfo.get(kernelReservedKeys.extraData).size) {
-            let $kernelExtraDataTable = $("#kernelExtraDataTable");
-            for (let [key, value] of kernelInfo.get(kernelReservedKeys.extraData)) {
-                $kernelExtraDataTable.append(
-                    "<tr>\n" +
-                    "<th scope='row'>" + capitalizeFirstLetter(key) + "</th>\n" +
-                    "<td>" + value + "</td>\n" +
-                    "</tr>");
-            }
-        } else
-            $("#kernelAdditionalInfoZone").hide();
-    };
-
-
-    /**
-     * Fill the moderator info table with information.
-     * Display an error if info is undefined.
-     *
-     * @param info {Map} Result Map or undefined to use the error text.
-     * @param errorText {String} Error text to display if result is undefined.
-     */
-    let setModeratorInfo = function (info, errorText) {
-        $.selector_cache("#moderatorInfoBody").fadeOut('fast', function () {
-            if (info !== undefined && info.size > 0) {
-                log('Setting moderator info', TypeInfo.Info);
-                $.selector_cache('#moderatorInfoZone').show();
-                $.selector_cache('#moderatorInfoEmptyZone').hide();
-                // Reserved fields
-                if (info.has(moderatorReservedKeys.register))
-                    $.selector_cache(".moderator-registration-link").attr('href', info.get(moderatorReservedKeys.register));
-                else {
-                    $.selector_cache(".moderator-registration-link").hide();
-                    log('No moderator registration link provided', TypeInfo.Warning);
-                }
-                if (info.has(moderatorReservedKeys.contact))
-                    $.selector_cache(".moderator-contact-link").attr('href', info.get(moderatorReservedKeys.contact));
-                else {
-                    $.selector_cache(".moderator-contact-link").hide();
-                    log('No moderator contact link provided', TypeInfo.Warning);
-                }
-                if (info.has(moderatorReservedKeys.search))
-                    $.selector_cache(".moderator-search-link").attr('href', info.get(moderatorReservedKeys.search));
-                else {
-                    $.selector_cache(".moderator-search-link").hide();
-                    log('No moderator search link provided', TypeInfo.Warning);
-                }
-
-                // Other fields
-                let $moderatorInfoTable = $.selector_cache("#moderatorInfoTable");
-                let isInfoEmpty = true;
-                for (let [key, value] of info) {
-                    if (!isValueInObject(key, moderatorReservedKeys)) {
-                        isInfoEmpty = false;
-                        $moderatorInfoTable.append(
-                            "<tr>\n" +
-                            "<th scope='row'>" + capitalizeFirstLetter(key) + "</th>\n" +
-                            "<td>" + value + "</td>\n" +
-                            "</tr>");
-                    }
-                }
-                if (isInfoEmpty)
-                    $.selector_cache("#moderatorAdditionalInfoZone").hide();
-            } else {
-                $.selector_cache('#moderatorInfoZone').hide();
-                $.selector_cache('#moderatorInfoEmptyZone').show();
-                $.selector_cache("#moderatorInfoEmptyText").html(errorText);
-            }
-            $.selector_cache("#moderatorInfoBody").fadeIn('fast');
-        });
-    };
-
-    let isValueInObject = function (val, object) {
-        let isIn = false;
-        for (let i of Object.keys(object)) {
-            if (object[i] === val) {
-                isIn = true;
-                break;
-            }
-        }
-        return isIn;
-    };
-
-    /**
      * Update the main UI components visibility under check and sign tabs,
      * based on current tab, wallet state and kernel ownership
      */
-    let updateMainUIState = function () {
-        if (!_isKernelConnected) {
+    this.updateMainUIState = function () {
+        if (!_kernelManager.isConnected()) {
             $.selector_cache('#mainUIContainer').hide();
             $.selector_cache('#accountsCard').hide();
             $.selector_cache('#loadingAccountsMessage').hide();
-            setMainUIError(true, "Not connected",
-                "Please connect to a kernel to start using the app", COLOR_CLASSES.info, false);
+            setMainUIError(false, "", "", undefined, false);
         } else if (_currentAppMode === APP_MODE.check) { // In check mode
             $.selector_cache('#mainUIContainer').show();
             $.selector_cache('#accountsCard').hide();
             $.selector_cache('#loadingAccountsMessage').hide();
-            setMainUIError(false, "", "", undefined, false)
+            setMainUIError(false, "", "", undefined, false);
         } else if (_currentWalletState !== WALLET_STATE.injected) { // In sign mode without injected wallet
             $.selector_cache('#mainUIContainer').hide();
             $.selector_cache('#accountsCard').hide();
@@ -1906,6 +1412,10 @@ function UIManager() {
      *                       PUBLIC FUNCTIONS
      * *********************************************************/
 
+    this.getKernelManager = function () {
+        return _kernelManager;
+    };
+
     /**
      * Set the app verbose mode.
      * Display a message indicating its state not matter the verbose mode.
@@ -1928,13 +1438,39 @@ function UIManager() {
     };
 
     /**
+     * Get the mode this app is currently in
+     *
+     * @return {APP_MODE} the current app mode
+     */
+    this.getAppMode = function () {
+        return _currentAppMode;
+    };
+
+    /**
+     * Get if the current account is able to sign documents
+     *
+     * @return {boolean}
+     */
+    this.isAccountOperator = function () {
+        return _isAccountOperator;
+    };
+
+    this.isOptimizerEnabled = function () {
+        return _isOptimizerEnabled;
+    };
+
+    this.setOptimizerEnabled = function (val) {
+        _isOptimizerEnabled = val;
+    };
+
+    /**
      * Check if all conditions are met to start file checking.
      * To be able to check, the item list must not be empty, and the user must be connected to a kernel.
      *
      * @return {boolean} Can we start the checking procedure ?
      */
     this.canCheck = function () {
-        return _isKernelConnected && getCurrentList().size;
+        return _kernelManager.isConnected() && getCurrentList().size;
     };
 
     /**
@@ -1943,7 +1479,7 @@ function UIManager() {
      * @return {boolean} Can we start the signing procedure ?
      */
     this.canSign = function () {
-        return _isKernelConnected && _currentWalletState === WALLET_STATE.injected && getCurrentList().size;
+        return _kernelManager.isConnected() && _currentWalletState === WALLET_STATE.injected && getCurrentList().size;
     };
 
     /**
@@ -2299,15 +1835,17 @@ function UIManager() {
     this.initUI = function () {
         this.setVerbose(true);
         log('Successfully Loaded');
+        _kernelManager = new UIKernelManager();
+        _moderatorManager = new UIModeratorManager();
         setAppVersion();
         setDefaultFieldValues();
         detectAppMode();
-        setUIMode(_currentAppMode, true);
+        UI.setUIMode(_currentAppMode, true);
         setupDOMDimensions();
         UI.updateCheckButtonState();
         UI.setUIButtonState(UI_STATE.none);
-        setKernelInfo(undefined, undefined);
-        setModeratorInfo(undefined, 'Connection in progress...');
+        _kernelManager.setKernelInfo(undefined, undefined);
+        _moderatorManager.setModeratorInfo(undefined, 'Connection in progress...');
         for (let i of Object.keys(TAB_TYPE)) {
             resetTabZone(TAB_TYPE[i]);
         }
@@ -2342,17 +1880,17 @@ function UIManager() {
             case TypeInfo.Good:
                 $.selector_cache('#networkTypeField').attr('data-original-title', 'You are connected to a public server');
                 $.selector_cache('#networkTypeField').addClass('badge-success');
-                _defaultModeratorAddress = officialBlockchainEliteModerator;
+                _moderatorManager.setDefaultAddress(officialBlockchainEliteModerator);
                 break;
             case TypeInfo.Warning:
                 $.selector_cache('#networkTypeField').attr('data-original-title', 'You are connected to a test server');
                 $.selector_cache('#networkTypeField').addClass('badge-warning');
-                _defaultModeratorAddress = ropstenBlockchainEliteModerator;
+                _moderatorManager.setDefaultAddress(ropstenBlockchainEliteModerator);
                 break;
             case TypeInfo.Critical:
                 $.selector_cache('#networkTypeField').attr('data-original-title', 'Could not connect');
                 $.selector_cache('#networkTypeField').addClass('badge-danger');
-                _defaultModeratorAddress = '';
+                _moderatorManager.setDefaultAddress('');
                 break;
         }
         for (let type in TypeConnection) {
@@ -2362,7 +1900,7 @@ function UIManager() {
             }
         }
         _currentNetworkType = connectionType;
-        _currentModeratorAddress = _defaultModeratorAddress;
+        _moderatorManager.setCurrentAddress(_moderatorManager.getDefaultAddress());
     };
 
     /**
@@ -2386,7 +1924,7 @@ function UIManager() {
             $.selector_cache('#connectionTypeField').attr('data-original-title', 'You are using an infura wallet');
             _currentWalletState = WALLET_STATE.infura;
         }
-        updateMainUIState();
+        UI.updateMainUIState();
         UI.updateCheckButtonState();
 
         tryReadyUI();
@@ -2431,7 +1969,7 @@ function UIManager() {
                         btnClass: 'btn-orange',
                         action: function () {
                             log('Connection insecure');
-                            updateKernelObject(_currentKernelAddress, undefined);
+                            updateKernelObject(_kernelManager.getCurrentAddress(), undefined);
                         }
                     },
                     cancel: function () {
@@ -2456,42 +1994,42 @@ function UIManager() {
     this.updateKernelConnection = function (connectionStatus, moderatorInfo) {
         _isAccountsListAvailable = false; // Kernel operators may change
         resetAllElements(); // Element signatures are different from each kernel
-        setKernelConnectionLoading(false);
+        _kernelManager.setKernelConnectionLoading(false);
         switch (connectionStatus) {
             case TypeInfo.Good:
                 $.selector_cache('#kernelConnectionInfoIcon').attr('class', 'fas fa-check-circle text-success');
                 setDOMColor($.selector_cache('#kernelInfoHeader'), COLOR_CLASSES.success);
-                setKernelInfo(moderatorInfo, TypeInfo.Good);
+                _kernelManager.setKernelInfo(moderatorInfo, TypeInfo.Good);
                 if (_currentAppMode === APP_MODE.sign)
                     askForAccounts();
-                _isKernelConnected = true;
+                _kernelManager.setConnected(true);
                 break;
             case TypeInfo.Warning:
                 $.selector_cache('#kernelConnectionInfoIcon').attr('class', 'fas fa-exclamation-triangle text-warning');
-                $.selector_cache('#kernelConnectedAddress').html("Currently connected to : '" + _currentKernelAddress + "'");
+                $.selector_cache('#kernelConnectedAddress').html("Currently connected to : '" + _kernelManager.getCurrentAddress() + "'");
                 setDOMColor($.selector_cache('#kernelInfoHeader'), COLOR_CLASSES.warning);
-                setKernelInfo(undefined, TypeInfo.Warning);
+                _kernelManager.setKernelInfo(undefined, TypeInfo.Warning);
                 if (_currentAppMode === APP_MODE.sign)
                     askForAccounts();
-                _isKernelConnected = true;
+                _kernelManager.setConnected(true);
                 break;
             case TypeInfo.Critical:
                 $.selector_cache('#kernelConnectionInfoIcon').attr('class', 'fas fa-times text-danger');
-                $.selector_cache('#kernelConnectedAddress').html("Could not connect to '" + _currentKernelAddress + "'");
+                $.selector_cache('#kernelConnectedAddress').html("Could not connect to '" + _kernelManager.getCurrentAddress() + "'");
                 setDOMColor($.selector_cache('#kernelInfoHeader'), COLOR_CLASSES.danger);
-                setKernelInfo(undefined, TypeInfo.Critical);
-                _isKernelConnected = false;
+                _kernelManager.setKernelInfo(undefined, TypeInfo.Critical);
+                _kernelManager.setConnected(false);
                 break;
             default:
                 $.selector_cache('#kernelConnectionInfoIcon').attr('class', 'fas fa-question');
                 $.selector_cache('#kernelConnectedAddress').html("Not Connected");
                 setDOMColor($.selector_cache('#kernelInfoHeader'), COLOR_CLASSES.secondary);
-                setKernelInfo(undefined, undefined);
-                _isKernelConnected = false;
+                _kernelManager.setKernelInfo(undefined, undefined);
+                _kernelManager.setConnected(false);
                 break;
         }
         UI.updateCheckButtonState();
-        updateMainUIState();
+        UI.updateMainUIState();
     };
 
     /**
@@ -2508,29 +2046,29 @@ function UIManager() {
         if (connectionInfo !== undefined && connectionInfo.has(moderatorReservedKeys.status))
             connectionType = connectionInfo.get(moderatorReservedKeys.status);
 
-        _isModeratorConnected = true;
-        setModeratorConnectionLoading(false);
+        _moderatorManager.setConnected(true);
+        _moderatorManager.setModeratorConnectionLoading(false);
         log('Updating moderator input UI', TypeInfo.Info);
         UI.updateKernelConnection(undefined, undefined); // Reset the kernel connection
         switch (connectionType) {
             case TypeInfo.Good:
                 $.selector_cache('#moderatorConnectionInfoIcon').attr('class', 'fas fa-check-circle text-success');
-                if (_currentModeratorAddress === _defaultModeratorAddress) {
+                if (_moderatorManager.isConnectedToDefault()) {
                     let modName = _currentNetworkType === TypeConnection.Mainnet ? 'Blockchain Élite ULCDocuments Official' : 'Blockchain Élite ULCDocuments Testnet';
                     $.selector_cache('#moderatorConnectedAddress').html("Currently connected to default: " +
                         "<strong>" + modName + "</strong>");
                 } else
                     $.selector_cache('#moderatorConnectedAddress').html("Currently connected to: " +
-                        "'<strong>" + _currentModeratorAddress + "</strong>'");
+                        "'<strong>" + _moderatorManager.getCurrentAddress() + "</strong>'");
                 setDOMColor($.selector_cache('#moderatorInfoHeader'), COLOR_CLASSES.success);
-                setModeratorInfo(connectionInfo, "");
+                _moderatorManager.setModeratorInfo(connectionInfo, "");
                 break;
             case TypeInfo.Critical:
-                _isKernelConnected = false;
+                _kernelManager.setConnected(false);
                 $.selector_cache('#moderatorConnectionInfoIcon').attr('class', 'fas fa-times text-danger');
-                $.selector_cache('#moderatorConnectedAddress').html("Could not connect to '" + _currentModeratorAddress + "'");
+                $.selector_cache('#moderatorConnectedAddress').html("Could not connect to '" + _moderatorManager.getCurrentAddress() + "'");
                 setDOMColor($.selector_cache('#moderatorInfoHeader'), COLOR_CLASSES.danger);
-                setModeratorInfo(undefined, 'Connection could not be established, falling back to default');
+                _moderatorManager.setModeratorInfo(undefined, 'Connection could not be established, falling back to default');
                 break;
         }
         tryReadyUI();
@@ -2627,14 +2165,14 @@ function UIManager() {
                             '</tr>');
                         $.selector_cache("#accountsTable").append(
                             "<tr class='" + rowClass + "'>\n" +
-                            "<td scope=\"row\">" + key + " (Current Account)" + "</td>\n" +
+                            "<td>" + key + " (Current Account)" + "</td>\n" +
                             "<td>" + rowOwnership + "</td>\n" +
                             "</tr>");
                         isFirstElem = false;
                     } else { // Other accounts
                         $.selector_cache("#accountsTable").append(
                             "<tr class='" + rowClass + "'>\n" +
-                            "<td scope=\"row\">" + key + "</td>\n" +
+                            "<td>" + key + "</td>\n" +
                             "<td>" + rowOwnership + "</td>\n" +
                             "</tr>");
                     }
@@ -2649,8 +2187,8 @@ function UIManager() {
                 _isAccountOperator = false;
             }
             _isLoadingAccounts = false;
-            updateKernelButtonsState();
-            updateMainUIState();
+            _kernelManager.updateKernelButtonsState();
+            UI.updateMainUIState();
             $.selector_cache('#accountsListBody').fadeIn('fast');
         });
     };
