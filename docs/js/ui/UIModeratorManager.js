@@ -45,7 +45,7 @@ function UIModeratorManager() {
             '<form>' +
             '   <div class="form-group">' +
             '       <label>Current moderator address:</label>' +
-            '       <label>' + _currentModeratorAddress + '</label>' +
+            '       <label style="word-break: break-all">' + _currentModeratorAddress + '</label>' +
             '   </div>' +
             '   <div class="form-group">' +
             '       <label>New moderator address:</label>' +
@@ -71,7 +71,7 @@ function UIModeratorManager() {
             content: message,
             type: 'orange',
             theme: JQUERY_CONFIRM_THEME,
-            columnClass: 'medium',
+            columnClass: 'xlarge',
             icon: 'fas fa-cog',
             escapeKey: 'cancel',
             typeAnimated: true,

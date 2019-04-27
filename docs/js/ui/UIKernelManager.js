@@ -23,12 +23,12 @@ function UIKernelManager() {
         $.alert({
             title: 'Kernel Information',
             content: '<div class="row" id="kernelInfoZone">\n' +
-                '<div class="col" id="kernelInfoCol">\n' +
-                '<div class="mr-4" id="kernelImgContainer">\n' +
+                '<div class="col-lg" id="kernelInfoCol">\n' +
+                '<div class="col-lg" id="kernelImgContainer">' +
                 '<img class="my-auto" src="images/img_placeholder.jpg" alt="Kernel Image"\n' +
                 'id="kernelImg">\n' +
                 '</div>\n' +
-                '<div class="pl-4 border-left border-dark" id="kernelInfoText">\n' +
+                '<div class="col-lg border-left border-dark" id="kernelInfoText">\n' +
                 '<h4 id="kernelName">Kernel Info</h4>\n' +
                 '<p id="kernelOrganization">#ORGA</p>\n' +
                 '<p id="kernelPhoneContainer">\n' +
@@ -50,7 +50,7 @@ function UIKernelManager() {
                 '<p class="text-muted" id="kernelVersion"></p>\n' +
                 '</div>\n' +
                 '</div>\n' +
-                '<div class="col" id="kernelAdditionalInfoZone">\n' +
+                '<div class="col-lg" id="kernelAdditionalInfoZone">\n' +
                 '<h4 class="text-center">Additional Information</h4>\n' +
                 '<table class="table">\n' +
                 '<tbody id="kernelExtraDataTable">\n' +
@@ -82,7 +82,7 @@ function UIKernelManager() {
                 '<form>' +
                 '<div class="form-group">' +
                 '<label>Current kernel address:</label>' +
-                '<label>' + _currentKernelAddress + '</label>' +
+                '<label style="word-break: break-all">' + _currentKernelAddress + '</label>' +
                 '</div>' +
                 '<div class="form-group">' +
                 '<label>New kernel address:</label>' +
@@ -97,7 +97,7 @@ function UIKernelManager() {
                 '</div>',
             type: 'blue',
             theme: JQUERY_CONFIRM_THEME,
-            columnClass: 'medium',
+            columnClass: 'xlarge',
             icon: 'fas fa-edit',
             escapeKey: 'cancel',
             typeAnimated: true,

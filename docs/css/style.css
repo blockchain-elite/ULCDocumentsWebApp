@@ -220,6 +220,10 @@
     margin-bottom: 20px;
 }
 
+#fileBlockchainInfoZone .row {
+    width: 100%;
+}
+
 .custom-checkbox {
     line-height: 30px;
 }
@@ -231,16 +235,13 @@
 }
 
 #kernelImgContainer {
-    margin-left: auto;
     display: flex;
-    width: 300px;
-    height: 300px;
 }
 
 #kernelImg {
-    max-height: 100%;
-    max-width: 100%;
-    margin: auto;
+    max-height: 300px;
+    max-width: 300px;
+    margin: auto 2rem auto auto;
 }
 
 #kernelInfoHeader {
@@ -279,8 +280,11 @@
 #kernelInfoText {
     display: block;
     margin: auto auto auto 0;
+    padding-left: 2rem;
     height: fit-content;
-    height: -moz-fit-content
+    height: -moz-fit-content;
+    text-align: left;
+    color: #212529;
 }
 
 #kernelAdditionalInfoZone {
@@ -407,6 +411,27 @@ only screen and (max-width: 991px) {
 
 
 
+@media
+only screen and (max-width: 767px) {
+    #kernelInfoText {
+        margin: 0;
+        padding: 0;
+        text-align: center;
+        border: none !important;
+    }
+
+    #kernelInfoZone, #kernelInfoCol, #kernelInfoCol div {
+        display: block;
+    }
+
+    #kernelImg {
+        margin: auto;
+    }
+
+    #kernelInfoZone {
+        text-align: center;
+    }
+}
 
 @media
 only screen and (max-width: 575px) {
@@ -423,28 +448,6 @@ only screen and (max-width: 575px) {
     #loadingScreen, #baseContainer, #indexContainer {
         /* Height of the footer */
         padding-bottom: 300px;
-    }
-
-
-    #kernelInfoZone, #kernelInfoCol, #kernelInfoCol div {
-        display: block;
-    }
-
-    #kernelImgContainer {
-        width: 100%;
-    }
-
-    #kernelInfoText {
-        margin-top: 10px;
-        border: none !important;
-    }
-
-    #kernelInfoZone {
-        text-align: center;
-    }
-
-    #kernelConnectionEditButton {
-        position: relative;
     }
 
     #WelcomeJumbotron h1{
