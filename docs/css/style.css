@@ -67,7 +67,7 @@
 #loadingScreen div {
     width: 100%;
     font-size: 3rem;
-    color: #7b7b7b;
+    color: #696969;
     cursor: default;
 }
 
@@ -135,6 +135,7 @@
 #fileContainer {
     overflow-y: auto;
     transition: 0.3s;
+    height: 0;
 }
 
 #textBox {
@@ -243,9 +244,14 @@
 }
 
 #kernelInfoHeader {
-    height: 50px;
+    min-height: 50px;
+    height: fit-content;
     margin: 20px auto;
     display: flex;
+}
+
+#kernelInfoHeader button {
+    margin: 3px 0;
 }
 
 #kernelInfoHeader .row {
@@ -332,6 +338,75 @@
 #detailsZone {
     color: #212529;
 }
+
+#actionButtonsMobileContainer {
+    display: none;
+}
+
+@media
+only screen and (max-width: 991px) {
+    #buttonsCardContainer {
+        position: fixed;
+        padding: 0;
+        bottom: 0;
+        width: 100%;
+        right: 0;
+        z-index: 100;
+        height: 250px;
+        transform: translateY(150px);
+        transition: 0.3s;
+    }
+
+    #actionButtonsMobileContainer {
+        display: block;
+    }
+
+    #actionButtonsMobileToggle {
+        z-index: 110;
+        position: absolute;
+        top: 0;
+        right: 0;
+        font-size: 3rem;
+        cursor: pointer;
+        height: 100px;
+        width: 100%;
+        color: #7b7b7b;
+    }
+
+    #actionButtonsMobileToggleIcon {
+        position: absolute;
+        top: 0;
+        right: 0;
+        padding: 20px;
+        transition: 0.3s;
+    }
+
+    #actionButtonsMobileFade {
+        height: 250px;
+        width: 100%;
+        z-index: 105;
+        position: absolute;
+        top: 0;
+        right: 0;
+        background: linear-gradient(to bottom, rgba(255,255,255,0) 0%,rgba(255,255,255,0.7) 20%,rgba(255,255,255,1) 80%);
+    }
+
+    #buttonsCardContainer.shown {
+        transform: translateY(0);
+    }
+
+    #buttonsCardContainer.shown #actionButtonsMobileToggle{
+        width: auto;
+        height: auto;
+    }
+
+    #buttonsCardContainer.shown #actionButtonsMobileToggleIcon{
+        transform: rotate(180deg);
+    }
+}
+
+
+
 
 @media
 only screen and (max-width: 575px) {

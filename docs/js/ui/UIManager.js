@@ -503,6 +503,16 @@ function UIManager() {
             sendNotification(TypeInfo.Good, 'Link Copied', 'The link to this page has been copied in your clipboard.')
         });
 
+        $.selector_cache('#actionButtonsMobileToggle').on('click', function () {
+            if ($.selector_cache('#buttonsCardContainer').hasClass('shown')) {
+                $.selector_cache('#buttonsCardContainer').removeClass('shown');
+                $.selector_cache('#actionButtonsMobileFade').fadeIn(300);
+            } else {
+                $.selector_cache('#buttonsCardContainer').addClass('shown');
+                $.selector_cache('#actionButtonsMobileFade').fadeOut(300);
+            }
+        });
+
         $.selector_cache('#advancedOptionsButton').on('click', function () {
             $.confirm({
                 title: 'Are you sure?',
@@ -1403,6 +1413,7 @@ function UIManager() {
     let setupDOMDimensions = function () {
         let height = $(window).height() - 200; // Header + kernel connection
         $.selector_cache("#mainCard").css('height', height);
+        // $.selector_cache("#fileListCard").css('height', $.selector_cache("#fileListCard").height());
     };
 
     /* *********************************************************

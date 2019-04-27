@@ -195,26 +195,22 @@
 
         <div class="card shadow" id="kernelInfoHeader">
             <div class="row">
-                <div class="col-6" style="display: flex;">
+                <div class="col-lg" style="display: flex;">
                     <i id="kernelConnectionInfoIcon" class="fas fa-question"
                        style="width: 20px;font-size: 1.1em; margin: auto 0;"></i>
                     <span id="kernelConnectedAddress" style="margin: auto 0">Not connected</span>
                 </div>
-                <div class="col-2">
+                <div class="col-lg text-center">
                     <button class="btn btn-primary"
                             id="kernelConnectionShareButton">
                         <i class="fas fa-share" style="width: 20px"></i>
                         Share this Kernel
                     </button>
-                </div>
-                <div class="col-2">
                     <button class="btn btn-primary"
                             id="kernelConnectionShowMoreButton">
                         <i class="fas fa-info-circle" style="width: 20px"></i>
                         Show more information
                     </button>
-                </div>
-                <div class="col-2">
                     <button class="btn btn-primary"
                             id="kernelConnectionEditButton">
                         <i class="fas fa-edit" style="width: 20px"></i>
@@ -343,8 +339,14 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-lg" style="display: flex;">
+                        <div class="col-lg" id="buttonsCardContainer" style="display: flex;">
                             <!--ACTION BUTTON AND PROGRESS TAB-->
+                            <div id="actionButtonsMobileContainer">
+                                <div id="actionButtonsMobileToggle">
+                                    <i class="fas fa-angle-up" id="actionButtonsMobileToggleIcon"></i>
+                                </div>
+                                <div id="actionButtonsMobileFade"></div>
+                            </div>
                             <div class="card text-center shadow" id="buttonsCard">
                                 <div class="card-body">
                                     <div class="row">
