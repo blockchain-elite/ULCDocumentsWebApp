@@ -130,10 +130,17 @@ function UIItemDetailsManager() {
      */
     this.displayFileProps = function (item) {
         itemPropPopup.onOpenBefore = function() {
-            $('textarea').autoResize();
+            $('#itemTextInput').autoResize();
             $('#itemHashType').text(getHashAlgorithm() + ': ');
             UI.getItemDetailsManager().setupItemPopup(item);
         };
+        itemPropPopup.onOpen = function() { // Make sure the input fields are focused
+            if (UI.getCurrentTab() === TAB_TYPE.text)
+                $('#itemTextInput').focus();
+            else if (UI.getCurrentTab() === TAB_TYPE.hash)
+                $('#itemHashInput').focus();
+        };
+
         let type = getJConfirmTypeFromColorCLass(item.getCardColor());
         let btnType = '';
         if (type !== '')
