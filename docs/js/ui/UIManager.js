@@ -1184,14 +1184,14 @@ function UIManager() {
      */
     let updateProgress = function (progress, isFinished = false) {
         if (isFinished) { // Finished
-            $.selector_cache('#fileInProgress').html('...');
+            $.selector_cache('#fileInProgress').html('');
             $.selector_cache('#actionInProgress').html('Finished');
             $.selector_cache('#actionProgressBar').css("width", "100%");
             $.selector_cache('#actionProgressBar').attr("aria-valuenow", "100");
             $.selector_cache('#actionProgressBar').html('100%');
             $.selector_cache('#actionProgressBar').removeClass('progress-bar-animated');
         } else if (progress === -1) { // Not started
-            $.selector_cache('#fileInProgress').html('...');
+            $.selector_cache('#fileInProgress').html('');
             $.selector_cache('#actionInProgress').html('Not started');
             $.selector_cache('#actionProgressBar').css("width", "0");
             $.selector_cache('#actionProgressBar').attr("aria-valuenow", "0");
@@ -1227,34 +1227,34 @@ function UIManager() {
      */
     this.updateMainUIState = function () {
         if (!_kernelManager.isConnected()) {
-            $.selector_cache('#mainUIContainer').hide();
+            $.selector_cache('#fileListContainer').hide();
             $.selector_cache('#accountsCard').hide();
             $.selector_cache('#loadingAccountsMessage').hide();
             setMainUIError(false, "", "", undefined, false);
         } else if (_currentAppMode === APP_MODE.check) { // In check mode
-            $.selector_cache('#mainUIContainer').show();
+            $.selector_cache('#fileListContainer').show();
             $.selector_cache('#accountsCard').hide();
             $.selector_cache('#loadingAccountsMessage').hide();
             setMainUIError(false, "", "", undefined, false);
         } else if (_currentWalletState !== WALLET_STATE.injected) { // In sign mode without injected wallet
-            $.selector_cache('#mainUIContainer').hide();
+            $.selector_cache('#fileListContainer').hide();
             $.selector_cache('#accountsCard').hide();
             $.selector_cache('#loadingAccountsMessage').hide();
             setMainUIError(true, "Wallet not injected",
                 "Please make sure you have metamask installed.", COLOR_CLASSES.warning, true);
         } else if (_isLoadingAccounts) {
-            $.selector_cache('#mainUIContainer').hide();
+            $.selector_cache('#fileListContainer').hide();
             $.selector_cache('#accountsCard').show();
             $.selector_cache('#loadingAccountsMessage').show();
             setMainUIError(false, '', '', undefined, false);
         } else if (!_isAccountOperator) { // In sign mode with an injected wallet but not kernel operator
-            $.selector_cache('#mainUIContainer').hide();
+            $.selector_cache('#fileListContainer').hide();
             $.selector_cache('#accountsCard').show();
             $.selector_cache('#loadingAccountsMessage').hide();
             setMainUIError(true, 'Not operator',
                 'You are not an operator on this kernel. You must be an operator to sign documents.', COLOR_CLASSES.danger, false);
         } else { // In sign mode with injected wallet and kernel operator
-            $.selector_cache('#mainUIContainer').show();
+            $.selector_cache('#fileListContainer').show();
             $.selector_cache('#accountsCard').show();
             $.selector_cache('#loadingAccountsMessage').hide();
             setMainUIError(false, '', '', undefined, false);

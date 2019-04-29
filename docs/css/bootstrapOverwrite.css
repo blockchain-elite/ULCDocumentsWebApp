@@ -35,8 +35,9 @@ footer {
     position: absolute;
     width: 100%;
     bottom: 0;
-    height: 210px;
+    height: 310px;
     color: white;
+    padding: 0 0 100px;
 }
 
 footer a {

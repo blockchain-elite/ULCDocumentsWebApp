@@ -3,6 +3,43 @@ function UIKernelManager() {
     let _currentKernelInfo = new Map();
     let _currentKernelAddress = ""; // The current kernel address the user is connected to
 
+    let kernelInfoDOM = '<div class="row" id="kernelInfoZone">\n' +
+        '<div class="col-lg" id="kernelInfoCol">\n' +
+        '<div class="col-lg" id="kernelImgContainer">' +
+        '<img class="my-auto" src="images/img_placeholder.jpg" alt="Kernel Image"\n' +
+        'id="kernelImg">\n' +
+        '</div>\n' +
+        '<div class="col-lg border-left border-dark" id="kernelInfoText">\n' +
+        '<h4 id="kernelName">Kernel Info</h4>\n' +
+        '<p id="kernelOrganization">#ORGA</p>\n' +
+        '<p id="kernelPhoneContainer">\n' +
+        '<i class="fas fa-phone" style="width: 20px"></i>\n' +
+        '<span id="kernelPhone">#PHONE</span>\n' +
+        '</p>\n' +
+        '<p id="kernelAddressContainer">\n' +
+        '<i class="fas fa-map-marker-alt" style="width: 20px"></i>\n' +
+        '<a id="kernelAddress" href="" target="_blank">#Address</a>\n' +
+        '</p>\n' +
+        '<p id="kernelUrlContainer">\n' +
+        '<i class="fas fa-globe" style="width: 20px"></i>\n' +
+        '<a href="" target="_blank" id="kernelUrl"></a>\n' +
+        '</p>\n' +
+        '<p id="kernelMailContainer">\n' +
+        '<i class="fas fa-envelope" style="width: 20px"></i>\n' +
+        '<a href="" id="kernelMail"></a>\n' +
+        '</p>\n' +
+        '<p class="text-muted" id="kernelVersion"></p>\n' +
+        '</div>\n' +
+        '</div>\n' +
+        '<div class="col-lg" id="kernelAdditionalInfoZone">\n' +
+        '<h4 class="text-center">Additional Information</h4>\n' +
+        '<table class="table">\n' +
+        '<tbody id="kernelExtraDataTable">\n' +
+        '</tbody>\n' +
+        '</table>\n' +
+        '</div>\n' +
+        '</div>';
+
     this.isConnected = function () {
         return _isKernelConnected;
     };
@@ -19,45 +56,17 @@ function UIKernelManager() {
         _currentKernelAddress = val;
     };
 
+    let fillKernelInfo = function () {
+        $.selector_cache('#kernelInfoContainer').html(kernelInfoDOM);
+        setKernelReservedFields(_currentKernelInfo);
+        setKernelExtraData(_currentKernelInfo);
+    };
+
     this.showKernelInfo = function () {
+        $.selector_cache('#kernelInfoContainer').html("");
         $.alert({
             title: 'Kernel Information',
-            content: '<div class="row" id="kernelInfoZone">\n' +
-                '<div class="col-lg" id="kernelInfoCol">\n' +
-                '<div class="col-lg" id="kernelImgContainer">' +
-                '<img class="my-auto" src="images/img_placeholder.jpg" alt="Kernel Image"\n' +
-                'id="kernelImg">\n' +
-                '</div>\n' +
-                '<div class="col-lg border-left border-dark" id="kernelInfoText">\n' +
-                '<h4 id="kernelName">Kernel Info</h4>\n' +
-                '<p id="kernelOrganization">#ORGA</p>\n' +
-                '<p id="kernelPhoneContainer">\n' +
-                '<i class="fas fa-phone" style="width: 20px"></i>\n' +
-                '<span id="kernelPhone">#PHONE</span>\n' +
-                '</p>\n' +
-                '<p id="kernelAddressContainer">\n' +
-                '<i class="fas fa-map-marker-alt" style="width: 20px"></i>\n' +
-                '<a id="kernelAddress" href="" target="_blank">#Address</a>\n' +
-                '</p>\n' +
-                '<p id="kernelUrlContainer">\n' +
-                '<i class="fas fa-globe" style="width: 20px"></i>\n' +
-                '<a href="" target="_blank" id="kernelUrl"></a>\n' +
-                '</p>\n' +
-                '<p id="kernelMailContainer">\n' +
-                '<i class="fas fa-envelope" style="width: 20px"></i>\n' +
-                '<a href="" id="kernelMail"></a>\n' +
-                '</p>\n' +
-                '<p class="text-muted" id="kernelVersion"></p>\n' +
-                '</div>\n' +
-                '</div>\n' +
-                '<div class="col-lg" id="kernelAdditionalInfoZone">\n' +
-                '<h4 class="text-center">Additional Information</h4>\n' +
-                '<table class="table">\n' +
-                '<tbody id="kernelExtraDataTable">\n' +
-                '</tbody>\n' +
-                '</table>\n' +
-                '</div>\n' +
-                '</div>',
+            content: kernelInfoDOM,
             type: 'blue',
             theme: JQUERY_CONFIRM_THEME,
             columnClass: 'xlarge',
@@ -81,7 +90,7 @@ function UIKernelManager() {
             content: '' +
                 '<form>' +
                 '<div class="form-group">' +
-                '<label>Current kernel address:</label>' +
+                '<label>Current kernel address: </label>' +
                 '<label style="word-break: break-all">' + _currentKernelAddress + '</label>' +
                 '</div>' +
                 '<div class="form-group">' +
@@ -213,6 +222,7 @@ function UIKernelManager() {
             this.updateKernelButtonsState();
             $.selector_cache("#kernelInfoEmptyText").html(errorText);
         }
+        fillKernelInfo();
     };
 
     /**

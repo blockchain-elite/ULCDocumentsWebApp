@@ -298,7 +298,7 @@ function UIItemDetailsManager() {
             $('#fileBlockchainSource').text('Source: ' + item.getInformation().get(elementReservedKeys.date));
 
         let family = getCompatibleFamily()[item.getInformation().get(elementReservedKeys.documentFamily)]; // Get the document family string
-        $('#fileBlockchainFamily').text('Signed as:' + family);
+        $('#fileBlockchainFamily').text('Signed as: ' + family);
     };
 
     let fillBlockchainExtraDataFields = function (item) {

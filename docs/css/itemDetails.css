@@ -33,6 +33,11 @@
 }
 
 #itemHashContainer {
-    float: right;
+    text-align: center;
+    width: 100%;
     word-break: break-all;
+}
+
+#docFamilyDropdownButton {
+    float: left;
 }

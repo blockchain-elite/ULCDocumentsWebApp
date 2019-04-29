@@ -201,8 +201,9 @@
                     <span id="kernelConnectedAddress" style="margin: auto 0">Not connected</span>
                 </div>
                 <div class="col-lg text-center">
-                    <button class="btn btn-primary"
-                            id="kernelConnectionShareButton">
+                    <button class="btn btn-primary" id="kernelConnectionShareButton" data-toggle="tooltip"
+                            data-placement="bottom"
+                            title="Copy the current application link to the clipboard">
                         <i class="fas fa-share" style="width: 20px"></i>
                         Share this Kernel
                     </button>
@@ -247,56 +248,11 @@
                     </div>
                 </div>
 
-                <div id="kernelInfoEmptyZone">
-                    <div class="container-fluid text-muted d-flex">
-                        <div class="container-fluid justify-content-center align-self-center text-center">
-                            <div id="kernelInfoEmptyTextContainer" class="text-muted">
-                                <h3>
-                                    <i id="kernelLoadingIcon"
-                                       class="fas fa-circle-notch fa-spin fa-fw"></i>
-                                    <span id="kernelInfoEmptyText">Not connected, please enter a kernel address below</span>
-                                </h3>
-                            </div>
-                            <form id="kernelInputForm" class="mt-4">
-                                <input id="kernelAddressInput" class="form-control"
-                                       placeholder="Enter an address here">
-                                <button class="btn btn-lg btn-primary mt-4"
-                                        id="kernelAddressInputConnect">
-                                    <i class="fas fa-arrow-right"></i>
-                                    Connect
-                                </button>
-                            </form>
-
-                            <div id="kernelButtons" class="mt-4" style="display: none">
-                                <h4 class="mb-4">Moderator Links:</h4>
-                                <a class="moderator-registration-link" target="_blank" href="">
-                                    <button class="btn btn-primary btn-lg">
-                                        <i class="fas fa-sign-in-alt" style="width: 25px"></i>
-                                        Register
-                                    </button>
-                                </a>
-                                <a class="moderator-contact-link" target="_blank" href="">
-                                    <button class="btn btn-primary btn-lg">
-                                        <i class="fas fa-at" style="width: 25px"></i>
-                                        Contact
-                                    </button>
-                                </a>
-                                <a class="moderator-search-link" target="_blank" href="">
-                                    <button class="btn btn-primary btn-lg">
-                                        <i class="fas fa-search" style="width: 25px"></i>
-                                        Search
-                                    </button>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
                 <!--MAIN UI-->
                 <div class="mb-2" id="mainUIContainer">
 
                     <div class="row" id="filesRow">
-                        <div class="col-lg">
+                        <div class="col-lg-5" id="fileListContainer">
                             <!--ITEM LIST CARD-->
                             <div class="card shadow mb-4" id="fileListCard">
                                 <div class="card-header">
@@ -339,62 +295,115 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-lg" id="buttonsCardContainer" style="display: flex;">
-                            <!--ACTION BUTTON AND PROGRESS TAB-->
-                            <div id="actionButtonsMobileContainer">
-                                <div id="actionButtonsMobileToggle">
-                                    <i class="fas fa-angle-up" id="actionButtonsMobileToggleIcon"></i>
-                                </div>
-                                <div id="actionButtonsMobileFade"></div>
-                            </div>
-                            <div class="card text-center shadow" id="buttonsCard">
-                                <div class="card-body">
-                                    <div class="row">
-                                        <div class="col-xl my-1" id="actionButtonContainer">
-                                            <div id="actionButtons">
-                                                <button class="btn btn-primary btn-lg action-button" id="checkButton">
-                                                    <span id="checkButtonText">Check</span>
-                                                    <i class="far fa-check-square" id="checkButtonLogo"
-                                                       style="margin-left: 10px"></i>
+                        <div class="col-lg">
+                            <div id="kernelInfoEmptyZone">
+                                <div class="container-fluid text-muted d-flex">
+                                    <div class="container-fluid justify-content-center align-self-center text-center">
+                                        <div id="kernelInfoEmptyTextContainer" class="text-muted">
+                                            <h3>
+                                                <i id="kernelLoadingIcon"
+                                                   class="fas fa-circle-notch fa-spin fa-fw"></i>
+                                                <span id="kernelInfoEmptyText">Not connected, please enter a kernel address below</span>
+                                            </h3>
+                                        </div>
+                                        <form id="kernelInputForm" class="mt-4">
+                                            <input id="kernelAddressInput" class="form-control"
+                                                   placeholder="Enter an address here">
+                                            <button class="btn btn-lg btn-primary mt-4"
+                                                    id="kernelAddressInputConnect">
+                                                <i class="fas fa-arrow-right"></i>
+                                                Connect
+                                            </button>
+                                        </form>
+
+                                        <div id="kernelButtons" class="mt-4" style="display: none">
+                                            <h4 class="mb-4">Moderator Links:</h4>
+                                            <a class="moderator-registration-link" target="_blank" href="">
+                                                <button class="btn btn-primary btn-lg">
+                                                    <i class="fas fa-sign-in-alt" style="width: 25px"></i>
+                                                    Register
                                                 </button>
-                                                <div id="signActionButtonContainer">
-                                                    <i class="fas fa-long-arrow-alt-right sign-next-step-logo mx-1"></i>
-                                                    <div id="buttonsContainer">
-                                                        <button class="btn btn-primary btn-lg action-button"
-                                                                id="signButton">
-                                                            Sign
-                                                            <i class="far fa-edit" id="signButtonLogo"
-                                                               style="margin-left: 10px"></i>
-                                                        </button>
-                                                        <button class="btn btn-warning btn-lg action-button mt-2"
-                                                                id="cancelButton">
-                                                            Cancel
-                                                            <i class="fas fa-times" style="margin-left: 10px"></i>
-                                                        </button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div class="col-xl my-1" style="display: flex">
-                                            <div id="actionTextContainer" style="margin: auto">
-                                                <div class="card-text" id="actionInProgress"></div>
-                                                <div class="card-text" id="fileInProgress"></div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="progress" id="actionProgressHolder">
-                                        <div class="progress-bar progress-bar-striped progress-bar-animated"
-                                             role="progressbar" id="actionProgressBar" style="width: 0;"
-                                             aria-valuenow="0"
-                                             aria-valuemin="0" aria-valuemax="100">
+                                            </a>
+                                            <a class="moderator-contact-link" target="_blank" href="">
+                                                <button class="btn btn-primary btn-lg">
+                                                    <i class="fas fa-at" style="width: 25px"></i>
+                                                    Contact
+                                                </button>
+                                            </a>
+                                            <a class="moderator-search-link" target="_blank" href="">
+                                                <button class="btn btn-primary btn-lg">
+                                                    <i class="fas fa-search" style="width: 25px"></i>
+                                                    Search
+                                                </button>
+                                            </a>
                                         </div>
                                     </div>
                                 </div>
                             </div>
+                            <div id="kernelInfoContainer">
+
+                            </div>
+
                         </div>
                     </div>
                 </div>
 
+            </div>
+        </div>
+
+        <div id="buttonsCardContainer" style="display: flex;">
+            <!--ACTION BUTTON AND PROGRESS TAB-->
+            <div id="actionButtonsMobileContainer">
+                <div id="actionButtonsMobileToggle">
+                    <i class="fas fa-angle-up" id="actionButtonsMobileToggleIcon"></i>
+                </div>
+                <div id="actionButtonsMobileFade"></div>
+            </div>
+            <div class="card text-center shadow" id="buttonsCard">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg my-1" id="actionButtonContainer">
+                            <div id="actionButtons">
+                                <button class="btn btn-primary btn-lg action-button" id="checkButton">
+                                    <span id="checkButtonText">Check</span>
+                                    <i class="far fa-check-square" id="checkButtonLogo"
+                                       style="margin-left: 10px"></i>
+                                </button>
+                                <div id="signActionButtonContainer">
+                                    <i class="fas fa-long-arrow-alt-right sign-next-step-logo mx-1"></i>
+                                    <div id="buttonsContainer">
+                                        <button class="btn btn-primary btn-lg action-button"
+                                                id="signButton">
+                                            Sign
+                                            <i class="far fa-edit" id="signButtonLogo"
+                                               style="margin-left: 10px"></i>
+                                        </button>
+                                        <button class="btn btn-warning btn-lg action-button ml-2"
+                                                id="cancelButton">
+                                            Cancel
+                                            <i class="fas fa-times" style="margin-left: 10px"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-lg my-1">
+                            <div id="actionTextContainer">
+                                <div class="card-text" id="actionInProgress"></div>
+                                <div class="card-text" id="fileInProgress"></div>
+                            </div>
+                            <div class="progress" id="actionProgressHolder">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated"
+                                     role="progressbar" id="actionProgressBar" style="width: 0;"
+                                     aria-valuenow="0"
+                                     aria-valuemin="0" aria-valuemax="100">
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
             </div>
         </div>
 
@@ -500,7 +509,7 @@
 
 
     <!--FOOTER-->
-    <footer class="p-0 shadow">
+    <footer class="shadow">
         <div class="container-fluid text-center">
             <div class="row">
                 <div class="col-sm-6 p-3">

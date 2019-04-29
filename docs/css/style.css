@@ -29,7 +29,7 @@
 #loadingScreen, #baseContainer, #indexContainer {
     margin-bottom: 0;
     /* Height of the footer */
-    padding: 0 0 210px;
+    padding: 0 0 310px;
 }
 
 #baseContainer {
@@ -89,12 +89,16 @@
     font-weight: bold;
     margin: 0 auto 0 auto;
     display: inline-flex;
-    height: 110px;
+    height: 100%;
 }
 
 #buttonsCard {
-    margin: auto 0;
+    margin: 0;
     width: 100%;
+}
+
+#buttonsCard .card-body {
+    padding: 10px;
 }
 
 #checkButton.btn-info {
@@ -177,7 +181,7 @@
 }
 
 #actionProgressHolder {
-    height: 2rem;
+    height: 1.5rem;
     font-size: 1.2em;
 }
 
@@ -296,11 +300,7 @@
 }
 
 #buttonsContainer {
-    display: block;
-    width: 150px;
-}
-#buttonsContainer button {
-    width: 100%;
+    display: flex;
 }
 
 #kernelInfoEmptyZone {
@@ -347,18 +347,34 @@
     display: none;
 }
 
+#buttonsCardContainer {
+    position: fixed;
+    padding: 0;
+    bottom: 0;
+    width: 100%;
+    right: 0;
+    z-index: 100;
+    height: 100px;
+    transition: 0.3s;
+}
+
+#kernelInfoContainer {
+    height: 100%;
+}
+
+#kernelConnectionShowMoreButton {
+    display: none !important;
+}
+
+#fileInProgress {
+    min-height: 24px;
+}
+
 @media
 only screen and (max-width: 991px) {
     #buttonsCardContainer {
-        position: fixed;
-        padding: 0;
-        bottom: 0;
-        width: 100%;
-        right: 0;
-        z-index: 100;
         height: 250px;
         transform: translateY(150px);
-        transition: 0.3s;
     }
 
     #actionButtonsMobileContainer {
@@ -407,6 +423,14 @@ only screen and (max-width: 991px) {
     #buttonsCardContainer.shown #actionButtonsMobileToggleIcon{
         transform: rotate(180deg);
     }
+
+    #kernelInfoContainer {
+        display: none;
+    }
+
+    #kernelConnectionShowMoreButton {
+        display: inline;
+    }
 }
 
 
@@ -447,7 +471,7 @@ only screen and (max-width: 575px) {
 
     #loadingScreen, #baseContainer, #indexContainer {
         /* Height of the footer */
-        padding-bottom: 300px;
+        padding-bottom: 400px;
     }
 
     #WelcomeJumbotron h1{
