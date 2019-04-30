@@ -89,8 +89,9 @@ function UIKernelManager() {
             title: 'Change kernel address',
             content: '' +
                 '<form>' +
-                '<div class="form-group">' +
+                '<div class="form-group" id="currentAddressForm">' +
                 '<label>Current kernel address: </label>' +
+                '<br>' +
                 '<label style="word-break: break-all">' + _currentKernelAddress + '</label>' +
                 '</div>' +
                 '<div class="form-group">' +
@@ -110,6 +111,10 @@ function UIKernelManager() {
             icon: 'fas fa-edit',
             escapeKey: 'cancel',
             typeAnimated: true,
+            onOpenBefore: function () {
+                if (_currentKernelAddress === '')
+                    $('#currentAddressForm').hide();
+            },
             onContentReady: function () {
                 // when content is fetched & rendered in DOM
                 $("#kernelInput").focus(); // Focus the input for faster copy/paste

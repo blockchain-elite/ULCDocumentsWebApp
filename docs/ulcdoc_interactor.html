@@ -248,9 +248,55 @@
                     </div>
                 </div>
 
+
+                <!-- NO CONNECTION -->
+                <div id="kernelInfoEmptyZone">
+                    <div class="container-fluid text-muted d-flex">
+                        <div class="container-fluid justify-content-center align-self-center text-center">
+                            <div id="kernelInfoEmptyTextContainer" class="text-muted">
+                                <h3>
+                                    <i id="kernelLoadingIcon"
+                                       class="fas fa-circle-notch fa-spin fa-fw"></i>
+                                    <span id="kernelInfoEmptyText">Not connected, please enter a kernel address below</span>
+                                </h3>
+                            </div>
+                            <form id="kernelInputForm" class="mt-4">
+                                <input id="kernelAddressInput" class="form-control"
+                                       placeholder="Enter an address here">
+                                <button class="btn btn-lg btn-primary mt-4"
+                                        id="kernelAddressInputConnect">
+                                    <i class="fas fa-arrow-right"></i>
+                                    Connect
+                                </button>
+                            </form>
+
+                            <div id="kernelButtons" class="mt-4" style="display: none">
+                                <h4 class="mb-4">Moderator Links:</h4>
+                                <a class="moderator-registration-link" target="_blank" href="">
+                                    <button class="btn btn-primary btn-lg">
+                                        <i class="fas fa-sign-in-alt" style="width: 25px"></i>
+                                        Register
+                                    </button>
+                                </a>
+                                <a class="moderator-contact-link" target="_blank" href="">
+                                    <button class="btn btn-primary btn-lg">
+                                        <i class="fas fa-at" style="width: 25px"></i>
+                                        Contact
+                                    </button>
+                                </a>
+                                <a class="moderator-search-link" target="_blank" href="">
+                                    <button class="btn btn-primary btn-lg">
+                                        <i class="fas fa-search" style="width: 25px"></i>
+                                        Search
+                                    </button>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!--MAIN UI-->
                 <div class="mb-2" id="mainUIContainer">
-
                     <div class="row" id="filesRow">
                         <div class="col-lg-5" id="fileListContainer">
                             <!--ITEM LIST CARD-->
@@ -296,58 +342,12 @@
                             </div>
                         </div>
                         <div class="col-lg">
-                            <div id="kernelInfoEmptyZone">
-                                <div class="container-fluid text-muted d-flex">
-                                    <div class="container-fluid justify-content-center align-self-center text-center">
-                                        <div id="kernelInfoEmptyTextContainer" class="text-muted">
-                                            <h3>
-                                                <i id="kernelLoadingIcon"
-                                                   class="fas fa-circle-notch fa-spin fa-fw"></i>
-                                                <span id="kernelInfoEmptyText">Not connected, please enter a kernel address below</span>
-                                            </h3>
-                                        </div>
-                                        <form id="kernelInputForm" class="mt-4">
-                                            <input id="kernelAddressInput" class="form-control"
-                                                   placeholder="Enter an address here">
-                                            <button class="btn btn-lg btn-primary mt-4"
-                                                    id="kernelAddressInputConnect">
-                                                <i class="fas fa-arrow-right"></i>
-                                                Connect
-                                            </button>
-                                        </form>
-
-                                        <div id="kernelButtons" class="mt-4" style="display: none">
-                                            <h4 class="mb-4">Moderator Links:</h4>
-                                            <a class="moderator-registration-link" target="_blank" href="">
-                                                <button class="btn btn-primary btn-lg">
-                                                    <i class="fas fa-sign-in-alt" style="width: 25px"></i>
-                                                    Register
-                                                </button>
-                                            </a>
-                                            <a class="moderator-contact-link" target="_blank" href="">
-                                                <button class="btn btn-primary btn-lg">
-                                                    <i class="fas fa-at" style="width: 25px"></i>
-                                                    Contact
-                                                </button>
-                                            </a>
-                                            <a class="moderator-search-link" target="_blank" href="">
-                                                <button class="btn btn-primary btn-lg">
-                                                    <i class="fas fa-search" style="width: 25px"></i>
-                                                    Search
-                                                </button>
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
                             <div id="kernelInfoContainer">
 
                             </div>
-
                         </div>
                     </div>
                 </div>
-
             </div>
         </div>
 
@@ -503,10 +503,17 @@
                 </div>
             </div>
         </div>
-
-
     </div>
 
+    <div id="actionLoadingScreen" style="display: none;">
+        <div class="text-center" style="margin: auto">
+            <i class="fas fa-circle-notch fa-spin fa-fw"></i>
+            Loading...
+            <div id="actionLoadingScreenSub">
+                The larger the files, the longer this will take.
+            </div>
+        </div>
+    </div>
 
     <!--FOOTER-->
     <footer class="shadow">
