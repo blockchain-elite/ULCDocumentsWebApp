@@ -308,6 +308,15 @@
     display: flex;
 }
 
+#kernelInputButtons {
+    display: flex;
+}
+
+#kernelInputButtons a, #kernelInputButtons button{
+    margin: auto;
+}
+
+
 #kernelAddressInput {
     max-width: 600px;
     margin: auto;

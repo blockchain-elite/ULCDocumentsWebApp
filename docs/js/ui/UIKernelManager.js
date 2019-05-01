@@ -2,6 +2,7 @@ function UIKernelManager() {
     let _isKernelConnected = false; // Is the user connected to a valid kernel ?
     let _currentKernelInfo = new Map();
     let _currentKernelAddress = ""; // The current kernel address the user is connected to
+    let _isReferenced = false;
 
     let kernelInfoDOM = '<div class="row" id="kernelInfoZone">\n' +
         '<div class="col-lg" id="kernelInfoCol">\n' +
@@ -40,6 +41,29 @@ function UIKernelManager() {
         '</div>\n' +
         '</div>';
 
+    let kernelInfoWarningDOM = '<div class="container-fluid text-muted d-flex" style="height: 100%;">\n' +
+        '<div class="container-fluid justify-content-center align-self-center text-center" style="margin: auto">\n' +
+        '<div class="text-muted">\n' +
+        '<h3>Connection could not be verified by moderator</h3>\n' +
+        '</div>' +
+        '<div id="kernelButtons" class="mt-4" style="display: none">\n' +
+        '<h4 class="mb-4">Moderator Links:</h4>\n' +
+        '<a class="moderator-registration-link" target="_blank" href="">\n' +
+        '<button class="btn btn-primary btn-lg">\n' +
+        '<i class="fas fa-sign-in-alt" style="width: 25px"></i>\n' +
+        'Register\n' +
+        '</button>\n' +
+        '</a>\n' +
+        '<a class="moderator-contact-link" target="_blank" href="">\n' +
+        '<button class="btn btn-primary btn-lg">\n' +
+        '<i class="fas fa-at" style="width: 25px"></i>\n' +
+        'Contact\n' +
+        '</button>\n' +
+        '</a>' +
+        '</div>' +
+        '</div>' +
+        '</div>';
+
     this.isConnected = function () {
         return _isKernelConnected;
     };
@@ -57,16 +81,24 @@ function UIKernelManager() {
     };
 
     let fillKernelInfo = function () {
-        $.selector_cache('#kernelInfoContainer').html(kernelInfoDOM);
-        setKernelReservedFields(_currentKernelInfo);
-        setKernelExtraData(_currentKernelInfo);
+        if (_isReferenced) {
+            $.selector_cache('#kernelInfoContainer').html(kernelInfoDOM);
+            setKernelReservedFields(_currentKernelInfo);
+            setKernelExtraData(_currentKernelInfo);
+        } else
+            $.selector_cache('#kernelInfoContainer').html(kernelInfoWarningDOM);
     };
 
     this.showKernelInfo = function () {
+        let content;
+        if (_isReferenced)
+            content = kernelInfoDOM;
+        else
+            content = kernelInfoWarningDOM;
         $.selector_cache('#kernelInfoContainer').html("");
         $.alert({
             title: 'Kernel Information',
-            content: kernelInfoDOM,
+            content: content,
             type: 'blue',
             theme: JQUERY_CONFIRM_THEME,
             columnClass: 'xlarge',
@@ -74,8 +106,10 @@ function UIKernelManager() {
             escapeKey: 'ok',
             typeAnimated: true,
             onOpenBefore: function () {
-                setKernelReservedFields(_currentKernelInfo);
-                setKernelExtraData(_currentKernelInfo);
+                if (_isReferenced) {
+                    setKernelReservedFields(_currentKernelInfo);
+                    setKernelExtraData(_currentKernelInfo);
+                }
             },
         });
     };
@@ -195,6 +229,7 @@ function UIKernelManager() {
             $.selector_cache('#kernelConnectionShareButton').show();
             _currentKernelInfo = result;
             setKernelConnectedAddress(result);
+            _isReferenced = true;
         } else {
             $.selector_cache('#kernelInfoZone').hide();
             $.selector_cache('#kernelInfoEmptyZone').show();
@@ -202,12 +237,14 @@ function UIKernelManager() {
             $.selector_cache('#kernelConnectionShowMoreButton').hide();
             $.selector_cache('#kernelConnectionShareButton').hide();
 
-            let errorText = "Not connected";
+            let errorText = "";
             switch (errorType) {
                 case TypeInfo.Warning:
-                    errorText = 'Connection could not be verified by moderator';
+                    _isReferenced = false;
+                    $.selector_cache('#kernelConnectionShowMoreButton').show();
                     $.selector_cache('#kernelConnectionEditButton').show();
                     $.selector_cache('#kernelConnectionShareButton').show();
+                    $.selector_cache('#kernelInfoEmptyZone').hide();
                     break;
                 case TypeInfo.Critical:
                     errorText = 'Connection could not be established, please enter a valid address below:';
