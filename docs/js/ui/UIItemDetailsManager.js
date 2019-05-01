@@ -291,14 +291,23 @@ function UIItemDetailsManager() {
 
     let fillBlockchainInfoFields = function (item) {
         logMe(UIManagerPrefix, 'Displaying Blockchain information', TypeInfo.Info);
-        $('#fileBlockchainDate').text('Signed on ' + item.getInformation().get(elementReservedKeys.date));
-        if (item.getInformation()[elementReservedKeys.source] !== '')
+        if (item.getInformation().get(elementReservedKeys.date) !== undefined)
+            $('#fileBlockchainDate').text('Signed on ' + item.getInformation().get(elementReservedKeys.date));
+        else
+            $('#fileBlockchainDate').text('');
+
+        if (item.getInformation().get(elementReservedKeys.source) === '' || item.getInformation().get(elementReservedKeys.source) === undefined)
             $('#fileBlockchainSource').text('No source provided.');
         else
-            $('#fileBlockchainSource').text('Source: ' + item.getInformation().get(elementReservedKeys.date));
+            $('#fileBlockchainSource').text('Source: ' + item.getInformation().get(elementReservedKeys.source));
 
-        let family = getCompatibleFamily()[item.getInformation().get(elementReservedKeys.documentFamily)]; // Get the document family string
-        $('#fileBlockchainFamily').text('Signed as: ' + family);
+        console.log(item.getInformation().get(elementReservedKeys.documentFamily));
+        if (item.getInformation().get(elementReservedKeys.documentFamily) !== '0') {
+            let family = getCompatibleFamily()[item.getInformation().get(elementReservedKeys.documentFamily)]; // Get the document family string
+            $('#fileBlockchainFamily').text('Signed as: ' + family);
+        } else
+            $('#fileBlockchainFamily').text('');
+
     };
 
     let fillBlockchainExtraDataFields = function (item) {
