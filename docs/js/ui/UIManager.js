@@ -664,7 +664,6 @@ function UIManager() {
         $.selector_cache('#importButtonHolder').attr('disabled', !canManageItems);
         $.selector_cache('#clearItemListButton').attr('disabled', !canManageItems);
         $.selector_cache('#addItemButton').attr('disabled', !canManageItems);
-        $.selector_cache('#editItemButton').attr('disabled', !canManageItems);
         $.selector_cache('#addItemButton').attr('disabled', !canManageItems);
         $.selector_cache('#itemTextInput').attr('disabled', !canManageItems);
         $.selector_cache('#itemHashInput').attr('disabled', !canManageItems);
@@ -675,18 +674,24 @@ function UIManager() {
             $.selector_cache('#checkButton').attr('disabled', true);
         else
             UI.updateCheckButtonState();
-        if (state !== UI_STATE.fetched)
+        if (state !== UI_STATE.fetched) {
             $.selector_cache('.sign-next-step-logo').css('color', '#E9ECEF');
-        else
+            $('.multi-selection').hide();
+        }
+        else {
             $.selector_cache('.sign-next-step-logo').css('color', '#17A2B8');
+            $('.multi-selection').show();
+        }
+
 
         $.selector_cache('#signButton').attr('disabled', state !== UI_STATE.fetched);
         $.selector_cache('#cancelButton').attr('disabled', state !== UI_STATE.fetched);
 
         // Show/hide loading screen
-        if (state === UI_STATE.checking || state === UI_STATE.fetching)
+        if (state === UI_STATE.checking || state === UI_STATE.fetching) {
             $.selector_cache('#actionLoadingScreen').show();
-        else if ($.selector_cache('#actionLoadingScreen').css('display') !== 'none')
+            $.selector_cache('#addItemButton').attr('disabled', true);
+        } else if ($.selector_cache('#actionLoadingScreen').css('display') !== 'none')
             $.selector_cache('#actionLoadingScreen').fadeOut(200);
 
         _currentUiState = state;
@@ -1421,7 +1426,7 @@ function UIManager() {
     };
 
     let setupDOMDimensions = function () {
-        let height = $(window).height() - 200; // Header + kernel connection
+        let height = $(window).height() - 280; // Header + kernel connection + action buttons
         $.selector_cache("#mainCard").css('height', height);
         // $.selector_cache("#fileListCard").css('height', $.selector_cache("#fileListCard").height());
     };

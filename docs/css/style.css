@@ -123,6 +123,10 @@
     font-size: 1.1rem;
 }
 
+.item-select-checkbox-container {
+    display: flex;
+}
+
 .item-subtitle {
     min-height: 30px;
 }
