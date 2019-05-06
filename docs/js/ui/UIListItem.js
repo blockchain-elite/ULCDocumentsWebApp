@@ -20,6 +20,32 @@
 // Define a main class list item, then make FileListItem, TextListItem and HashListItem inherit it
 // Create a new file UIListItems
 
+let itemDOMElement =
+    '    <div class="card item-card mb-3 shadow-sm item-state-unknown">\n' +
+    '        <div class="card-body p-0">' +
+    '            <div class="row">' +
+    '                <div class="col-1 pr-0 d-flex">' +
+    '                   <div class="btn item-select-checkbox">' +
+    '                       <i class="item-select-checkbox-icon fas fa-check" style="display: none"></i>' +
+    '                   </div>' +
+    '                </div>' +
+    '                <div class="col-1 pr-1 d-flex">' +
+    '                    <i class="item-type-icon"></i>' +
+    '                </div>' +
+    '                <div class="col pl-1">' +
+    '                    <div class="pt-1 item-name"></div>' +
+    '                    <div class="pt-1 text-muted item-subtitle"></div>' +
+    '                    <div class="pt-1 text-muted list-item-state"></div>' +
+    '                </div>' +
+    '                <div class="col-2 text-center item-state-icon d-flex justify-content-center align-items-center">' +
+    '                    <i class="fas fa-question list-item-icon"></i>' +
+    '                </div>' +
+    '            </div>' +
+    '        </div>' +
+    '       <i class="text-muted remove-list-item-button fas fa-times"></i>' +
+    '   </div>';
+
+
 class ListItem {
 
     /**
@@ -38,6 +64,8 @@ class ListItem {
         this.customExtraData = [];
         this.$item = undefined;
         this.$removeButton = undefined;
+        this.$selectedCheckbox = undefined;
+        this.$selectedCheckboxIcon = undefined;
         this.OUT_ANIM = 'fadeOutLeft faster';
         this.IN_ANIM = 'fadeInLeft faster';
         this.type = TypeElement.Unknown;
@@ -152,7 +180,7 @@ class ListItem {
      * @param information {Map} Dictionary containing the information.
      */
     setInformation(information) {
-        this.information = new Map (information);
+        this.information = new Map(information);
         if (this.isSelected()) {
             UI.getItemDetailsManager().setupItemPopup(this);
         }
@@ -174,7 +202,7 @@ class ListItem {
      * @param extraData {Map} The extra data to display
      */
     setExtraData(extraData) {
-        this.extraData = new Map (extraData);
+        this.extraData = new Map(extraData);
         if (this.isSelected()) {
             UI.getItemDetailsManager().setupItemPopup(this);
         }
@@ -218,10 +246,15 @@ class ListItem {
     setSelected(state) {
         if (state && !this.isSelected()) {
             this.$item.addClass(this.FILE_SELECTED_CLASS);
-            UI.getItemDetailsManager().displayFileProps(this);
-
-        } else if (!state)
+            this.$selectedCheckbox.addClass('btn-primary');
+            this.$selectedCheckboxIcon.fadeIn(200);
+            UI.addItemToSelected(this);
+        } else if (!state) {
             this.$item.removeClass(this.FILE_SELECTED_CLASS);
+            this.$selectedCheckbox.removeClass('btn-primary');
+            this.$selectedCheckboxIcon.fadeOut(200);
+            UI.removeItemFromSelected(this);
+        }
     }
 
     /**
@@ -319,10 +352,15 @@ class ListItem {
     /**
      * Create the UI entry from the template in the file list.
      */
-    createEntry($item, isAnimated) {
-        this.$item = $item;
+    createEntry(isAnimated) {
+        let $selector = $(itemDOMElement);
+        $selector.attr('id', this.id);
+        UI.getCurrentTabHolder().append($selector);
+        this.$item = $selector;
         this.$removeButton = this.$item.find(".remove-list-item-button");
         this.$removeButton.attr('id', 'buttonRemoveItem_' + this.index);
+        this.$selectedCheckbox = this.$item.find('.item-select-checkbox');
+        this.$selectedCheckboxIcon = this.$item.find('.item-select-checkbox-icon');
         this.$fileState = this.$item.find(".list-item-state");
         this.setType(this.getType());
         if (isAnimated)
@@ -359,13 +397,10 @@ class FileListItem extends ListItem {
     }
 
     createEntry(isAnimated) {
-        UI.createListItemFromTemplate(this.id, TAB_TYPE.file);
-        super.createEntry($('#' + this.id), isAnimated);
-        this.$item.find(".uploaded-file-name").text(this.file.name);
-        this.$item.find(".uploaded-file-icon").html(
-            "<i style='font-size: 1.5rem;margin-right: 5px' class='" + getMimeTypeIcon(this.file) + "'></i>"
-        );
-        this.$item.find(".uploaded-file-size").text(humanFileSize(this.file.size, false));
+        super.createEntry(isAnimated);
+        this.$item.find(".item-name").text(this.file.name);
+        this.$item.find(".item-type-icon").addClass(getMimeTypeIcon(this.file));
+        this.$item.find(".item-subtitle").text(humanFileSize(this.file.size, false));
 
     }
 
@@ -392,12 +427,12 @@ class TextListItem extends ListItem {
     }
 
     createEntry(isAnimated) {
-        UI.createListItemFromTemplate(this.id, TAB_TYPE.text);
         super.createEntry($('#' + this.id), isAnimated);
-        this.textTitle = this.$item.find(".list-text-title");
+        this.textTitle = this.$item.find(".item-name");
         this.textTitle.text("Text n°" + this.index);
-        this.itemText = this.$item.find('.item-text');
+        this.itemText = this.$item.find('.item-subtitle');
         this.setText(this.savedText);
+        this.$item.find(".item-type-icon").addClass('fas fa-align-left');
     }
 
     getText() {
@@ -437,12 +472,12 @@ class HashListItem extends ListItem {
     }
 
     createEntry(isAnimated) {
-        UI.createListItemFromTemplate(this.id, TAB_TYPE.hash);
         super.createEntry($('#' + this.id), isAnimated);
-        this.hashTitle = this.$item.find(".list-hash-title");
+        this.hashTitle = this.$item.find(".item-name");
         this.hashTitle.text(getHashAlgorithm() + " n°" + this.index);
-        this.itemHash = this.$item.find('.item-hash');
+        this.itemHash = this.$item.find('.item-subtitle');
         this.setHash(this.hash);
+        this.$item.find(".item-type-icon").addClass('fas fa-hashtag');
     }
 
     setItemLocked(isLocked) {
@@ -460,6 +495,6 @@ class HashListItem extends ListItem {
     }
 
     setTitle(id) {
-        this.hashTitle.text(getHashAlgorithm() +' n°' + id);
+        this.hashTitle.text(getHashAlgorithm() + ' n°' + id);
     }
 }

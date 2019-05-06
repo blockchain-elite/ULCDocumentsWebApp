@@ -151,6 +151,7 @@ function UIManager() {
     let _currentNetworkType = TypeConnection.Unkown;
     let _elementsToSign = 0;
     let _elementSigned = 0;
+    let _selectedItems = [];
 
     /* *********************************************************
      *                      JQUERY SELECTORS
@@ -258,7 +259,6 @@ function UIManager() {
         recreateAppModeItemList();
         UI.updateMainUIState();
         UI.resetProgress();
-        fileListResetSelection();
         UI.updateCheckButtonState();
     };
 
@@ -436,6 +436,9 @@ function UIManager() {
         $.selector_cache('#addItemButton').on('click', function () {
             createItemEntry();
         });
+        $.selector_cache('#editItemButton').on('click', function () {
+            // TODO
+        });
         $.selector_cache("body")
             .on('click', function (e) {
                 // Remove button clicked
@@ -445,8 +448,11 @@ function UIManager() {
                     let $card = getCardFromTarget($(e.target));
                     if ($card !== undefined) {
                         let index = getFileIndexFromId($card.attr('id'));
-                        fileListResetSelection();
-                        listItemClick(index);
+                        let item = getCurrentListItem(index);
+                        if (e.target.className.search('item-select-checkbox') !== -1)
+                            item.setSelected(!item.isSelected());
+                        else
+                            listItemClick(item);
                     }
                 }
             })
@@ -545,6 +551,7 @@ function UIManager() {
      * @param type {TAB_TYPE} The type of the tab clicked
      */
     let tabClick = function (type) {
+        clearSelectedItems();
         for (let i of Object.keys(TAB_TYPE)) {
             if (TAB_TYPE[i] !== type) {
                 $tabButtons[TAB_TYPE[i]].removeClass('active');
@@ -564,7 +571,6 @@ function UIManager() {
             $.selector_cache('#importButtonHolder').show();
         }
         UI.resetProgress();
-        fileListResetSelection();
         UI.updateCheckButtonState();
     };
 
@@ -658,6 +664,7 @@ function UIManager() {
         $.selector_cache('#importButtonHolder').attr('disabled', !canManageItems);
         $.selector_cache('#clearItemListButton').attr('disabled', !canManageItems);
         $.selector_cache('#addItemButton').attr('disabled', !canManageItems);
+        $.selector_cache('#editItemButton').attr('disabled', !canManageItems);
         $.selector_cache('#addItemButton').attr('disabled', !canManageItems);
         $.selector_cache('#itemTextInput').attr('disabled', !canManageItems);
         $.selector_cache('#itemHashInput').attr('disabled', !canManageItems);
@@ -725,17 +732,22 @@ function UIManager() {
     };
 
     /**
-     * Set the file list item selected, associated to the index.
+     * Set the file list item selected.
      *
-     * @param index {Number} The file unique index
+     * @param currentItem {ListItem|FileListItem|TextListItem|HashListItem} The item clicked
      */
-    let listItemClick = function (index) {
-        for (let item of getCurrentList().values()) { // unselect previous items
-            if (item.getIndex() !== index) {
-                item.setSelected(false);
-            }
+    let listItemClick = function (currentItem) {
+        if (_selectedItems.length === 0) { // Are we multiselecting ?
+            clearSelectedItems();
+            _itemDetailsManager.displayFileProps(currentItem);
         }
-        getCurrentListItem(index).setSelected(true);
+        currentItem.setSelected(!currentItem.isSelected());
+    };
+
+    let clearSelectedItems = function () {
+        for (let item of getCurrentList().values()) {
+            item.setSelected(false);
+        }
     };
 
     /**
@@ -874,7 +886,7 @@ function UIManager() {
         UI.resetProgress();
         updateDisplayIds(_currentTab);
 
-        listItemClick(item.getIndex());
+        listItemClick(item);
     };
 
     /**
@@ -922,8 +934,7 @@ function UIManager() {
                 if (currentItem.getHash() !== '') {
                     currentItem.setType(TypeElement.Loading);
                     checkHash(currentItem.getHash(), currentItem.getIndex());
-                }
-                else {
+                } else {
                     switch (_currentTab) {
                         case TAB_TYPE.file:
                             checkFile(currentItem.getFile(), currentItem.getIndex());
@@ -1319,13 +1330,6 @@ function UIManager() {
     };
 
     /**
-     * Reset the file selection (unselect all items and reset details box).
-     */
-    let fileListResetSelection = function () {
-        $(".file-selected").removeClass('file-selected'); // unselect all items
-    };
-
-    /**
      * Get the current list based on the current tab
      *
      * @return {Map} The map representing the list
@@ -1426,6 +1430,17 @@ function UIManager() {
      *                       PUBLIC FUNCTIONS
      * *********************************************************/
 
+    this.addItemToSelected = function (item) {
+        _selectedItems.push(item);
+        $.selector_cache('#editItemButton').attr('disabled', false);
+    };
+
+    this.removeItemFromSelected = function (item) {
+        if (_selectedItems.indexOf(item) !== -1)
+            _selectedItems.splice(_selectedItems.indexOf(item), 1);
+        $.selector_cache('#editItemButton').attr('disabled', _selectedItems.length === 0);
+    };
+
     this.getKernelManager = function () {
         return _kernelManager;
     };
@@ -1508,15 +1523,8 @@ function UIManager() {
         return _kernelManager.isConnected() && _currentWalletState === WALLET_STATE.injected && getCurrentList().size;
     };
 
-    /**
-     * Clone the file list item template into the right tab.
-     *
-     * @param id {String} The id of the DOM element to create.
-     * It must en with _{index} with the unique file index to be able to retrieve the file.
-     * @param type {TAB_TYPE} The type to create
-     */
-    this.createListItemFromTemplate = function (id, type) {
-        $tabListItemTemplates[type].contents().clone().attr('id', id).appendTo($tabHolders[type]);
+    this.getCurrentTabHolder = function () {
+        return $tabHolders[_currentTab];
     };
 
     /**

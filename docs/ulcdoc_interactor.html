@@ -39,69 +39,6 @@
 <!---------------------------------------------------------------------------------------->
 <!--                                        TEMPLATES                                   -->
 <!---------------------------------------------------------------------------------------->
-<!-- LIST ITEMS -->
-<template id="fileListItemTemplate">
-    <div class="card item-card mb-3 shadow-sm item-state-unknown">
-        <div class="card-body p-0">
-            <div class="row">
-                <div class="col-9 file-info">
-                    <ul class="list-group list-group-flush">
-                        <li class="list-group-item py-1">
-                            <span class="uploaded-file-icon"></span>
-                            <span class="uploaded-file-name"></span>
-                        </li>
-                        <li class="list-group-item py-1">
-                            Size: <span class="uploaded-file-size"></span>
-                        </li>
-                    </ul>
-                </div>
-                <div class="col text-center file-state-icon d-flex justify-content-center align-items-center">
-                    <i class="fas fa-question list-item-icon"></i>
-                </div>
-            </div>
-        </div>
-        <div class="card-footer text-muted py-1">
-            <span class="list-item-state"></span>
-            <button class="btn btn-danger float-right remove-list-item-button">Remove<i
-                    class="fas fa-trash-alt"
-                    style="margin-left: 5px"></i></button>
-        </div>
-    </div>
-</template>
-<template id="textListItemTemplate">
-    <div class="card item-card mb-3 shadow-sm item-state-unknown">
-        <div class="card-body p-0">
-            <span class="list-text-title ml-2">TEXT #</span>
-            <span class="text-center text-state-icon" style="float: right;">
-                <i class="fas fa-question list-item-icon"></i>
-            </span>
-            <p class="item-text mx-2"></p>
-        </div>
-        <div class="card-footer text-muted py-1">
-            <span class="list-item-state"></span>
-            <button class="btn btn-danger float-right remove-list-item-button">Remove<i
-                    class="fas fa-trash-alt"
-                    style="margin-left: 5px"></i></button>
-        </div>
-    </div>
-</template>
-<template id="hashListItemTemplate">
-    <div class="card item-card mb-3 shadow-sm item-state-unknown">
-        <div class="card-body p-0">
-            <span class="align-self-center list-hash-title ml-2">TEXT #</span>
-            <div class="col-sm text-center hash-state-icon" style="float: right;">
-                <i class="fas fa-question list-item-icon"></i>
-            </div>
-            <p class="item-hash mx-2"></p>
-        </div>
-        <div class="card-footer text-muted py-1">
-            <span class="list-item-state"></span>
-            <button class="btn btn-danger float-right remove-list-item-button">Remove<i
-                    class="fas fa-trash-alt"
-                    style="margin-left: 5px"></i></button>
-        </div>
-    </div>
-</template>
 <!-- EMPTY LISTS-->
 <template id="fileListEmptyTemplate">
     <div class="text-muted text-center empty-item-list d-flex align-items-center">
@@ -264,7 +201,8 @@
                                 <input id="kernelAddressInput" class="form-control"
                                        placeholder="Enter an address here">
                                 <div id="kernelInputButtons" class="mt-4">
-                                    <a class="moderator-search-link mr-2" id="kernelSearchButton" target="_blank" href="" style="display: none;">
+                                    <a class="moderator-search-link mr-2" id="kernelSearchButton" target="_blank"
+                                       href="" style="display: none;">
                                         <button class="btn btn-primary btn-lg">
                                             <i class="fas fa-search" style="width: 25px"></i>
                                             Search
@@ -319,6 +257,10 @@
                                     <button class="btn btn-primary" id="addItemButton" style="display: none">
                                         Add
                                         <i class="fas fa-plus" style="margin-left: 10px"></i>
+                                    </button>
+                                    <button class="btn btn-primary" id="editItemButton">
+                                        Edit Selected
+                                        <i class="fas fa-edit" style="margin-left: 10px"></i>
                                     </button>
                                     <input type="file" id="importButton" multiple hidden>
                                     <button class="btn btn-danger float-right" id="clearItemListButton">Remove All<i

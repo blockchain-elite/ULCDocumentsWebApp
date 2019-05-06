@@ -111,13 +111,41 @@
     margin: auto;
 }
 
+.item-select-checkbox {
+    margin: auto;
+    width: 25px;
+    height: 25px;
+    padding: 0;
+    border: 1px solid rgba(0,0,0,.125);
+}
+
+.item-select-checkbox i {
+    font-size: 1.1rem;
+}
+
+.item-subtitle {
+    min-height: 30px;
+}
+
 .adress-image {
     width: 80%;
 }
 
-.file-icon {
-    height: 32px;
-    margin-right: 10px;
+.item-type-icon {
+    font-size: 2.5rem;
+    margin: auto;
+}
+
+.remove-list-item-button {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    font-size: 1.4rem;
+    transition: 0.2s;
+}
+
+.remove-list-item-button:hover {
+    transform: scale(1.3);
 }
 
 .item-card {
@@ -165,13 +193,13 @@
     transition: 0.5s;
 }
 
-.file-state-icon {
+.item-type-icon i {
     font-size: 3rem;
     vertical-align: middle;
     width: 100%;
 }
 
-.text-state-icon, .hash-state-icon {
+.item-state-icon {
     font-size: 1.5rem;
     vertical-align: middle;
 }
@@ -212,10 +240,6 @@
     padding-right: 1rem;
     min-height: inherit; /* Chrome fix for height: 100%*/
     width: 100%;
-}
-
-.file-info {
-    width: 80%;
 }
 
 #FileBlockchainInfoZone {
@@ -336,7 +360,7 @@
     word-break: break-all;
 }
 
-.list-text-title, .list-hash-title, .uploaded-file-name {
+.item-name {
     font-weight: bold;
 }
 
@@ -489,10 +513,6 @@ only screen and (max-width: 575px) {
     #textBox, #dropZone, #hashBox {
         padding-left: 0.3rem;
         padding-right: 0.3rem;
-    }
-
-    .file-state-icon {
-        font-size: 2rem;
     }
 
     #loadingScreen, #baseContainer, #indexContainer {
