@@ -168,11 +168,6 @@ function UIManager() {
         $("#textTabSelector"),
         $("#hashTabSelector")
     ];
-    let $tabListItemTemplates = [
-        $("#fileListItemTemplate"),
-        $("#textListItemTemplate"),
-        $("#hashListItemTemplate")
-    ];
     let $tabListEmptyTemplate = [
         $("#fileListEmptyTemplate"),
         $("#textListEmptyTemplate"),
@@ -437,7 +432,7 @@ function UIManager() {
             createItemEntry();
         });
         $.selector_cache('#editItemButton').on('click', function () {
-            // TODO
+            _itemDetailsManager.displayItemListProps(_selectedItems);
         });
         $.selector_cache("body")
             .on('click', function (e) {
@@ -624,11 +619,11 @@ function UIManager() {
             switch (_currentTab) {
                 case TAB_TYPE.text:
                     if (item.getText().length === 0)
-                        UI.removeItemFromList(item.getIndex(), item.isSelected());
+                        UI.removeItemFromList(item.getIndex());
                     break;
                 case TAB_TYPE.hash:
                     if (item.getHash().length === 0)
-                        UI.removeItemFromList(item.getIndex(), item.isSelected());
+                        UI.removeItemFromList(item.getIndex());
             }
         }
     };
@@ -1108,7 +1103,7 @@ function UIManager() {
      */
     let removeInvalidElements = function (elements) {
         for (let i of elements) {
-            UI.removeItemFromList(i, true);
+            UI.removeItemFromList(i);
         }
     };
 
@@ -1399,7 +1394,7 @@ function UIManager() {
         for (let item1 of list.values()) {
             for (let item2 of list.values()) {
                 if (item1 !== item2 && item1.getHash() === item2.getHash())
-                    UI.removeItemFromList(item2.getIndex(), item2.isSelected());
+                    UI.removeItemFromList(item2.getIndex());
             }
         }
     };
@@ -1537,9 +1532,8 @@ function UIManager() {
      * If we are removing the last file, display the empty file list template.
      *
      * @param index {Number} The file unique index.
-     * @param isSelected {Boolean} Whether the file is currently selected.
-     */
-    this.removeItemFromList = function (index, isSelected) {
+    */
+    this.removeItemFromList = function (index) {
         $("#" + getCurrentListItem(index).getId()).remove();
         getCurrentList().delete(index);
         if (isCurrentItemListEmpty()) {

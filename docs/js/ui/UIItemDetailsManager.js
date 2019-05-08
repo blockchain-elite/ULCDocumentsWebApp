@@ -129,40 +129,61 @@ function UIItemDetailsManager() {
      * @param item {ListItem|FileListItem|TextListItem|HashListItem} The item to show.
      */
     this.displayFileProps = function (item) {
-        itemPropPopup.onOpenBefore = function() {
+        this.displayItemListProps([item]);
+    };
+
+
+    /**
+     *
+     * @param items {ListItem[]|FileListItem[]|TextListItem[]|HashListItem[]}
+     */
+    this.displayItemListProps = function (items) {
+        itemPropPopup.onOpenBefore = function () {
             $('#itemTextInput').autoResize();
             $('#itemHashType').text(getHashAlgorithm() + ': ');
-            UI.getItemDetailsManager().setupItemPopup(item);
+            UI.getItemDetailsManager().setupItemPopup(items);
         };
-        itemPropPopup.onOpen = function() { // Make sure the input fields are focused
+        itemPropPopup.onOpen = function () { // Make sure the input fields are focused
             if (UI.getCurrentTab() === TAB_TYPE.text)
                 $('#itemTextInput').focus();
             else if (UI.getCurrentTab() === TAB_TYPE.hash)
                 $('#itemHashInput').focus();
         };
 
-        let type = getJConfirmTypeFromColorCLass(item.getCardColor());
+        let type;
+        if (items.length > 1)
+            type = getJConfirmTypeFromColorClass(COLOR_CLASSES.success); // We have multiples items fetched
+        else
+            type = getJConfirmTypeFromColorClass(items[0].getCardColor());
         let btnType = '';
         if (type !== '')
             btnType = 'btn-' + type;
         let icon = '';
         let title = '';
-        if (UI.getCurrentTab() === TAB_TYPE.file) {
-            icon = getMimeTypeIcon(item.getFile());
-            title = item.getFile().name + ' <span class="text-muted">(' + humanFileSize(item.getFile().size) + ')</span>';
-        } else if (UI.getCurrentTab() === TAB_TYPE.text) {
-            icon = 'fas fa-align-left';
-            title = item.getTitle();
+        if (items.length > 1) {
+            icon = getMimeTypeIcon(undefined);
+            title = 'Multiple items';
         } else {
-            icon = 'fas fa-hashtag';
-            title = item.getTitle();
+            if (UI.getCurrentTab() === TAB_TYPE.file) {
+                icon = getMimeTypeIcon(items[0].getFile());
+                title = items[0].getFile().name + ' <span class="text-muted">(' + humanFileSize(items[0].getFile().size) + ')</span>';
+            } else if (UI.getCurrentTab() === TAB_TYPE.text) {
+                icon = 'fas fa-align-left';
+                title = items[0].getTitle();
+            } else {
+                icon = 'fas fa-hashtag';
+                title = items[0].getTitle();
+            }
         }
         itemPropPopup.buttons = {
             ok: {
                 keys: ['enter'],
                 btnClass: btnType,
                 action: function () {
-                    item.setSelected(false);
+                    let selected = items.slice();
+                    for (let i = 0; i < selected.length; i++) {
+                        selected[i].setSelected(false);
+                    }
                 }
             },
         };
@@ -172,35 +193,31 @@ function UIItemDetailsManager() {
         itemPropPopup.open();
     };
 
-    this.setupItemPopup = function (item) {
+    this.setupItemPopup = function (items) {
         setBlockchainInfoErrorText('', COLOR_CLASSES.none); // reset color
-        if (item !== undefined) {
-            let file = undefined;
-            if (UI.getCurrentTab() === TAB_TYPE.file)
-                file = item.getFile();
-            fillFileProp(file);
-            setupItemInputFields(item);
-            fillReservedFields(item);
+        if (items.length) {
+            fillFileProp(items);
+            fillReservedFields(items);
+            setupItemInputFields(items);
             // Display blockchain edit fields if the item has no signatures
-            if (UI.getCurrentAppMode() === APP_MODE.sign && UI.getCurrentUIState() === UI_STATE.fetched
-                && item.getType() === TypeElement.Fake && item.getNumSign() === 0) {
+            if (canDisplayBlockchainEditFields(items)) {
                 logMe(UIManagerPrefix, 'Displaying Blockchain edit fields', TypeInfo.Info);
                 $("#fileBlockchainInfoCard").show();
                 $('#fileBlockchainInfoZone').hide();
                 $('#fileBlockchainEditInfoZone').show();
                 // Reset table
                 $("#fileBlockchainEditExtraDataTable").html('');
-                setupSourceInputField(item);
-                createDocFamilyDropDown(item);
-                createSavedInputFields(item);
-                setupExtraDataControlButtons(item);
-            } else if (item.getInformation() !== undefined && item.getInformation().size) {
+                setupSourceInputField(items);
+                createDocFamilyDropDown(items);
+                createSavedExtraDataInputFields(items);
+                setupExtraDataControlButtons(items);
+            } else if (canDisplayBlockchainInformation(items)) {
                 $("#fileBlockchainInfoCard").show();
                 $('#fileBlockchainInfoZone').show();
                 $('#fileBlockchainEditInfoZone').hide();
-                fillBlockchainInfoFields(item);
-                if (item.getExtraData() !== undefined && item.getExtraData().size)
-                    fillBlockchainExtraDataFields(item);
+                fillBlockchainInfoFields(items);
+                if (canDisplayBlockchainExtraData(items))
+                    fillBlockchainExtraDataFields(items);
                 else
                     $("#fileBlockchainExtraDataZone").hide();
             } else {
@@ -208,10 +225,43 @@ function UIItemDetailsManager() {
                 $("#fileBlockchainInfoCard").hide();
                 $('#fileBlockchainInfoZone').hide();
                 $('#fileBlockchainEditInfoZone').hide();
-                setBlockchainInfoMessage(item);
+                setBlockchainInfoMessage(items);
             }
         }
         $('[data-toggle="tooltip"]').tooltip(); // Enable created tooltips
+    };
+
+    let canDisplayBlockchainEditFields = function (items) {
+        let isListReady = true;
+        for (let i = 0; i < items.length; i++) {
+            if (items[i].getType() !== TypeElement.Fake || items[i].getNumSign() !== 0) {
+                isListReady = false;
+                break;
+            }
+        }
+        return UI.getCurrentAppMode() === APP_MODE.sign && UI.getCurrentUIState() === UI_STATE.fetched && isListReady;
+    };
+
+    let canDisplayBlockchainInformation = function (items) {
+        let canDisplay = true;
+        for (let i = 0; i < items.length; i++) {
+            if (items[i].getInformation() === undefined || items[i].getInformation().size === 0) {
+                canDisplay = false;
+                break;
+            }
+        }
+        return canDisplay;
+    };
+
+    let canDisplayBlockchainExtraData = function (items) {
+        let canDisplay = true;
+        for (let i = 0; i < items.length; i++) {
+            if (items[i].getExtraData() === undefined || items[i].getExtraData().size === 0) {
+                canDisplay = false;
+                break;
+            }
+        }
+        return canDisplay;
     };
 
     /**
@@ -219,69 +269,90 @@ function UIItemDetailsManager() {
      *
      * @param file {File} The file to display information from
      */
-    let fillFileProp = function (file) {
-        if (file !== undefined) { // display file properties only if we have a file
+    let fillFileProp = function (items) {
+        if (UI.getCurrentTab() === TAB_TYPE.file && items.length === 1) { // display file properties only if a unique item
             logMe(UIManagerPrefix, 'Displaying file properties', TypeInfo.Info);
-            let date = new Date(file.lastModified);
+            let date = new Date(items[0].getFile().lastModified);
             $("#fileDateProp").text(date);
             $(".file-specific-info").show();
         } else
             $(".file-specific-info").hide();
     };
 
-    let fillReservedFields = function (item) {
-        // display generic info
+    let fillReservedFields = function (items) {
+        let item = undefined;
+        if (items.length === 1)
+            item = items[0];
+
         if (UI.getCurrentTab() !== TAB_TYPE.hash) {
-            if (item.getHash() !== '')
+            if (item !== undefined && item.getHash() !== '')
                 $("#itemHashProp").text(item.getHash());
-            else
+            else if (item !== undefined)
                 $("#itemHashProp").text('not yet calculated');
+            else
+                $("#itemHashProp").text('< Different >');
         } else {
             $('#itemHashContainer').hide();
         }
 
-        if (item.getType() !== TypeElement.Unknown)
-            $("#itemStatusProp").text(ITEM_STATE_TEXT[item.getType()]).show();
-        else
-            $("#itemStatusProp").hide();
+        if (item !== undefined) {
+            if (item.getType() !== TypeElement.Unknown)
+                $("#itemStatusProp").text(ITEM_STATE_TEXT[item.getType()]).show();
+            else
+                $("#itemStatusProp").hide();
+        } else // Multiple elements so they must be fake (ready to sign)
+            $("#itemStatusProp").text(ITEM_STATE_TEXT[TypeElement.Fake]).show();
+
 
         // Set the number of signatures needed
-        if (item.getNeededSign() > 0 && item.getType() !== TypeElement.Unknown)
+        if (item !== undefined && item.getNeededSign() > 0 && item.getType() !== TypeElement.Unknown)
             $("#itemNumSignProp").text(item.getNumSign() + "/" + item.getNeededSign()).show();
         else
             $("#itemNumSignContainer").hide();
         // Set the Tx url if available
-        if (item.getTxUrl() !== '')
+        if (item !== undefined && item.getTxUrl() !== '')
             $("#itemTxUrlProp").attr('href', item.getTxUrl()).show();
         else
             $("#itemTxUrlProp").hide();
     };
 
-    let setupItemInputFields = function (item) {
-        if (!(item instanceof FileListItem)) {
-            if (item instanceof TextListItem) {
+    let setupItemInputFields = function (items) {
+        let item = undefined;
+        if (items.length === 1)
+            item = items[0];
+
+        if (!(UI.getCurrentTab() === TAB_TYPE.file)) {
+            let input;
+            let val = '< Different >';
+            if (UI.getCurrentTab() === TAB_TYPE.text) {
                 $("#itemHashInput").hide();
-                $("#itemTextInput").off('change keyup paste').val(item.getText()).on('change keyup paste', function () { // Remove previous event handlers
-                    item.setText($("#itemTextInput").val());
-                    if (item.getType() !== TypeElement.Unknown) {
-                        item.reset();
-                        item.setHash('');
-                        UI.displayFileProps(item.getIndex());
-                        UI.resetProgress();
-                        UI.setUIButtonState(UI_STATE.none);
-                    }
-                }).show();
-            } else { // We have a hash
+                input = $('#itemTextInput');
+                if (item !== undefined)
+                    val = item.getText();
+            } else {
                 $("#itemTextInput").hide();
-                $("#itemHashInput").off('change keyup paste').val(item.getHash()).on('change keyup paste', function () { // Remove previous event handlers
-                    item.setHash($("#itemHashInput").val());
-                    if (item.getType() !== TypeElement.Unknown) {
-                        item.reset();
-                        UI.displayFileProps(item.getIndex());
-                        UI.resetProgress();
-                        UI.setUIButtonState(UI_STATE.none);
+                input = $('#itemHashInput');
+                if (item !== undefined)
+                    val = item.getHash();
+            }
+            input.off('change keyup paste').val(val).on('change keyup paste', function () { // Remove previous event handlers
+                let mustReset = false;
+                for (let i = 0; i < items.length; i++) {
+                    items[i].setText(input.val());
+                    if (items[i].getType() !== TypeElement.Unknown) {
+                        items[i].reset();
+                        items[i].setHash('');
+                        mustReset = true;
                     }
-                }).show();
+                }
+                if (mustReset) {
+                    UI.getItemDetailsManager().setupItemPopup(items);
+                    UI.resetProgress();
+                    UI.setUIButtonState(UI_STATE.none);
+                }
+            }).show();
+            if (UI.getCurrentUIState() === UI_STATE.fetched) {
+                input.attr('disabled', true);
             }
         } else {
             $("#itemTextInput").hide();
@@ -289,47 +360,254 @@ function UIItemDetailsManager() {
         }
     };
 
-    let fillBlockchainInfoFields = function (item) {
+    let fillBlockchainInfoFields = function (items) {
         logMe(UIManagerPrefix, 'Displaying Blockchain information', TypeInfo.Info);
-        if (item.getInformation().get(elementReservedKeys.date) !== undefined)
+        let item = undefined;
+        if (items.length === 1)
+            item = items[0];
+
+        if (item !== undefined && item.getInformation().get(elementReservedKeys.date) !== undefined)
             $('#fileBlockchainDate').text('Signed on ' + item.getInformation().get(elementReservedKeys.date));
-        else
+        else if (item !== undefined)
             $('#fileBlockchainDate').text('');
-
-        if (item.getInformation().get(elementReservedKeys.source) === '' || item.getInformation().get(elementReservedKeys.source) === undefined)
-            $('#fileBlockchainSource').text('No source provided.');
         else
-            $('#fileBlockchainSource').text('Source: ' + item.getInformation().get(elementReservedKeys.source));
+            $('#fileBlockchainDate').text('< Different >');
 
-        console.log(item.getInformation().get(elementReservedKeys.documentFamily));
-        if (item.getInformation().get(elementReservedKeys.documentFamily) !== '0') {
+        if (item !== undefined && (item.getInformation().get(elementReservedKeys.source) === '' || item.getInformation().get(elementReservedKeys.source) === undefined))
+            $('#fileBlockchainSource').text('No source provided.');
+        else if (item !== undefined)
+            $('#fileBlockchainSource').text('Source: ' + item.getInformation().get(elementReservedKeys.source));
+        else
+            $('#fileBlockchainSource').text('Source is different.');
+
+        if (item !== undefined && item.getInformation().get(elementReservedKeys.documentFamily) !== '0') {
             let family = getCompatibleFamily()[item.getInformation().get(elementReservedKeys.documentFamily)]; // Get the document family string
             $('#fileBlockchainFamily').text('Signed as: ' + family);
-        } else
+        } else if (item !== undefined)
             $('#fileBlockchainFamily').text('');
-
+        else
+            $('#fileBlockchainFamily').text('Different Types');
     };
 
-    let fillBlockchainExtraDataFields = function (item) {
+    let fillBlockchainExtraDataFields = function (items) {
         $("#fileBlockchainExtraDataZone").show();
         // Reset table
         let extraDataTable = $("#fileBlockchainExtraDataTable");
         extraDataTable.html('');
         let counter = 0;
-        for (let [key, value] of item.getExtraData()) {
-            counter++;
-            extraDataTable.append(
-                "<tr>\n" +
-                "<th scope='row' id='blockchainExtraFieldKey" + counter + "'></th>\n" +
-                "<td id='blockchainExtraFieldValue" + counter + "'></td>\n" +
-                "</tr>");
-            $("#blockchainExtraFieldKey" + counter).text(key);
-            $("#blockchainExtraFieldValue" + counter).text(value); // Prevent XSS
+        if (items.length === 1) {
+            for (let [key, value] of items[0].getExtraData()) {
+                counter++;
+                extraDataTable.append(
+                    "<tr>\n" +
+                    "<th scope='row' id='blockchainExtraFieldKey" + counter + "'></th>\n" +
+                    "<td id='blockchainExtraFieldValue" + counter + "'></td>\n" +
+                    "</tr>");
+                $("#blockchainExtraFieldKey" + counter).text(key);
+                $("#blockchainExtraFieldValue" + counter).text(value); // Prevent XSS
+            }
         }
     };
 
-    let setBlockchainInfoMessage = function (item) {
-        let message = _blockchainErrorMsg.get(UI.getCurrentAppMode()).get(item.getType());
+    /**
+     *
+     * @param item {ListItem}
+     */
+    let setupSourceInputField = function (items) {
+        let sourceInput = $("#infoSourceInput");
+        if (items.length === 1 && items[0].getInformation().has(elementReservedKeys.source))
+            sourceInput.val(items[0].getInformation().get(elementReservedKeys.source));
+        else if (items.length === 1)
+            sourceInput.val('');
+        else {
+            let different = false;
+            let src = items[0].getInformation().get(elementReservedKeys.source);
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].getInformation().get(elementReservedKeys.source) !== src) {
+                    different = true;
+                    break;
+                }
+            }
+            if (different)
+                sourceInput.attr('placeholder', '< Different >');
+            else
+                sourceInput.val(src);
+        }
+
+
+        sourceInput.off('change keyup paste').on('change keyup paste', function () { // reset callback
+            let val = sourceInput.val();
+            for (let i = 0; i < items.length; i++) {
+                if (val !== '')
+                    items[i].getInformation().set(elementReservedKeys.source, val);
+                else
+                    items[i].getInformation().delete(elementReservedKeys.source);
+            }
+
+        });
+    };
+
+    /**
+     * Generate the dropdown menu based on kernel document family.
+     *
+     * @param item {ListItem} The item we are editing
+     */
+    let createDocFamilyDropDown = function (items) {
+        let dropdownButton = $("#docFamilyDropdownButton");
+        let dropdownMenu = $("#docFamilyDropdownMenu");
+        let docFamilyArray = getCompatibleFamily();
+        // clear menu
+        dropdownMenu.html('');
+        // Generate dropdown menu entries
+        for (let i = 0; i < getCompatibleFamily().length; i++) {
+            dropdownMenu.append("<button class='dropdown-item btn' id='dropdownButton" + i + "'>" + docFamilyArray[i] + "</button>");
+            $("#dropdownButton" + i).on('click', function () {
+                dropdownButton.text(docFamilyArray[i]);
+                for (let j = 0; j < items.length; j++) {
+                    if (i !== 0)
+                        items[j].getInformation().set(elementReservedKeys.documentFamily, i);
+                    else
+                        items[j].getInformation().delete(elementReservedKeys.documentFamily);
+                }
+
+            });
+        }
+        // Set default value
+        if (items.length === 1 && items[0].getInformation().has(elementReservedKeys.documentFamily))
+            dropdownButton.text(docFamilyArray[items[0].getInformation().get(elementReservedKeys.documentFamily)]);
+        else if (items.length === 1)
+            dropdownButton.text(docFamilyArray[0]);
+        else {
+            let different = false;
+            let type = 0;
+            if (items[0].getInformation().has(elementReservedKeys.documentFamily))
+                type = items[0].getInformation().get(elementReservedKeys.documentFamily);
+            for (let i = 0; i < items.length; i++) {
+                let iType = 0;
+                if (items[i].getInformation().has(elementReservedKeys.documentFamily))
+                    iType = items[i].getInformation().get(elementReservedKeys.documentFamily);
+                if (iType !== type) {
+                    different = true;
+                    break;
+                }
+            }
+            if (different)
+                dropdownButton.text('< Different >');
+            else
+                dropdownButton.text(docFamilyArray[type]);
+        }
+    };
+
+    /**
+     * Create input fields with values from the item.
+     * @param item {ListItem} The list item to take values from
+     */
+    let createSavedExtraDataInputFields = function (items) {
+        $('#fileBlockchainEditExtraDataTable').html(''); // Clear the list to recreate it
+        let different = false;
+        if (items.length > 1) {
+            let data = items[0].getCustomExtraData();
+            for (let i = 0; i < items.length; i++) {
+                for (let j = 0; j < data.length; j++) {
+                    if (items[i].getCustomExtraData()[j] !== data[j]) {
+                        different = true;
+                        break;
+                    }
+                }
+                if (different)
+                    break;
+            }
+            if (different)
+                createNewExtraDataInputField(items, 0, '', '', '< Different >');
+        }
+        if (items.length === 1 || (items.length > 1 && !different)) {
+            let item = items[0];
+            if (item !== undefined) {
+                item.clearCustomExtraData();
+                if (item.getCustomExtraData().length === 0)
+                    createNewExtraDataInputField([item], 0, '', '', undefined);
+                else {
+                    for (let i = 0; i < item.getCustomExtraData().length; i++) {
+                        if (item.getCustomExtraData()[i] !== undefined) {
+                            createNewExtraDataInputField([item], i, item.getCustomExtraData()[i][0], item.getCustomExtraData()[i][1], undefined)
+                        }
+                    }
+                }
+            }
+        }
+    };
+
+    /**
+     * Create a new input fields in the edit blockchain zone.
+     *
+     * @param item {ListItem} The list item we are editing
+     * @param index {Number} The index of the last input field created
+     * @param key {String} The default value for the key input field
+     * @param value {String} The default value for the value input field
+     */
+    let createNewExtraDataInputField = function (items, index, key, value, placeholder) {
+        if (placeholder === undefined)
+            placeholder = 'Enter your data here';
+        $("#fileBlockchainEditExtraDataTable").append(
+            "<tr id='inputRowExtra" + index + "'>\n" +
+            "<th><input class='form-control' id='inputKeyExtra" + index + "' type='text' placeholder='" + placeholder + "'></th>\n" +
+            "<td><textarea class='form-control' id='inputValueExtra" + index + "' placeholder='" + placeholder + "'></textarea></td>\n" +
+            "<td><button class='btn btn-danger delete-extra-button' id='inputDeleteExtra" + index + "'" +
+            " data-toggle='tooltip' data-placement='bottom' title='Delete this row'>" +
+            "<i class='fas fa-trash'></i></button></td>\n" +
+            "</tr>");
+        let inputKey = $("#inputKeyExtra" + index);
+        let inputValue = $("#inputValueExtra" + index);
+        $("#inputDeleteExtra" + index).on('click', function () {
+            for (let i = 0; i < items.length; i++) {
+                items[i].setCustomExtraData(index, undefined);
+            }
+            $("#inputRowExtra" + index).remove();
+        });
+        inputKey.val(key);
+        inputValue.val(value);
+        if (placeholder === 'Enter your data here') {
+            for (let i = 0; i < items.length; i++) {
+                items[i].setCustomExtraData(index, [key, value]);
+            }
+        }
+        inputKey.on('change keyup paste', function () {
+            for (let i = 0; i < items.length; i++) {
+                items[i].setCustomExtraData(index, [inputKey.val(), inputValue.val()]);
+            }
+        });
+        inputValue.on('change keyup paste', function () {
+            for (let i = 0; i < items.length; i++) {
+                items[i].setCustomExtraData(index, [inputKey.val(), inputValue.val()]);
+            }
+        });
+    };
+
+    /**
+     * Setup event handlers for blockchain edit buttons
+     * @param item {ListItem} The list item we are editing
+     */
+    let setupExtraDataControlButtons = function (items) {
+        // Set event handlers
+        $("#editExtraDataAddButton").off('click').on('click', function () { // Reset event handler
+            if (items.length === 1) {
+                createNewExtraDataInputField(items, items[0].getCustomExtraData().length, '', '', undefined);
+            }
+
+        });
+        $("#editExtraDataClearButton").off('click').on('click', function () { // Reset event handlers
+            $("#fileBlockchainEditExtraDataTable").html('');
+            for (let i = 0; i < items.length; i++) {
+                items[i].clearCustomExtraData();
+            }
+            createNewExtraDataInputField(items, 0, '', '', undefined);
+        });
+    };
+
+    let setBlockchainInfoMessage = function (items) {
+        let message = undefined;
+        if (items.length === 1)
+            message = _blockchainErrorMsg.get(UI.getCurrentAppMode()).get(items[0].getType())
         if (message !== undefined)
             setBlockchainInfoErrorText(message[0], message[1]);
         else
@@ -341,124 +619,4 @@ function UIItemDetailsManager() {
         setDOMColor($('#fileBlockchainInfoCard'), color);
     };
 
-    /**
-     *
-     * @param item {ListItem}
-     */
-    let setupSourceInputField = function (item) {
-        let sourceInput = $("#infoSourceInput");
-        if (item.getInformation().has(elementReservedKeys.source))
-            sourceInput.val(item.getInformation().get(elementReservedKeys.source));
-        else
-            sourceInput.val('');
-
-        sourceInput.off('change keyup paste').on('change keyup paste', function () { // reset callback
-            let val = $("#infoSourceInput").val();
-            if (val !== '')
-                item.getInformation().set(elementReservedKeys.source, val);
-            else
-                item.getInformation().delete(elementReservedKeys.source);
-        });
-    };
-
-    /**
-     * Generate the dropdown menu based on kernel document family.
-     *
-     * @param item {ListItem} The item we are editing
-     */
-    let createDocFamilyDropDown = function (item) {
-        let dropdownButton = $("#docFamilyDropdownButton");
-        let dropdownMenu = $("#docFamilyDropdownMenu");
-        let docFamilyArray = getCompatibleFamily();
-        // clear menu
-        dropdownMenu.html('');
-        // Generate dropdown menu entries
-        for (let i = 0; i < getCompatibleFamily().length; i++) {
-            dropdownMenu.append("<button class='dropdown-item btn' id='dropdownButton" + i + "'>" + docFamilyArray[i] + "</button>");
-            $("#dropdownButton" + i).on('click', function () {
-                dropdownButton.text(docFamilyArray[i]);
-                if (i !== 0)
-                    item.getInformation().set(elementReservedKeys.documentFamily, i);
-                else
-                    item.getInformation().delete(elementReservedKeys.documentFamily);
-            });
-        }
-        // Set default value
-        if (item.getInformation().has(elementReservedKeys.documentFamily))
-            dropdownButton.text(docFamilyArray[item.getInformation().get(elementReservedKeys.documentFamily)]);
-        else
-            dropdownButton.text(docFamilyArray[0]);
-    };
-
-    /**
-     * Create input fields with values from the item.
-     * @param item {ListItem} The list item to take values from
-     */
-    let createSavedInputFields = function (item) {
-        item.clearCustomExtraData();
-        $('#fileBlockchainEditExtraDataTable').html(''); // Clear the list to recreate it
-        if (item.getCustomExtraData().length === 0)
-            createNewInputFields(item, 0, '', '');
-        else {
-            for (let i = 0; i < item.getCustomExtraData().length; i++) {
-                if (item.getCustomExtraData()[i] !== undefined) {
-                    createNewInputFields(item, i, item.getCustomExtraData()[i][0], item.getCustomExtraData()[i][1])
-                }
-            }
-        }
-
-    };
-
-    /**
-     * Create a new input fields in the edit blockchain zone.
-     *
-     * @param item {ListItem} The list item we are editing
-     * @param index {Number} The index of the last input field created
-     * @param key {String} The default value for the key input field
-     * @param value {String} The default value for the value input field
-     */
-    let createNewInputFields = function (item, index, key, value) {
-        $("#fileBlockchainEditExtraDataTable").append(
-            "<tr id='inputRowExtra" + index + "'>\n" +
-            "<th><input class='form-control' id='inputKeyExtra" + index + "' type='text' placeholder='Enter a key'></th>\n" +
-            "<td><textarea class='form-control' id='inputValueExtra" + index + "' placeholder='Enter a value'></textarea></td>\n" +
-            "<td><button class='btn btn-danger delete-extra-button' id='inputDeleteExtra" + index + "'" +
-            " data-toggle='tooltip' data-placement='bottom' title='Delete this row'>" +
-            "<i class='fas fa-trash'></i></button></td>\n" +
-            "</tr>");
-        let inputKey = $("#inputKeyExtra" + index);
-        let inputValue = $("#inputValueExtra" + index);
-        $("#inputDeleteExtra" + index).on('click', function () {
-            item.setCustomExtraData(index, undefined);
-            $("#inputRowExtra" + index).remove();
-        });
-        inputKey.val(key);
-        inputValue.val(value);
-        item.setCustomExtraData(index, [key, value]);
-        inputKey.on('change keyup paste', function () {
-            item.setCustomExtraData(index, [inputKey.val(), inputValue.val()]);
-        });
-        inputValue.on('change keyup paste', function () {
-            item.setCustomExtraData(index, [inputKey.val(), inputValue.val()]);
-        });
-    };
-
-    /**
-     * Setup event handlers for blockchain edit buttons
-     * @param item {ListItem} The list item we are editing
-     */
-    let setupExtraDataControlButtons = function (item) {
-        // Set event handlers
-        $("#editExtraDataAddButton").off('click').on('click', function () { // Reset event handler
-            createNewInputFields(item, item.getCustomExtraData().length, '', '');
-        });
-        $("#editExtraDataClearButton").off('click').on('click', function () { // Reset event handlers
-            for (let i = 0; i < item.getCustomExtraData().length; i++) {
-                if (item.getCustomExtraData()[i] !== undefined)
-                    $("#inputRowExtra" + i).remove();
-            }
-            item.clearCustomExtraData();
-            createNewInputFields(item, 0, '', '');
-        });
-    };
 }

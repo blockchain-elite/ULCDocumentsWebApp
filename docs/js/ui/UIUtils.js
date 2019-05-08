@@ -51,10 +51,12 @@ function humanFileSize(bytes, si) {
 
 function getMimeTypeIcon(file) {
     let icon = "";
-    for (let mimeType in MIME_TYPE_ICONS) {
-        if (file.type.search(mimeType) !== -1) {
-            icon = MIME_TYPE_ICONS[mimeType];
-            break;
+    if (file !== undefined) {
+        for (let mimeType in MIME_TYPE_ICONS) {
+            if (file.type.search(mimeType) !== -1) {
+                icon = MIME_TYPE_ICONS[mimeType];
+                break;
+            }
         }
     }
     if (icon === "")
@@ -295,7 +297,7 @@ let isValueInObject = function (val, object) {
  * @param colorClass {COLOR_CLASSES}
  * @return {String}
  */
-let getJConfirmTypeFromColorCLass = function (colorClass) {
+let getJConfirmTypeFromColorClass = function (colorClass) {
     let type = '';
     switch (colorClass) {
         case COLOR_CLASSES.info:
