@@ -281,9 +281,9 @@ function UIManager() {
     let tryReadyUI = function () {
         if (_moderatorManager.isConnected() && _currentWalletState !== WALLET_STATE.unknown
             && $.selector_cache('#loadingScreen').css('display') !== 'none') {
-            if (_currentNetworkType === TypeConnection.Mainnet)
-                readyUI();
-            else
+            readyUI();
+
+            if (_currentNetworkType !== TypeConnection.Mainnet)
                 showTestnetWarning();
         }
     };
@@ -305,31 +305,7 @@ function UIManager() {
      * Show a warning alowing the user to abort connection when using testnet
      */
     let showTestnetWarning = function () {
-        $.confirm({
-            title: 'Untrusted network',
-            content: 'You are connected to a test network. Please note that signatures cannot be trusted and are only used for testing purposes.',
-            theme: JQUERY_CONFIRM_THEME,
-            type: 'orange',
-            icon: 'fas fa-exclamation-triangle',
-            escapeKey: 'cancel',
-            columnClass: 'medium',
-            typeAnimated: true,
-            buttons: {
-                confirm: {
-                    keys: ['enter'],
-                    btnClass: 'btn-orange',
-                    action: function () {
-                        readyUI();
-                    }
-                },
-                cancel: {
-                    text: 'Abort',
-                    action: function () {
-                        window.location = APP_BASE_URL;
-                    }
-                }
-            },
-        });
+        $.selector_cache('#ropstenWarning').show();
     };
 
     /**
