@@ -201,7 +201,6 @@ function UIKernelManager() {
             _isKernelConnected = false;
             UI.updateMainUIState();
             $.selector_cache('#kernelConnectedAddress').html('Connection in progress...');
-            setDOMColor($.selector_cache('#kernelInfoHeader'), COLOR_CLASSES.secondary);
             $.selector_cache('#kernelConnectionInfoIcon').attr('class', 'fas fa-circle-notch fa-spin fa-fw');
             $.selector_cache('#kernelConnectionLoadingIcon').attr('class', 'fas fa-circle-notch fa-spin fa-fw');
             this.setKernelInfo(undefined, TypeInfo.Info);

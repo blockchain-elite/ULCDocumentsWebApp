@@ -1690,7 +1690,6 @@ function UIManager() {
         switch (connectionStatus) {
             case TypeInfo.Good:
                 $.selector_cache('#kernelConnectionInfoIcon').attr('class', 'fas fa-check-circle text-success');
-                setDOMColor($.selector_cache('#kernelInfoHeader'), COLOR_CLASSES.success);
                 _kernelManager.setKernelInfo(moderatorInfo, TypeInfo.Good);
                 if (_currentAppMode === APP_MODE.sign)
                     askForAccounts();
@@ -1699,7 +1698,6 @@ function UIManager() {
             case TypeInfo.Warning:
                 $.selector_cache('#kernelConnectionInfoIcon').attr('class', 'fas fa-exclamation-triangle text-warning');
                 $.selector_cache('#kernelConnectedAddress').html("Currently connected to : '" + _kernelManager.getCurrentAddress() + "'");
-                setDOMColor($.selector_cache('#kernelInfoHeader'), COLOR_CLASSES.warning);
                 _kernelManager.setKernelInfo(undefined, TypeInfo.Warning);
                 if (_currentAppMode === APP_MODE.sign)
                     askForAccounts();
@@ -1708,14 +1706,12 @@ function UIManager() {
             case TypeInfo.Critical:
                 $.selector_cache('#kernelConnectionInfoIcon').attr('class', 'fas fa-times text-danger');
                 $.selector_cache('#kernelConnectedAddress').html("Could not connect to '" + _kernelManager.getCurrentAddress() + "'");
-                setDOMColor($.selector_cache('#kernelInfoHeader'), COLOR_CLASSES.danger);
                 _kernelManager.setKernelInfo(undefined, TypeInfo.Critical);
                 _kernelManager.setConnected(false);
                 break;
             default:
                 $.selector_cache('#kernelConnectionInfoIcon').attr('class', 'fas fa-question');
                 $.selector_cache('#kernelConnectedAddress').html("Not Connected");
-                setDOMColor($.selector_cache('#kernelInfoHeader'), COLOR_CLASSES.secondary);
                 _kernelManager.setKernelInfo(undefined, undefined);
                 _kernelManager.setConnected(false);
                 break;

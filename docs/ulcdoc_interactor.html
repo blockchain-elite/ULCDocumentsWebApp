@@ -131,35 +131,7 @@
     <!--MAIN-->
     <div class="container" id="baseContainer" style="display: none;">
 
-        <div class="card shadow" id="kernelInfoHeader">
-            <div class="row">
-                <div class="col-lg" style="display: flex;">
-                    <i id="kernelConnectionInfoIcon" class="fas fa-question"
-                       style="width: 20px;font-size: 1.1em; margin: auto 0;"></i>
-                    <span id="kernelConnectedAddress" style="margin: auto 0">Not connected</span>
-                </div>
-                <div class="col-lg text-center">
-                    <button class="btn btn-primary" id="kernelConnectionShareButton" data-toggle="tooltip"
-                            data-placement="bottom"
-                            title="Copy the current application link to the clipboard">
-                        <i class="fas fa-share" style="width: 20px"></i>
-                        Share this Kernel
-                    </button>
-                    <button class="btn btn-primary"
-                            id="kernelConnectionShowMoreButton">
-                        <i class="fas fa-info-circle" style="width: 20px"></i>
-                        Show more information
-                    </button>
-                    <button class="btn btn-primary"
-                            id="kernelConnectionEditButton">
-                        <i class="fas fa-edit" style="width: 20px"></i>
-                        Edit Kernel Address
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <div class="card shadow mb-5" id="mainCard">
+        <div class="card shadow my-5" id="mainCard">
             <div class="card-header">
                 <!--APP MODE TABS-->
                 <ul class="nav nav-tabs card-header-tabs main-card-nav">
@@ -271,7 +243,37 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-lg-7" id="kernelInfoContainer">
+                        <div class="col-lg-7" style="display: flex; flex-flow: column">
+                            <div style="height: 50px; display: flex">
+                                <h3 class="text-center" style="margin: auto">
+                                    <i id="kernelConnectionInfoIcon" class="fas fa-question"></i>
+                                    <span id="kernelConnectedAddress" style="margin: auto 0">Not connected</span>
+                                </h3>
+                            </div>
+
+
+                            <div id="kernelInfoContainer">
+
+                            </div>
+                            <div class="text-center" style="height: 50px">
+                                <button class="btn btn-primary" id="kernelConnectionShareButton" data-toggle="tooltip"
+                                        data-placement="bottom"
+                                        title="Copy the current application link to the clipboard">
+                                    <i class="fas fa-share" style="width: 20px"></i>
+                                    Share this Kernel
+                                </button>
+                                <button class="btn btn-primary"
+                                        id="kernelConnectionShowMoreButton">
+                                    <i class="fas fa-info-circle" style="width: 20px"></i>
+                                    Show more information
+                                </button>
+                                <button class="btn btn-primary"
+                                        id="kernelConnectionEditButton">
+                                    <i class="fas fa-edit" style="width: 20px"></i>
+                                    Edit Kernel Address
+                                </button>
+                            </div>
+
                         </div>
                     </div>
                 </div>
