@@ -1171,7 +1171,7 @@ function UIManager() {
     let getItemInfoToSign = function (item) {
         let infoMap = new Map(item.getInformation());
         if (item.getNumSign() === 0) {// We are the first to sign, we can enter values
-            item.clearCustomExtraData();
+            item.sanitizeCustomExtraData();
             if (item.getCustomExtraData().length) {// We have valid extra data
                 item.setExtraData(customExtraToMap(item.getCustomExtraData()));
                 infoMap.set(elementReservedKeys.extraData, item.getExtraData());
@@ -1962,4 +1962,7 @@ let UI = new UIManager();
 UI.initUI();
 
 
-// separate UI into 3 parts : import, check, result
+// Remove ropsten warning on connect (put a message in the navbar)
+// Fix multi-edit extra-data
+// Fix hash checking
+// remove kernel connection bar (move its content inside the kernel info zone)

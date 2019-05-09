@@ -146,10 +146,14 @@ class ListItem {
         return this.neededSign;
     }
 
+    clearCustomExtraData() {
+        this.customExtraData = [];
+    }
+
     /**
      * Remove empty or invalid elements from the customExtraData array
      */
-    clearCustomExtraData() {
+    sanitizeCustomExtraData() {
         for (let i = 0; i < this.customExtraData.length; i++) {
             if (this.customExtraData[i] === undefined || this.customExtraData[i][0] === '' || this.customExtraData[i][0] === '')
                 this.customExtraData.splice(i, 1);

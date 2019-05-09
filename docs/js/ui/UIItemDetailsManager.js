@@ -183,6 +183,7 @@ function UIItemDetailsManager() {
                     let selected = items.slice();
                     for (let i = 0; i < selected.length; i++) {
                         selected[i].setSelected(false);
+                        selected[i].sanitizeCustomExtraData();
                     }
                 }
             },
@@ -498,38 +499,49 @@ function UIItemDetailsManager() {
         }
     };
 
+    let isCustomExtraDataDifferent = function(items) {
+        let different = false;
+        let data = items[0].getCustomExtraData();
+        for (let i = 0; i < items.length; i++) {
+            if (items[i].getCustomExtraData().length !== data.length)
+                different = true;
+            else {
+                for (let j = 0; j < items[i].getCustomExtraData().length; j++) {
+                    if (items[i].getCustomExtraData()[j][0] !== data[j][0] ||
+                        items[i].getCustomExtraData()[j][1] !== data[j][1]) {
+                        different = true;
+                        break;
+                    }
+                }
+            }
+            if (different)
+                break;
+        }
+        return different;
+    };
+
     /**
      * Create input fields with values from the item.
      * @param item {ListItem} The list item to take values from
      */
     let createSavedExtraDataInputFields = function (items) {
         $('#fileBlockchainEditExtraDataTable').html(''); // Clear the list to recreate it
+
         let different = false;
         if (items.length > 1) {
-            let data = items[0].getCustomExtraData();
-            for (let i = 0; i < items.length; i++) {
-                for (let j = 0; j < data.length; j++) {
-                    if (items[i].getCustomExtraData()[j] !== data[j]) {
-                        different = true;
-                        break;
-                    }
-                }
-                if (different)
-                    break;
-            }
+            different = isCustomExtraDataDifferent(items);
             if (different)
-                createNewExtraDataInputField(items, 0, '', '', '< Different >');
+                createNewExtraDataInputField(items, 0, '', '', true);
         }
         if (items.length === 1 || (items.length > 1 && !different)) {
             let item = items[0];
             if (item !== undefined) {
-                item.clearCustomExtraData();
                 if (item.getCustomExtraData().length === 0)
-                    createNewExtraDataInputField([item], 0, '', '', undefined);
+                    createNewExtraDataInputField(items, 0, '', '', false);
                 else {
                     for (let i = 0; i < item.getCustomExtraData().length; i++) {
                         if (item.getCustomExtraData()[i] !== undefined) {
-                            createNewExtraDataInputField([item], i, item.getCustomExtraData()[i][0], item.getCustomExtraData()[i][1], undefined)
+                            createNewExtraDataInputField(items, i, item.getCustomExtraData()[i][0], item.getCustomExtraData()[i][1], false)
                         }
                     }
                 }
@@ -545,9 +557,10 @@ function UIItemDetailsManager() {
      * @param key {String} The default value for the key input field
      * @param value {String} The default value for the value input field
      */
-    let createNewExtraDataInputField = function (items, index, key, value, placeholder) {
-        if (placeholder === undefined)
-            placeholder = 'Enter your data here';
+    let createNewExtraDataInputField = function (items, index, key, value, isDiff) {
+        let placeholder = 'Enter your data here';
+        if (isDiff)
+            placeholder = '< Different >';
         $("#fileBlockchainEditExtraDataTable").append(
             "<tr id='inputRowExtra" + index + "'>\n" +
             "<th><input class='form-control' id='inputKeyExtra" + index + "' type='text' placeholder='" + placeholder + "'></th>\n" +
@@ -566,18 +579,23 @@ function UIItemDetailsManager() {
         });
         inputKey.val(key);
         inputValue.val(value);
-        if (placeholder === 'Enter your data here') {
+        if (!isDiff) {
             for (let i = 0; i < items.length; i++) {
                 items[i].setCustomExtraData(index, [key, value]);
             }
         }
         inputKey.on('change keyup paste', function () {
             for (let i = 0; i < items.length; i++) {
+                if (isDiff)
+                    items[i].clearCustomExtraData();
                 items[i].setCustomExtraData(index, [inputKey.val(), inputValue.val()]);
+                console.log(items.length);
             }
         });
         inputValue.on('change keyup paste', function () {
             for (let i = 0; i < items.length; i++) {
+                if (isDiff)
+                    items[i].clearCustomExtraData();
                 items[i].setCustomExtraData(index, [inputKey.val(), inputValue.val()]);
             }
         });
@@ -590,17 +608,18 @@ function UIItemDetailsManager() {
     let setupExtraDataControlButtons = function (items) {
         // Set event handlers
         $("#editExtraDataAddButton").off('click').on('click', function () { // Reset event handler
-            if (items.length === 1) {
-                createNewExtraDataInputField(items, items[0].getCustomExtraData().length, '', '', undefined);
+            if (items.length === 1 || !isCustomExtraDataDifferent(items)) {
+                createNewExtraDataInputField(items, items[0].getCustomExtraData().length, '', '', false);
+            } else  {
+                createNewExtraDataInputField(items, 1, '', '', false);
             }
-
         });
         $("#editExtraDataClearButton").off('click').on('click', function () { // Reset event handlers
             $("#fileBlockchainEditExtraDataTable").html('');
             for (let i = 0; i < items.length; i++) {
                 items[i].clearCustomExtraData();
             }
-            createNewExtraDataInputField(items, 0, '', '', undefined);
+            createNewExtraDataInputField(items, 0, '', '', false);
         });
     };
 
