@@ -339,11 +339,15 @@ function UIItemDetailsManager() {
             input.off('change keyup paste').val(val).on('change keyup paste', function () { // Remove previous event handlers
                 let mustReset = false;
                 for (let i = 0; i < items.length; i++) {
-                    items[i].setText(input.val());
+                    if (UI.getCurrentTab() === TAB_TYPE.hash)
+                        items[i].setHash(input.val());
+                    else
+                        items[i].setText(input.val());
                     if (items[i].getType() !== TypeElement.Unknown) {
                         items[i].reset();
-                        items[i].setHash('');
                         mustReset = true;
+                        if (UI.getCurrentTab() !== TAB_TYPE.hash)
+                            items[i].setHash('');
                     }
                 }
                 if (mustReset) {

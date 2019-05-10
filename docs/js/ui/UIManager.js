@@ -1397,7 +1397,7 @@ function UIManager() {
     };
 
     let setupDOMDimensions = function () {
-        let height = $(window).height() - 280; // Header + kernel connection + action buttons
+        let height = $(window).height() - 200; // Header + action buttons
         $.selector_cache("#mainCard").css('height', height);
         // $.selector_cache("#fileListCard").css('height', $.selector_cache("#fileListCard").height());
     };
@@ -1934,7 +1934,4 @@ let UI = new UIManager();
 UI.initUI();
 
 
-// Remove ropsten warning on connect (put a message in the navbar)
-// Fix multi-edit extra-data
 // Fix hash checking
-// remove kernel connection bar (move its content inside the kernel info zone)
