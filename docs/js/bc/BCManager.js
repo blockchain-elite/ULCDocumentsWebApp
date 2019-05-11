@@ -820,6 +820,7 @@ Function that prepare all requests and optimize number of transactions.
 */
 async function signOptimisedDocuments(myHashArray, infoArray, indexArray){
     //if just one doc, no need to use this function,  redirecting to simple signDocument.
+
     if (myHashArray.length === 1) {
         signDocument(myHashArray[0], infoArray[0], indexArray[0]);
         return;
@@ -869,6 +870,7 @@ async function signOptimisedDocuments(myHashArray, infoArray, indexArray){
     }
     //now execute it.
     //for gaz opti, better to call one by one signing if only one item.
+
     if(confirmArray[0].length > 0){
         confirmArray[0].length > 1 ? requestMultiConfirmDocs(confirmArray[0],confirmArray[1]) : requestConfirmDoc(confirmArray[0][0],confirmArray[1][0]);
     }
@@ -878,7 +880,7 @@ async function signOptimisedDocuments(myHashArray, infoArray, indexArray){
     }
 
     if(pushArray[0].length > 0){
-        for (i in pushArray){
+        for (i in pushArray[0]){
             requestPushDoc(pushArray[0][i], pushArray[1][i], pushArray[2][i]);
         }
     }

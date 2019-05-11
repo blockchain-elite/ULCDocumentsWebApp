@@ -22,7 +22,7 @@
  *                      CONSTANTS
  **********************************************************/
 
-const APP_VERSION = 'beta 0.0.9';
+const APP_VERSION = 'beta 0.0.10';
 
 const APP_BASE_URL = 'https://ulcdocuments.blockchain-elite.fr/';
 
@@ -1932,4 +1932,3 @@ function UIManager() {
 
 let UI = new UIManager();
 UI.initUI();
-
