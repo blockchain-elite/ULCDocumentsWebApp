@@ -26,10 +26,16 @@
     position:relative;
 }
 
-#loadingScreen, #baseContainer, #indexContainer {
+#loadingScreen, #baseContainer {
     margin-bottom: 0;
-    /* Height of the footer */
+    /* Height of the footer in-app */
     padding: 0 0 310px;
+}
+
+#indexContainer {
+    margin-bottom: 0;
+    /* Height of the footer in the index */
+    padding: 0 0 210px;
 }
 
 #baseContainer {
@@ -521,9 +527,14 @@ only screen and (max-width: 575px) {
         padding-right: 0.3rem;
     }
 
-    #loadingScreen, #baseContainer, #indexContainer {
+    #loadingScreen, #baseContainer {
         /* Height of the footer */
-        padding-bottom: 400px;
+        padding-bottom: 450px;
+    }
+
+    #indexContainer {
+        /* Height of the footer in the index */
+        padding-bottom: 300px;
     }
 
     #WelcomeJumbotron h1{

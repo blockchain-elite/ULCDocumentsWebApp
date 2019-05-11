@@ -1933,5 +1933,3 @@ function UIManager() {
 let UI = new UIManager();
 UI.initUI();
 
-
-// Fix hash checking

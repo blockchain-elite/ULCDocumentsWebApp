@@ -40,6 +40,10 @@ footer {
     padding: 0 0 100px;
 }
 
+.index-footer {
+    height: 210px;
+}
+
 footer a {
     color: #83e6ff;
 }
@@ -161,8 +165,13 @@ only screen and (max-width: 575px) {
         font-size: 1rem;
     }
 
-    footer {
+    .index-footer {
         height: 300px;
+        font-size: 0.8rem;
+    }
+
+    footer {
+        height: 450px;
         font-size: 0.8rem;
     }
 
