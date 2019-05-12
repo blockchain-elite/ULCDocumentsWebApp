@@ -57,6 +57,11 @@ footer a:hover {
     color: white;
 }
 
+#container {
+    min-height:100%;
+    position:relative;
+}
+
 .navbar {
     background: #990000;
     color: #ffffff;

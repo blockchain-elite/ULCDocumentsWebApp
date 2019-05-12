@@ -21,21 +21,10 @@
     width: auto;
 }
 
-#container {
-    min-height:100%;
-    position:relative;
-}
-
 #loadingScreen, #baseContainer {
     margin-bottom: 0;
     /* Height of the footer in-app */
     padding: 0 0 310px;
-}
-
-#indexContainer {
-    margin-bottom: 0;
-    /* Height of the footer in the index */
-    padding: 0 0 210px;
 }
 
 #baseContainer {
@@ -46,43 +35,11 @@
     height: 700px;
 }
 
-#WelcomeJumbotron {
-	background-image: url('../images/bg_header.jpg');
-	background-repeat: no-repeat;
-	background-position: center;
-	background-size: cover;
-	min-height: 400px;
-    margin-bottom: 0;
-}
-
-#WelcomeMessage {
-	background-color: rgba(0,0,0,0.3);
-	border-radius: 5px;
-	margin: auto 15% auto 15%;
-	padding: 10px;
-}
-
-#WelcomeMessage h1 {
-    font-size: 4rem;
-}
-
-#WelcomeMessage p{
-	font-size: 1.8em;
-}
-
 #loadingScreen div {
     width: 100%;
     font-size: 3rem;
     color: #696969;
     cursor: default;
-}
-
-.to-app-button {
-    padding: 20px;
-    width: 170px;
-    border-radius: 15px;
-    font-size: 1.5em;
-    font-weight: bold;
 }
 
 #actionButtonContainer {
@@ -110,7 +67,6 @@
 #checkButton.btn-info {
     height: inherit;
 }
-
 
 .sign-next-step-logo {
     font-size: 2em;
@@ -350,7 +306,6 @@
     margin: auto;
 }
 
-
 #kernelAddressInput {
     max-width: 600px;
     margin: auto;
@@ -531,14 +486,4 @@ only screen and (max-width: 575px) {
         /* Height of the footer */
         padding-bottom: 450px;
     }
-
-    #indexContainer {
-        /* Height of the footer in the index */
-        padding-bottom: 300px;
-    }
-
-    #WelcomeJumbotron h1{
-        font-size: 2.5em;
-    }
-
 }
