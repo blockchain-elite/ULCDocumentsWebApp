@@ -318,3 +318,12 @@ let getJConfirmTypeFromColorClass = function (colorClass) {
     }
     return type;
 };
+
+let copyToClipboard = function (text) {
+    let textContainer = document.createElement('input');
+    document.body.appendChild(textContainer);
+    textContainer.value = text;
+    textContainer.select();
+    document.execCommand('copy');
+    document.body.removeChild(textContainer);
+};

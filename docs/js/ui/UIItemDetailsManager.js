@@ -32,8 +32,11 @@ function UIItemDetailsManager() {
             '</h5>\n' +
             '<textarea id="itemTextInput" class="form-control" rows="5" placeholder="Enter your text here..."></textarea>\n' +
             '<input id="itemHashInput" class="form-control" placeholder="Enter your hash here...">\n' +
-            '<p class="text-muted" id="itemHashContainer"><span id="itemHashType"></span><span\n' +
+            '<p class="text-muted" id="itemHashContainer">File\'s hash (<span id="itemHashType"></span>): <span\n' +
             'id="itemHashProp">HASH</span>\n' +
+            '<button class="ml-2 btn btn-secondary" id="copyHashButton" data-toggle="tooltip"' +
+            'data-placement="bottom" title="Copy hash to clipboard" style="display: none">' +
+            '<i class="fas fa-copy"></i></button>' +
             '</p>\n' +
             '<a id="itemTxUrlProp" href="" target="_blank">\n' +
             '<button class="btn btn-primary">\n' +
@@ -136,8 +139,13 @@ function UIItemDetailsManager() {
     this.displayItemListProps = function (items) {
         itemPropPopup.onOpenBefore = function () {
             $('#itemTextInput').autoResize();
-            $('#itemHashType').text(getHashAlgorithm() + ': ');
+            $('#itemHashType').text(getHashAlgorithm());
             UI.getItemDetailsManager().setupItemPopup(items);
+            $("#copyHashButton").on('click', function () {
+                copyToClipboard(items[0].getHash());
+                sendNotification(TypeInfo.Good, 'Hash copied', 'The hash has been copied to the clipboard.');
+            });
+            $('[data-toggle="tooltip"]').tooltip(); // Enable created tooltips
         };
         itemPropPopup.onOpen = function () { // Make sure the input fields are focused
             if (UI.getCurrentTab() === TAB_TYPE.text)
@@ -224,7 +232,6 @@ function UIItemDetailsManager() {
                 setBlockchainInfoMessage(items);
             }
         }
-        $('[data-toggle="tooltip"]').tooltip(); // Enable created tooltips
     };
 
     let canDisplayBlockchainEditFields = function (items) {
@@ -266,9 +273,10 @@ function UIItemDetailsManager() {
             item = items[0];
 
         if (UI.getCurrentTab() !== TAB_TYPE.hash) {
-            if (item !== undefined && item.getHash() !== '')
+            if (item !== undefined && item.getHash() !== '') {
                 $("#itemHashProp").text(item.getHash());
-            else if (item !== undefined)
+                $('#copyHashButton').show();
+            } else if (item !== undefined)
                 $("#itemHashProp").text('not yet calculated');
             else
                 $("#itemHashProp").text('< Different >');

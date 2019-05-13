@@ -24,8 +24,6 @@
 
 const APP_VERSION = 'beta 0.0.10';
 
-const APP_BASE_URL = 'https://ulcdocuments.blockchain-elite.fr/';
-
 const APP_MODE = {
     check: 0,
     sign: 1
@@ -488,17 +486,8 @@ function UIManager() {
         $.selector_cache('#kernelConnectionEditButton').on('click', function () {
             _kernelManager.showKernelInput();
         });
-        $.selector_cache('#kernelConnectionShowMoreButton').on('click', function () {
-            _kernelManager.showKernelInfo();
-        });
         $.selector_cache('#kernelConnectionShareButton').on('click', function () {
-            let linkContainer = document.createElement('input');
-            let link = window.location.href;
-            document.body.appendChild(linkContainer);
-            linkContainer.value = link;
-            linkContainer.select();
-            document.execCommand('copy');
-            document.body.removeChild(linkContainer);
+            copyToClipboard(window.location.href);
             sendNotification(TypeInfo.Good, 'Link Copied', 'The link to this page has been copied in your clipboard.')
         });
 
@@ -1961,17 +1950,6 @@ function UIManager() {
 let UI = new UIManager();
 UI.initUI();
 
-// Move ropsten warning to a popup under the navbar (size of body)
-// if click on close, save it for the session
-// If clic on do not show again, save pref in cookie (use Cookies.js)
-
-// Remove last modified date for files
-// Change SHA3-256 display in item details
-// Add copy hash button to item details
-
-
 // Improve item details blockchain info display :
 // Display clock icon next to date
 // Display Blockchain Icon and info below hash (over general info and extra data
-
-// Add select all button
