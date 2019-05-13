@@ -1402,9 +1402,13 @@ function UIManager() {
     };
 
     let setupDOMDimensions = function () {
-        let height = $(window).height() - 200; // Header + action buttons
-        $.selector_cache("#mainCard").css('height', height);
-        // $.selector_cache("#fileListCard").css('height', $.selector_cache("#fileListCard").height());
+        if ($(window).width() < 991) {
+            let height = $(window).height() - 200; // Header + action buttons
+            $.selector_cache("#mainCard").css('min-height', height);
+        } else {
+            let height = $(window).height() -200; // Header + action buttons
+            $.selector_cache("#mainCard").css('height', height);
+        }
     };
 
     /* *********************************************************

@@ -89,31 +89,6 @@ function UIKernelManager() {
             $.selector_cache('#kernelInfoContainer').html(kernelInfoWarningDOM);
     };
 
-    this.showKernelInfo = function () {
-        let content;
-        if (_isReferenced)
-            content = kernelInfoDOM;
-        else
-            content = kernelInfoWarningDOM;
-        $.selector_cache('#kernelInfoContainer').html("");
-        $.alert({
-            title: 'Kernel Information',
-            content: content,
-            type: 'blue',
-            theme: JQUERY_CONFIRM_THEME,
-            columnClass: 'xlarge',
-            icon: 'fas fa-info-circle',
-            escapeKey: 'ok',
-            typeAnimated: true,
-            onOpenBefore: function () {
-                if (_isReferenced) {
-                    setKernelReservedFields(_currentKernelInfo);
-                    setKernelExtraData(_currentKernelInfo);
-                }
-            },
-        });
-    };
-
     /**
      * Show a dialog to enter a new kernel address
      */

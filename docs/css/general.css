@@ -394,6 +394,12 @@
 
 @media
 only screen and (max-width: 991px) {
+
+    #fileListContainer {
+        min-height: 500px;
+        margin-bottom: 20px;
+    }
+
     #buttonsCardContainer {
         height: 250px;
         transform: translateY(150px);
@@ -446,15 +452,19 @@ only screen and (max-width: 991px) {
         transform: rotate(180deg);
     }
 
-    #kernelInfoContainer {
-        display: none;
-    }
-
     #kernelConnectionShowMoreButton {
         display: inline;
     }
 }
 
+#kernelInfoColumn {
+    display: flex;
+    flex-flow: column;
+}
+
+@media
+only screen and (max-width: 991px) {
+}
 
 
 @media

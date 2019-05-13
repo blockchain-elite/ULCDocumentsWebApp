@@ -30,10 +30,6 @@ function UIItemDetailsManager() {
             '<span id="itemNumSignProp">#SIGNATURES</span>\n' +
             '</span>\n' +
             '</h5>\n' +
-            '<p class="text-center text-muted file-specific-info">\n' +
-            '<span>Last Modified: </span>\n' +
-            '<span id="fileDateProp">##DATE</span>\n' +
-            '</p>\n' +
             '<textarea id="itemTextInput" class="form-control" rows="5" placeholder="Enter your text here..."></textarea>\n' +
             '<input id="itemHashInput" class="form-control" placeholder="Enter your hash here...">\n' +
             '<p class="text-muted" id="itemHashContainer"><span id="itemHashType"></span><span\n' +
@@ -166,7 +162,7 @@ function UIItemDetailsManager() {
         } else {
             if (UI.getCurrentTab() === TAB_TYPE.file) {
                 icon = getMimeTypeIcon(items[0].getFile());
-                title = items[0].getFile().name + ' <span class="text-muted">(' + humanFileSize(items[0].getFile().size) + ')</span>';
+                title = items[0].getFile().name + ' <span class="text-muted" style="font-weight: normal">(' + humanFileSize(items[0].getFile().size) + ')</span>';
             } else if (UI.getCurrentTab() === TAB_TYPE.text) {
                 icon = 'fas fa-align-left';
                 title = items[0].getTitle();
@@ -197,7 +193,6 @@ function UIItemDetailsManager() {
     this.setupItemPopup = function (items) {
         setBlockchainInfoErrorText('', COLOR_CLASSES.none); // reset color
         if (items.length) {
-            fillFileProp(items);
             fillReservedFields(items);
             setupItemInputFields(items);
             // Display blockchain edit fields if the item has no signatures
@@ -263,21 +258,6 @@ function UIItemDetailsManager() {
             }
         }
         return canDisplay;
-    };
-
-    /**
-     * Fill in the file property fields if we have a valid file
-     *
-     * @param file {File} The file to display information from
-     */
-    let fillFileProp = function (items) {
-        if (UI.getCurrentTab() === TAB_TYPE.file && items.length === 1) { // display file properties only if a unique item
-            logMe(UIManagerPrefix, 'Displaying file properties', TypeInfo.Info);
-            let date = new Date(items[0].getFile().lastModified);
-            $("#fileDateProp").text(date);
-            $(".file-specific-info").show();
-        } else
-            $(".file-specific-info").hide();
     };
 
     let fillReservedFields = function (items) {

@@ -195,7 +195,7 @@
                 <!--MAIN UI-->
                 <div class="mb-2" id="mainUIContainer">
                     <div class="row" id="filesRow">
-                        <div class="col-lg" id="fileListContainer">
+                        <div class="col-lg-5" id="fileListContainer">
                             <!--ITEM LIST CARD-->
                             <div class="card shadow mb-4" id="fileListCard">
                                 <div class="card-header">
@@ -249,8 +249,8 @@
                                 </div>
                             </div>
                         </div>
-                        <div class="col-lg-7" style="display: flex; flex-flow: column">
-                            <div style="height: 50px; display: flex">
+                        <div class="col-lg-7" id="kernelInfoColumn">
+                            <div class="mb-2" style="display: flex">
                                 <h3 class="text-center" style="margin: auto">
                                     <i id="kernelConnectionInfoIcon" class="fas fa-question"></i>
                                     <span id="kernelConnectedAddress" style="margin: auto 0">Not connected</span>
@@ -261,19 +261,14 @@
                             <div id="kernelInfoContainer">
 
                             </div>
-                            <div class="text-center" style="height: 50px">
-                                <button class="btn btn-primary" id="kernelConnectionShareButton" data-toggle="tooltip"
+                            <div class="text-center">
+                                <button class="btn btn-primary mb-1" id="kernelConnectionShareButton" data-toggle="tooltip"
                                         data-placement="bottom"
                                         title="Copy the current application link to the clipboard">
                                     <i class="fas fa-share" style="width: 20px"></i>
                                     Share this Kernel
                                 </button>
-                                <button class="btn btn-primary"
-                                        id="kernelConnectionShowMoreButton">
-                                    <i class="fas fa-info-circle" style="width: 20px"></i>
-                                    Show more information
-                                </button>
-                                <button class="btn btn-primary"
+                                <button class="btn btn-primary mb-1"
                                         id="kernelConnectionEditButton">
                                     <i class="fas fa-edit" style="width: 20px"></i>
                                     Edit Kernel Address
