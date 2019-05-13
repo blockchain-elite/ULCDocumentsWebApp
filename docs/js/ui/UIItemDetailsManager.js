@@ -353,7 +353,7 @@ function UIItemDetailsManager() {
                 if (mustReset) {
                     UI.getItemDetailsManager().setupItemPopup(items);
                     UI.resetProgress();
-                    UI.setUIButtonState(UI_STATE.none);
+                    UI.setUIElementsState(UI_STATE.none);
                 }
             }).show();
             if (UI.getCurrentUIState() === UI_STATE.fetched) {

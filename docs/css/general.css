@@ -206,6 +206,11 @@
     padding-right: 1rem;
     min-height: inherit; /* Chrome fix for height: 100%*/
     width: 100%;
+    height: 100%;
+}
+#fileContainer {
+    display: flex;
+    flex-flow: column;
 }
 
 #FileBlockchainInfoZone {

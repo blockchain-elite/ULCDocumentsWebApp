@@ -361,11 +361,16 @@ function UIManager() {
             startSign();
         });
         $.selector_cache('#cancelButton').on('click', function () {
-            UI.setUIButtonState(UI_STATE.none);
+            UI.setUIElementsState(UI_STATE.none);
             resetElementsFromList(getCurrentList());
             UI.resetProgress();
         });
-
+        $.selector_cache('#selectAllButton').on('click', function () {
+            let shouldSelect = _selectedItems.length !== getCurrentList().size;
+            for (let item of getCurrentList().values()) {
+                item.setSelected(shouldSelect);
+            }
+        });
         $.selector_cache('#kernelAddressInputConnect').on('click', function () {
             _kernelManager.setCurrentAddress($.selector_cache('#kernelAddressInput').val());
             UI.connectToKernel();
@@ -572,10 +577,10 @@ function UIManager() {
                     item.setType(TypeElement.Loading);
             }
             if (_currentAppMode === APP_MODE.check) {
-                UI.setUIButtonState(UI_STATE.checking);
+                UI.setUIElementsState(UI_STATE.checking);
                 log('Checking started...');
             } else {
-                UI.setUIButtonState(UI_STATE.fetching);
+                UI.setUIElementsState(UI_STATE.fetching);
                 log('Fetching started...');
             }
 
@@ -619,7 +624,7 @@ function UIManager() {
      *
      * @param state {UI_STATE} How should we lock the UI ?
      */
-    this.setUIButtonState = function (state) {
+    this.setUIElementsState = function (state) {
         log('Setting ui working mode to: ' + UI_STATE[state]);
         // Common locked elements
         let isWorking = state !== UI_STATE.none;
@@ -830,7 +835,7 @@ function UIManager() {
                 item.createEntry(true);
                 getList(_currentAppMode, TAB_TYPE.file).set(_uniqueIdCounter, item);
                 UI.updateCheckButtonState();
-                UI.setUIButtonState(UI_STATE.none);
+                UI.setUIElementsState(UI_STATE.none);
                 UI.resetProgress();
                 _uniqueIdCounter += 1;
             };
@@ -858,7 +863,7 @@ function UIManager() {
         getCurrentList().set(_uniqueIdCounter, item);
         _uniqueIdCounter += 1;
         UI.updateCheckButtonState();
-        UI.setUIButtonState(UI_STATE.none);
+        UI.setUIElementsState(UI_STATE.none);
         UI.resetProgress();
         updateDisplayIds(_currentTab);
 
@@ -955,7 +960,7 @@ function UIManager() {
     let endCheck = function () {
         log('Finished checking all the items', TypeInfo.Info);
         updateProgress(0, true);
-        UI.setUIButtonState(UI_STATE.none);
+        UI.setUIElementsState(UI_STATE.none);
     };
 
     /**
@@ -968,7 +973,7 @@ function UIManager() {
         if (invalidElements.length)
             displayInvalidElementsError(invalidElements);
         else
-            UI.setUIButtonState(UI_STATE.fetched);
+            UI.setUIElementsState(UI_STATE.fetched);
     };
 
     let updateDisplayedItemInfo = function () {
@@ -1009,15 +1014,15 @@ function UIManager() {
                         if (getCurrentList().size) {
                             sendNotification(TypeInfo.Good, 'Ready to sign', 'Removed invalid elements. ' +
                                 'You can now start signing.');
-                            UI.setUIButtonState(UI_STATE.fetched);
+                            UI.setUIElementsState(UI_STATE.fetched);
                         } else {
                             sendNotification(TypeInfo.Critical, 'Error', 'No valid document to sign');
-                            UI.setUIButtonState(UI_STATE.none);
+                            UI.setUIElementsState(UI_STATE.none);
                         }
                     }
                 },
                 cancel: function () {
-                    UI.setUIButtonState(UI_STATE.none);
+                    UI.setUIElementsState(UI_STATE.none);
                 },
             },
             onContentReady: function () {
@@ -1101,7 +1106,7 @@ function UIManager() {
                     keys: ['enter'],
                     btnClass: 'btn-blue',
                     action: function () {
-                        UI.setUIButtonState(UI_STATE.signing);
+                        UI.setUIElementsState(UI_STATE.signing);
                         _elementsToSign = getCurrentList().size;
                         _elementSigned = 0;
                         $.selector_cache('#actionInProgress').html('Signing...');
@@ -1132,7 +1137,7 @@ function UIManager() {
                     }
                 },
                 cancel: function () {
-                    UI.setUIButtonState(UI_STATE.fetched);
+                    UI.setUIElementsState(UI_STATE.fetched);
                 },
             }
         });
@@ -1409,12 +1414,14 @@ function UIManager() {
     this.addItemToSelected = function (item) {
         _selectedItems.push(item);
         $.selector_cache('#editItemButton').attr('disabled', false);
+        $.selector_cache('#selectAllButton').prop('checked', _selectedItems.length === getCurrentList().size);
     };
 
     this.removeItemFromSelected = function (item) {
         if (_selectedItems.indexOf(item) !== -1)
             _selectedItems.splice(_selectedItems.indexOf(item), 1);
         $.selector_cache('#editItemButton').attr('disabled', _selectedItems.length === 0);
+        $.selector_cache('#selectAllButton').prop('checked', false);
     };
 
     this.getKernelManager = function () {
@@ -1516,7 +1523,7 @@ function UIManager() {
             UI.resetProgress();
             resetTabZone(_currentTab);
             UI.updateCheckButtonState();
-            UI.setUIButtonState(UI_STATE.none);
+            UI.setUIElementsState(UI_STATE.none);
         }
         updateDisplayIds(_currentTab);
     };
@@ -1536,7 +1543,7 @@ function UIManager() {
         UI.setUIMode(_currentAppMode, true);
         setupDOMDimensions();
         UI.updateCheckButtonState();
-        UI.setUIButtonState(UI_STATE.none);
+        UI.setUIElementsState(UI_STATE.none);
         _kernelManager.setKernelInfo(undefined, undefined);
         _moderatorManager.setModeratorInfo(undefined, 'Connection in progress...');
         for (let i of Object.keys(TAB_TYPE)) {
@@ -1918,7 +1925,7 @@ function UIManager() {
             log('Item with index ' + index + ' has been removed and cannot be updated', TypeInfo.Warning);
         _elementSigned += 1;
         if (_elementSigned === _elementsToSign)
-            UI.setUIButtonState(UI_STATE.none);
+            UI.setUIElementsState(UI_STATE.none);
 
         console.log('signed: ' + _elementSigned + '/' + _elementsToSign);
     };
@@ -1932,3 +1939,18 @@ function UIManager() {
 
 let UI = new UIManager();
 UI.initUI();
+
+// Move ropsten warning to a popup under the navbar (size of body)
+// if click on close, save it for the session
+// If clic on do not show again, save pref in cookie (use Cookies.js)
+
+// Remove last modified date for files
+// Change SHA3-256 display in item details
+// Add copy hash button to item details
+
+
+// Improve item details blockchain info display :
+// Display clock icon next to date
+// Display Blockchain Icon and info below hash (over general info and extra data
+
+// Add select all button

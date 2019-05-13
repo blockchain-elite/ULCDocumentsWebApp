@@ -152,9 +152,9 @@
                             src="images/download-metamask-dark.png" alt="metamask"></a>
                 </div>
                 <!--LOADING ACCOUNTS-->
-                <div style="display: none;" class="container-fluid text-muted" id="loadingAccountsMessage">
-                    <div class="container-fluid justify-content-center align-self-center text-center">
-                        <h3>Loading Accounts...</h3>
+                <div style="display: none;height: 100%" class="container-fluid text-muted" id="loadingAccountsMessage">
+                    <div class="container-fluid text-center" style="display: flex;height: 100%">
+                        <h2 style="margin: auto">Waiting for Metamask. If you are not logged in, please do so now.</h2>
                     </div>
                 </div>
 
@@ -212,6 +212,12 @@
                                     </ul>
                                 </div>
                                 <div class="card-body d-flex" id="fileContainer">
+                                    <div>
+                                        <div class="custom-control form-control-lg custom-checkbox multi-selection">
+                                            <input type="checkbox" class="custom-control-input" id="selectAllButton">
+                                            <label class="custom-control-label" for="selectAllButton">Select All</label>
+                                        </div>
+                                    </div>
                                     <div id="dropZone">
 
                                     </div>
