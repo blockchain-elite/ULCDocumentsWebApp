@@ -32,7 +32,7 @@ let itemDOMElement =
     '                <div class="col-1 mx-1 d-flex">' +
     '                    <i class="item-type-icon"></i>' +
     '                </div>' +
-    '                <div class="col pl-1">' +
+    '                <div class="col pl-1" style="max-width: 60%">' +
     '                    <div class="pt-1 item-name"></div>' +
     '                    <div class="pt-1 text-muted item-subtitle"></div>' +
     '                    <div class="pt-1 text-muted list-item-state"></div>' +
