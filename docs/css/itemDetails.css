@@ -48,3 +48,7 @@
     width: 20px;
     height: 20px;
 }
+
+#fileBlockchainInfoTitle {
+    border-bottom: 1px solid #d8d8d8;
+}

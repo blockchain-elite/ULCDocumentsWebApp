@@ -1949,7 +1949,3 @@ function UIManager() {
 
 let UI = new UIManager();
 UI.initUI();
-
-// Improve item details blockchain info display :
-// Display clock icon next to date
-// Display Blockchain Icon and info below hash (over general info and extra data

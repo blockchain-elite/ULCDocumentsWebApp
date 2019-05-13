@@ -45,11 +45,10 @@ function UIItemDetailsManager() {
             '</button>\n' +
             '</a>\n' +
             '<div class="mt-5" id="fileBlockchainInfoCard">\n' +
-
+            '<h2 id="fileBlockchainInfoTitle" class="mb-3"><i class="fas fa-cubes mr-3"></i>Blockchain Information</h2>' +
             '<div id="fileBlockchainInfoZone">\n' +
             '<div class="row" style="margin: 0">' +
             '<div class="col">\n' +
-            '<h4 class="text-center">Blockchain Information</h4>\n' +
             '<p id="fileBlockchainDate"></p>' +
             '<p id="fileBlockchainSource"></p>' +
             '<p id="fileBlockchainFamily"></p>' +
@@ -360,11 +359,11 @@ function UIItemDetailsManager() {
             item = items[0];
 
         if (item !== undefined && item.getInformation().get(elementReservedKeys.date) !== undefined)
-            $('#fileBlockchainDate').text('Signed on ' + item.getInformation().get(elementReservedKeys.date));
+            $('#fileBlockchainDate').html('<i class="far fa-clock mr-2"></i>Signed on ' + item.getInformation().get(elementReservedKeys.date));
         else if (item !== undefined)
             $('#fileBlockchainDate').text('');
         else
-            $('#fileBlockchainDate').text('< Different >');
+            $('#fileBlockchainDate').html('<i class="far fa-clock mr-2"></i> Signature date different.');
 
         if (item !== undefined && (item.getInformation().get(elementReservedKeys.source) === '' || item.getInformation().get(elementReservedKeys.source) === undefined))
             $('#fileBlockchainSource').text('No source provided.');
