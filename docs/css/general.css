@@ -392,6 +392,38 @@
     font-size: 2rem;
 }
 
+#ropstenWarning {
+    position: fixed;
+    top: 55px;
+    width: 100%;
+    z-index: 10;
+    padding: 10px 40px;
+    text-align: center;
+}
+
+#ropstenWarningCloseIcon {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 10px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+#ropstenWarningCloseIcon:hover {
+    transform: scale(1.5);
+}
+
+#ropstenWarningClosePermanent {
+    color: #990000;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+#ropstenWarningClosePermanent:hover {
+    color: #5c0000;
+}
+
 @media
 only screen and (max-width: 991px) {
 

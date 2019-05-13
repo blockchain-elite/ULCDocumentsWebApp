@@ -302,10 +302,20 @@ function UIManager() {
     };
 
     /**
-     * Show a warning alowing the user to abort connection when using testnet
+     * Show a warning when using a testnet
      */
     let showTestnetWarning = function () {
-        $.selector_cache('#ropstenWarning').show();
+        if (Cookies.get('hide-ropsten-warning') === undefined){
+            $.selector_cache('#ropstenWarning').show();
+            animateCss($.selector_cache('#ropstenWarning'), 'fadeInDown faster');
+        }
+
+    };
+
+    let hideTestnetWarning = function () {
+        animateCss($.selector_cache('#ropstenWarning'), 'fadeOutUp faster', function () {
+            $.selector_cache('#ropstenWarning').hide();
+        });
     };
 
     /**
@@ -414,6 +424,13 @@ function UIManager() {
         });
         $.selector_cache('#editItemButton').on('click', function () {
             _itemDetailsManager.displayItemListProps(_selectedItems);
+        });
+        $.selector_cache('#ropstenWarningCloseIcon').on('click', function () {
+            hideTestnetWarning();
+        });
+        $.selector_cache('#ropstenWarningClosePermanent').on('click', function () {
+            Cookies.set('hide-ropsten-warning', '1', { expires: 365 });
+            hideTestnetWarning();
         });
         $.selector_cache("body")
             .on('click', function (e) {

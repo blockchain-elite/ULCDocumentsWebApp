@@ -109,9 +109,6 @@
                       title="Network Type not available at the moment">
                     Not Connected
                 </span>
-                <span class="badge badge-warning mr-2" id=" ropstenWarning">
-                    Please note that signatures are only used for testing purposes
-                </span>
             </span>
             <span class="navbar-text text-center pl-2 border-left border-light">
                 Web App:
@@ -119,6 +116,16 @@
             </span>
         </div>
     </nav>
+
+    <div class="alert-warning shadow" id="ropstenWarning" style="display: none;">
+        <span>
+            You are using a test network.
+            Please note that signatures are only used for testing purposes.
+        </span>
+        <span id="ropstenWarningClosePermanent">Do not show this again.</span>
+        <i class="fas fa-times" id="ropstenWarningCloseIcon"></i>
+    </div>
+
 
     <!--LOADING SCREEN-->
     <div class="container align-items-center" id="loadingScreen" style="display: flex">
@@ -504,6 +511,7 @@
 <script src="js/lib/web3.min.js"></script>
 <script src="js/lib/crypto-js.js"></script>
 <script src="js/lib/auto-resize.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/js-cookie@2/src/js.cookie.min.js"></script>
 <!-- COMMON -->
 <script src="js/ULCDocCommons.js"></script>
 <!-- UI RELATED -->
