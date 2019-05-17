@@ -25,7 +25,7 @@
           integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css"
           integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
-    <link rel="stylesheet" type="text/css" href="css/style.css"/>
+    <link rel="stylesheet" type="text/css" href="css/general.css"/>
     <link rel="stylesheet" type="text/css" href="css/bootstrapOverwrite.css"/>
     <link rel="stylesheet" type="text/css" href="css/itemDetails.css"/>
     <link rel="stylesheet" type="text/css" href="css/check.css" id="appModeCss"/>
@@ -39,69 +39,6 @@
 <!---------------------------------------------------------------------------------------->
 <!--                                        TEMPLATES                                   -->
 <!---------------------------------------------------------------------------------------->
-<!-- LIST ITEMS -->
-<template id="fileListItemTemplate">
-    <div class="card item-card mb-3 shadow-sm item-state-unknown">
-        <div class="card-body p-0">
-            <div class="row">
-                <div class="col-9 file-info">
-                    <ul class="list-group list-group-flush">
-                        <li class="list-group-item py-1">
-                            <span class="uploaded-file-icon"></span>
-                            <span class="uploaded-file-name"></span>
-                        </li>
-                        <li class="list-group-item py-1">
-                            Size: <span class="uploaded-file-size"></span>
-                        </li>
-                    </ul>
-                </div>
-                <div class="col text-center file-state-icon d-flex justify-content-center align-items-center">
-                    <i class="fas fa-question list-item-icon"></i>
-                </div>
-            </div>
-        </div>
-        <div class="card-footer text-muted py-1">
-            <span class="list-item-state"></span>
-            <button class="btn btn-danger float-right remove-list-item-button">Remove<i
-                    class="fas fa-trash-alt"
-                    style="margin-left: 5px"></i></button>
-        </div>
-    </div>
-</template>
-<template id="textListItemTemplate">
-    <div class="card item-card mb-3 shadow-sm item-state-unknown">
-        <div class="card-body p-0">
-            <span class="list-text-title ml-2">TEXT #</span>
-            <span class="text-center text-state-icon" style="float: right;">
-                <i class="fas fa-question list-item-icon"></i>
-            </span>
-            <p class="item-text mx-2"></p>
-        </div>
-        <div class="card-footer text-muted py-1">
-            <span class="list-item-state"></span>
-            <button class="btn btn-danger float-right remove-list-item-button">Remove<i
-                    class="fas fa-trash-alt"
-                    style="margin-left: 5px"></i></button>
-        </div>
-    </div>
-</template>
-<template id="hashListItemTemplate">
-    <div class="card item-card mb-3 shadow-sm item-state-unknown">
-        <div class="card-body p-0">
-            <span class="align-self-center list-hash-title ml-2">TEXT #</span>
-            <div class="col-sm text-center hash-state-icon" style="float: right;">
-                <i class="fas fa-question list-item-icon"></i>
-            </div>
-            <p class="item-hash mx-2"></p>
-        </div>
-        <div class="card-footer text-muted py-1">
-            <span class="list-item-state"></span>
-            <button class="btn btn-danger float-right remove-list-item-button">Remove<i
-                    class="fas fa-trash-alt"
-                    style="margin-left: 5px"></i></button>
-        </div>
-    </div>
-</template>
 <!-- EMPTY LISTS-->
 <template id="fileListEmptyTemplate">
     <div class="text-muted text-center empty-item-list d-flex align-items-center">
@@ -145,21 +82,20 @@
         </button>
         <div class="collapse navbar-collapse" id="navbarNav">
             <ul class="navbar-nav mr-auto">
-                <li class="nav-item">
-                    <a class="nav-link" target="_blank" href="https://www.blockchain-elite.fr/labs/"><img alt=""
-                                                                                                     src="images/blockchain-elite-logo.svg"
-                                                                                                     style="height: 25px;margin-right: 10px">BlockChain-Elite Labs</a>
+                <li class="nav-item text-center">
+                    <a class="nav-link" target="_blank" href="https://www.blockchain-elite.fr/labs/">
+                        <img alt="" src="images/blockchain-elite-logo.svg" style="height: 25px;margin-right: 10px">
+                        BlockChain-Elite Labs
+                    </a>
                 </li>
-                <!--<li class="nav-item">-->
-                <!--<a class="nav-link" target="_blank" href="#"><i class="fas fa-book" style="margin-right: 10px"></i>ReadTheDoc</a>-->
-                <!--</li>-->
-                <li class="nav-item">
+                <li class="nav-item text-center">
                     <a class="nav-link" target="_blank" href="https://github.com/blockchain-elite/ULCDocumentsWebApp"><i
                             class="fab fa-github"
                             style="margin-right: 10px"></i>Github</a>
                 </li>
             </ul>
-            <span class="navbar-text mr-2">
+
+            <span class="navbar-text text-center mr-2">
                 Connection Type:
                 <span id="connectionTypeField" class="badge badge-secondary" data-toggle="tooltip"
                       data-placement="bottom"
@@ -167,19 +103,29 @@
                     Not Connected
                 </span>
             </span>
-            <span class="navbar-text pl-2 mr-2 border-left border-light">
+            <span class="navbar-text text-center pl-2 mr-2 border-left border-light">
                 Network Type:
                 <span id="networkTypeField" class="badge badge-secondary" data-toggle="tooltip" data-placement="bottom"
                       title="Network Type not available at the moment">
                     Not Connected
                 </span>
             </span>
-            <span class="navbar-text pl-2 border-left border-light">
+            <span class="navbar-text text-center pl-2 border-left border-light">
                 Web App:
                 <span id="webAppVersion" class="badge badge-secondary">#VALUE</span>
             </span>
         </div>
     </nav>
+
+    <div class="alert-warning" id="ropstenWarning" style="display: none;">
+        <span>
+            You are using a test network.
+            Please note that signatures are only used for testing purposes.
+        </span>
+        <span id="ropstenWarningClosePermanent">Do not show this again.</span>
+        <i class="fas fa-times" id="ropstenWarningCloseIcon"></i>
+    </div>
+
 
     <!--LOADING SCREEN-->
     <div class="container align-items-center" id="loadingScreen" style="display: flex">
@@ -192,186 +138,7 @@
     <!--MAIN-->
     <div class="container" id="baseContainer" style="display: none;">
 
-        <div class="card shadow my-4">
-            <div class="card-header">
-                <h5>Connection Information</h5>
-            </div>
-            <div class="card-body">
-                <!--MODERATOR INFO-->
-                <div class="card shadow my-3">
-                    <div class="card-header alert-secondary" id="moderatorInfoHeader"
-                         data-toggle="collapse"
-                         data-target="#collapseModerator" aria-expanded="false"
-                         aria-controls="collapseModerator"
-                         style="cursor: pointer">
-                        <i class="collapseIcon fas fa-angle-down"></i>
-                        <i class="collapseHeaderSeparator mr-3 ml-2"></i>
-                        <i id="moderatorConnectionInfoIcon" class="fas fa-question"
-                           style="width: 20px;font-size: 1.1em"></i>
-                        Moderator Information
-                        <span id="moderatorConnectedAddress" style="float: right;">
-                            Advanced connected to default
-                        </span>
-                    </div>
-                    <div class="accordion" id="accordionModerator">
-                        <div id="collapseModerator" class="collapse customCollapse"
-                             data-parent="#moderatorInfoHeader">
-                            <div class="card-body" id="moderatorInfoBody">
-                                <div id="moderatorInfoEmptyZone">
-                                    <div class="container-fluid text-muted d-flex">
-                                        <div class="container-fluid justify-content-center align-self-center text-center">
-                                            <h3 id="moderatorInfoEmptyText">Not connected</h3>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div id="moderatorInfoZone">
-                                    <div id="moderatorButtons">
-                                        <a class="moderator-registration-link" target="_blank" href="">
-                                            <button class="btn btn-primary btn-lg">
-                                                <i class="fas fa-sign-in-alt" style="width: 25px"></i>
-                                                Register
-                                            </button>
-                                        </a>
-                                        <a class="moderator-contact-link" target="_blank" href="">
-                                            <button class="btn btn-primary btn-lg">
-                                                <i class="fas fa-at" style="width: 25px"></i>
-                                                Contact
-                                            </button>
-                                        </a>
-                                        <a class="moderator-search-link" target="_blank" href="">
-                                            <button class="btn btn-primary btn-lg">
-                                                <i class="fas fa-search" style="width: 25px"></i>
-                                                Search
-                                            </button>
-                                        </a>
-                                    </div>
-                                    <div id="moderatorAdditionalInfoZone" class="mt-2">
-                                        <h4 class="text-center">Additional Information</h4>
-                                        <table class="table">
-                                            <tbody id="moderatorInfoTable">
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                                <button class="btn btn-warning mb-2" id="advancedOptionsButton" style="float: right">
-                                    <i class="fas fa-cog" style="width: 20px;"></i>
-                                    Advanced Options
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <!--KERNEL INFO-->
-                <div class="card shadow my-3">
-                    <div class="card-header alert-secondary" id="kernelInfoHeader" data-toggle="collapse"
-                         data-target="#collapseSignature" aria-expanded="false" aria-controls="collapseSignature"
-                         style="cursor: pointer">
-                        <i class="collapseIcon fas fa-angle-down"></i>
-                        <i class="collapseHeaderSeparator mr-3 ml-2"></i>
-                        <i id="kernelConnectionInfoIcon" class="fas fa-question"
-                           style="width: 20px;font-size: 1.1em"></i>
-                        Kernel Connection
-                        <span id="kernelConnectedAddress"
-                              style="float: right">Not connected</span>
-                    </div>
-                    <div class="accordion" id="accordionSignature">
-                        <div id="collapseSignature" class="collapse show customCollapse"
-                             data-parent="#kernelInfoHeader">
-                            <div class="card-body" id="kernelInfoBody">
-                                <button class="btn btn-primary"
-                                        id="kernelConnectionEditButton">
-                                    <i class="fas fa-edit" style="width: 20px"></i>
-                                    Edit Kernel Address
-                                </button>
-                                <div id="kernelInfoEmptyZone">
-                                    <div class="container-fluid text-muted d-flex">
-                                        <div class="container-fluid justify-content-center align-self-center text-center">
-                                            <div id="kernelInfoEmptyTextContainer" class="text-muted">
-                                                <h3>
-                                                    <i id="kernelLoadingIcon"
-                                                       class="fas fa-circle-notch fa-spin fa-fw"></i>
-                                                    <span id="kernelInfoEmptyText">Not connected, please enter a kernel address below</span>
-                                                </h3>
-                                            </div>
-                                            <form id="kernelInputForm" class="mt-4">
-                                                <input id="kernelAddressInput" class="form-control"
-                                                       placeholder="Enter an address here">
-                                                <button class="btn btn-lg btn-primary mt-4"
-                                                        id="kernelAddressInputConnect">
-                                                    <i class="fas fa-arrow-right"></i>
-                                                    Connect
-                                                </button>
-                                            </form>
-
-                                            <div id="kernelButtons" class="mt-4" style="display: none">
-                                                <h4 class="mb-4">Moderator Links:</h4>
-                                                <a class="moderator-registration-link" target="_blank" href="">
-                                                    <button class="btn btn-primary btn-lg">
-                                                        <i class="fas fa-sign-in-alt" style="width: 25px"></i>
-                                                        Register
-                                                    </button>
-                                                </a>
-                                                <a class="moderator-contact-link" target="_blank" href="">
-                                                    <button class="btn btn-primary btn-lg">
-                                                        <i class="fas fa-at" style="width: 25px"></i>
-                                                        Contact
-                                                    </button>
-                                                </a>
-                                                <a class="moderator-search-link" target="_blank" href="">
-                                                    <button class="btn btn-primary btn-lg">
-                                                        <i class="fas fa-search" style="width: 25px"></i>
-                                                        Search
-                                                    </button>
-                                                </a>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="row" id="kernelInfoZone">
-                                    <div class="col" id="kernelInfoCol">
-                                        <div class="mr-4" id="kernelImgContainer">
-                                            <img class="my-auto" src="images/img_placeholder.jpg" alt="Kernel Image"
-                                                 id="kernelImg">
-                                        </div>
-                                        <div class="pl-4 border-left border-dark" id="kernelInfoText">
-                                            <h4 id="kernelName">Kernel Info</h4>
-                                            <p id="kernelOrganization">#ORGA</p>
-                                            <p id="kernelPhoneContainer">
-                                                <i class="fas fa-phone" style="width: 20px"></i>
-                                                <span id="kernelPhone">#PHONE</span>
-                                            </p>
-                                            <p id="kernelAddressContainer">
-                                                <i class="fas fa-map-marker-alt" style="width: 20px"></i>
-                                                <a id="kernelAddress" href="" target="_blank">#Address</a>
-                                            </p>
-                                            <p id="kernelUrlContainer">
-                                                <i class="fas fa-globe" style="width: 20px"></i>
-                                                <a href="" target="_blank" id="kernelUrl"></a>
-                                            </p>
-                                            <p id="kernelMailContainer">
-                                                <i class="fas fa-envelope" style="width: 20px"></i>
-                                                <a href="" id="kernelMail"></a>
-                                            </p>
-                                            <p class="text-muted" id="kernelVersion"></p>
-                                        </div>
-                                    </div>
-                                    <div class="col" id="kernelAdditionalInfoZone">
-                                        <h4 class="text-center">Additional Information</h4>
-                                        <table class="table">
-                                            <tbody id="kernelExtraDataTable">
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-
-        <div class="card shadow mb-5">
+        <div class="card shadow my-3" id="mainCard">
             <div class="card-header">
                 <!--APP MODE TABS-->
                 <ul class="nav nav-tabs card-header-tabs main-card-nav">
@@ -389,21 +156,55 @@
                     <h1 class="display-4" id="signErrorTitle">Error!</h1>
                     <p class="lead" id="signErrorText">Wallet not injected, please check your connection.</p>
                     <a href="https://metamask.io/" target="_blank" id="signErrorMetamask"><img
-                            src="images/download-metamask-dark.png"></a>
+                            src="images/download-metamask-dark.png" alt="metamask"></a>
                 </div>
                 <!--LOADING ACCOUNTS-->
-                <div style="display: none;" class="container-fluid text-muted" id="loadingAccountsMessage">
-                    <div class="container-fluid justify-content-center align-self-center text-center">
-                        <h3>Loading Accounts...</h3>
+                <div style="display: none;height: 100%" class="container-fluid text-muted" id="loadingAccountsMessage">
+                    <div class="container-fluid text-center" style="display: flex;height: 100%">
+                        <h2 style="margin: auto">Waiting for Metamask. If you are not logged in, please do so now.</h2>
                     </div>
                 </div>
+
+
+                <!-- NO CONNECTION -->
+                <div id="kernelInfoEmptyZone">
+                    <div class="container-fluid text-muted d-flex">
+                        <div class="container-fluid justify-content-center align-self-center text-center">
+                            <div id="kernelInfoEmptyTextContainer" class="text-muted">
+                                <h3>
+                                    <i id="kernelLoadingIcon"
+                                       class="fas fa-circle-notch fa-spin fa-fw"></i>
+                                    <span id="kernelInfoEmptyText">Not connected, please enter a kernel address below</span>
+                                </h3>
+                            </div>
+                            <form id="kernelInputForm" class="mt-4">
+                                <input id="kernelAddressInput" class="form-control"
+                                       placeholder="Enter an address here">
+                                <div id="kernelInputButtons" class="mt-4">
+                                    <a class="moderator-search-link mr-2" id="kernelSearchButton" target="_blank"
+                                       href="" style="display: none;">
+                                        <button class="btn btn-primary btn-lg">
+                                            <i class="fas fa-search" style="width: 25px"></i>
+                                            Search
+                                        </button>
+                                    </a>
+                                    <button class="btn btn-lg btn-primary"
+                                            id="kernelAddressInputConnect">
+                                        <i class="fas fa-arrow-right"></i>
+                                        Connect
+                                    </button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
                 <!--MAIN UI-->
                 <div class="mb-2" id="mainUIContainer">
-
-                    <div class="row">
-                        <div class="col-lg-4">
+                    <div class="row" id="filesRow">
+                        <div class="col-lg-5" id="fileListContainer">
                             <!--ITEM LIST CARD-->
-                            <div class="card shadow mb-4">
+                            <div class="card shadow mb-4" id="fileListCard">
                                 <div class="card-header">
                                     <ul class="nav nav-tabs card-header-tabs">
                                         <li class="nav-item">
@@ -418,6 +219,12 @@
                                     </ul>
                                 </div>
                                 <div class="card-body d-flex" id="fileContainer">
+                                    <div>
+                                        <div class="custom-control form-control-lg custom-checkbox multi-selection">
+                                            <input type="checkbox" class="custom-control-input" id="selectAllButton">
+                                            <label class="custom-control-label" for="selectAllButton">Select All</label>
+                                        </div>
+                                    </div>
                                     <div id="dropZone">
 
                                     </div>
@@ -437,6 +244,11 @@
                                         Add
                                         <i class="fas fa-plus" style="margin-left: 10px"></i>
                                     </button>
+                                    <button class="btn btn-primary multi-selection" id="editItemButton"
+                                            style="display: none">
+                                        Edit Selected
+                                        <i class="fas fa-edit" style="margin-left: 10px"></i>
+                                    </button>
                                     <input type="file" id="importButton" multiple hidden>
                                     <button class="btn btn-danger float-right" id="clearItemListButton">Remove All<i
                                             class="fas fa-trash"
@@ -444,238 +256,204 @@
                                 </div>
                             </div>
                         </div>
-                        <!--FILE DETAILS CARD-->
-                        <div class="col-lg-8 mb-2">
-                            <div class="card shadow" id="fileDetailsCard">
-                                <div class="card-header">
-                                    <h5>Details</h5>
-                                </div>
-                                <div class="card-body" id="detailsBody">
-                                    <div id="detailsEmptyZone">
-                                        <div class="text-muted text-center align-items-center">
-                                            <h3 class="mx-auto">Click on a file to show its details</h3>
-                                        </div>
-                                    </div>
-
-                                    <div id="detailsZone" style="display: none">
-                                        <div class="card mb-4 shadow" id="generalInfoBody">
-                                            <div class="card-header">
-                                                <h6 class="text-center">General Information</h6>
-                                            </div>
-                                            <div class="card-body">
-                                                <h2 class="text-center">
-                                                    <span class="text-muted">
-                                                        <i id="itemTypeProp" class="far fa-file"></i>
-                                                    </span>
-
-                                                    <span id="itemNameProp">#NAME</span>
-                                                    <span class="file-specific-info text-muted">
-                                                         (<span id="fileSizeProp">#SIZE</span>)
-                                                    </span>
-                                                </h2>
-                                                <h5 class="text-center">
-                                                    <span id="itemStatusProp">#STATUS</span>
-                                                    <span id="itemNumSignContainer" class="text-muted">
-                                                         :
-                                                        <span id="itemNumSignProp">#SIGNATURES</span>
-                                                    </span>
-                                                </h5>
-                                                <p class="text-center text-muted file-specific-info">
-                                                    <span>Last Modified: </span>
-                                                    <span id="fileDateProp">##DATE</span>
-                                                </p>
-                                                <form class="form-group" id="itemTextInputContainer">
-                                                    <label for="itemTextInput">Enter your text here: </label>
-                                                    <textarea id="itemTextInput" class="form-control"></textarea>
-                                                </form>
-                                                <form class="form-group" id="itemHashInputContainer">
-                                                    <label for="itemHashInput">Enter your hash here: </label>
-                                                    <input id="itemHashInput" class="form-control" placeholder="0x...">
-                                                </form>
-                                            </div>
-                                            <div class="card-footer">
-                                                <p class="text-muted" id="itemHashContainer">Hash: <span
-                                                        id="itemHashProp">HASH</span>
-                                                </p>
-                                                <a id="itemTxUrlProp" href="" target="_blank">
-                                                    <button class="btn btn-primary">
-                                                        <i class="fas fa-external-link-alt"></i>
-                                                        See Transaction on Etherscan
-                                                    </button>
-                                                </a>
-                                            </div>
-                                        </div>
-                                        <div class="card mb-4 shadow" id="fileBlockchainInfoCard">
-                                            <div class="card-header">
-                                                <h6 class="text-center">Blockchain Information</h6>
-                                            </div>
-                                            <div class="card-body" id="fileBlockchainInfoBody">
-                                                <div id="fileBlockchainInfoZone">
-                                                    <h4 class="text-center">Blockchain Info</h4>
-                                                    <table class="table">
-                                                        <tbody id="fileBlockchainInfoTable">
-                                                        </tbody>
-                                                    </table>
-                                                    <div id="fileBlockchainExtraDataZone">
-                                                        <h4 class="text-center">Extra Data</h4>
-                                                        <table class="table">
-                                                            <tbody id="fileBlockchainExtraDataTable">
-                                                            </tbody>
-                                                        </table>
-                                                    </div>
-                                                </div>
-                                                <div id="fileBlockchainEditInfoZone">
-                                                    <h4 class="text-center">Edit Blockchain Info</h4>
-                                                    <table class="table">
-                                                        <tbody id="fileBlockchainEditInfoTable">
-                                                        <tr>
-                                                            <th>Source</th>
-                                                            <td><input class="form-control" type="text"
-                                                                       id="infoSourceInput" placeholder="Enter a value">
-                                                            </td>
-                                                        </tr>
-                                                        <tr>
-                                                            <th>Document Type</th>
-                                                            <td>
-                                                                <div class="dropdown">
-                                                                    <button class="btn btn-info dropdown-toggle"
-                                                                            type="button" id="docFamilyDropdownButton"
-                                                                            data-toggle="dropdown" aria-haspopup="true"
-                                                                            aria-expanded="false">
-                                                                        Dropdown button
-                                                                    </button>
-                                                                    <div class="dropdown-menu"
-                                                                         aria-labelledby="docFamilyDropdown"
-                                                                         id="docFamilyDropdownMenu">
-                                                                    </div>
-                                                                </div>
-                                                            </td>
-                                                        </tr>
-                                                        </tbody>
-                                                    </table>
-                                                    <h4 class="text-center">Extra Data</h4>
-                                                    <table class="table editExtraDataTable">
-                                                        <tbody id="fileBlockchainEditExtraDataTable">
-                                                        </tbody>
-                                                    </table>
-                                                    <button class="btn btn-info" id="editExtraDataAddButton"
-                                                            data-toggle="tooltip" data-placement="bottom"
-                                                            title="Add more extra data fields">
-                                                        Add Fields
-                                                        <i class="fas fa-plus" style="margin-left: 10px"></i>
-                                                    </button>
-                                                    <button class="btn btn-danger" id="editExtraDataClearButton"
-                                                            data-toggle="tooltip" data-placement="bottom"
-                                                            title="Remove all extra data fields" style="float: right;">
-                                                        Clear
-                                                        <i class="fas fa-trash" style="margin-left: 10px"></i>
-                                                    </button>
-                                                </div>
-                                                <div id="fileBlockchainInfoEmptyZone">
-                                                    <div class="container-fluid d-flex">
-                                                        <div class="container-fluid justify-content-center align-self-center text-center">
-                                                            <h3 id="fileBlockchainInfoEmptyText">
-                                                                Click on check to get information from the blockchain
-                                                            </h3>
-                                                        </div>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                </div>
+                        <div class="col-lg-7" id="kernelInfoColumn">
+                            <div class="mb-2" style="display: flex">
+                                <h3 class="text-center" style="margin: auto">
+                                    <i id="kernelConnectionInfoIcon" class="fas fa-question"></i>
+                                    <span id="kernelConnectedAddress" style="margin: auto 0">Not connected</span>
+                                </h3>
                             </div>
+
+
+                            <div id="kernelInfoContainer">
+
+                            </div>
+                            <div class="text-center">
+                                <button class="btn btn-primary mb-1" id="kernelConnectionShareButton" data-toggle="tooltip"
+                                        data-placement="bottom"
+                                        title="Copy the current application link to the clipboard">
+                                    <i class="fas fa-share" style="width: 20px"></i>
+                                    Share this Kernel
+                                </button>
+                                <button class="btn btn-primary mb-1"
+                                        id="kernelConnectionEditButton">
+                                    <i class="fas fa-edit" style="width: 20px"></i>
+                                    Edit Kernel Address
+                                </button>
+                            </div>
+
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
 
-                    <!--ACTION BUTTON AND PROGRESS TAB-->
-                    <div class="card text-center shadow mb-2">
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-xl-3 my-1" id="actionButtonContainer">
-                                    <div id="actionButtons">
-                                        <button class="btn btn-primary btn-lg action-button" id="checkButton">
-                                            <span id="checkButtonText">Check</span>
-                                            <i class="far fa-check-square" id="checkButtonLogo"
+        <div class="shadow" id="buttonsCardContainer" style="display: flex;">
+            <!--ACTION BUTTON AND PROGRESS TAB-->
+            <div id="actionButtonsMobileContainer">
+                <div id="actionButtonsMobileToggle">
+                    <i class="fas fa-angle-up" id="actionButtonsMobileToggleIcon"></i>
+                </div>
+                <div id="actionButtonsMobileFade"></div>
+            </div>
+            <div class="card text-center shadow" id="buttonsCard">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg my-1" id="actionButtonContainer">
+                            <div id="actionButtons">
+                                <button class="btn btn-primary btn-lg action-button" id="checkButton">
+                                    <span id="checkButtonText">Check</span>
+                                    <i class="far fa-check-square" id="checkButtonLogo"
+                                       style="margin-left: 10px"></i>
+                                </button>
+                                <div id="signActionButtonContainer">
+                                    <i class="fas fa-long-arrow-alt-right sign-next-step-logo mx-1"></i>
+                                    <div id="buttonsContainer">
+                                        <button class="btn btn-primary btn-lg action-button"
+                                                id="signButton">
+                                            Sign
+                                            <i class="far fa-edit" id="signButtonLogo"
                                                style="margin-left: 10px"></i>
                                         </button>
-                                        <div id="signActionButtonContainer">
-                                            <i class="fas fa-long-arrow-alt-right sign-next-step-logo mx-1"></i>
-                                            <div id="buttonsContainer">
-                                                <button class="btn btn-primary btn-lg action-button" id="signButton">
-                                                    Sign
-                                                    <i class="far fa-edit" id="signButtonLogo"
-                                                       style="margin-left: 10px"></i>
-                                                </button>
-                                                <button class="btn btn-warning btn-lg action-button mt-2"
-                                                        id="cancelButton">
-                                                    Cancel
-                                                    <i class="fas fa-times" style="margin-left: 10px"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                </div>
-                                <div class="col-xl-9 my-1">
-                                    <p class="card-text" id="actionInProgress">
-                                        Not started
-                                    </p>
-                                    <p class="card-text" id="fileInProgress">
-                                        ...
-                                    </p>
-                                    <div class="progress" id="actionProgressHolder">
-                                        <div class="progress-bar progress-bar-striped progress-bar-animated"
-                                             role="progressbar" id="actionProgressBar" style="width: 0;"
-                                             aria-valuenow="0"
-                                             aria-valuemin="0" aria-valuemax="100">
-                                        </div>
+                                        <button class="btn btn-warning btn-lg action-button ml-2"
+                                                id="cancelButton">
+                                            Cancel
+                                            <i class="fas fa-times" style="margin-left: 10px"></i>
+                                        </button>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                </div>
-
-                <!--ACCOUNTS LIST-->
-                <div class="card shadow mb-2" id="accountsCard">
-                    <div class="card-header alert-secondary" data-toggle="collapse"
-                         data-target="#collapseAccounts" aria-expanded="false" aria-controls="collapseAccounts"
-                         id="accountListHeader" style="cursor: pointer">
-                        <i class="collapseIcon fas fa-angle-down"></i>
-                        <i class="collapseHeaderSeparator mr-3 ml-2"></i>
-                        Current account: <span id="accountState"></span>
-                    </div>
-                    <div class="accordion" id="accordionAccounts">
-                        <div id="collapseAccounts" class="collapse customCollapse" data-parent="#accountListHeader">
-                            <div class="card-body" id="accountsListBody">
-                                <div id="accountsListEmptyZone">
-                                    <div class="container-fluid text-muted d-flex empty-kernel-info">
-                                        <div class="container-fluid justify-content-center align-self-center text-center">
-                                            <h3>Not other accounts detected</h3>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div id="accountsListZone" style="display: none;">
-                                    <h4 class="text-center">Available Accounts</h4>
-                                    <table class="table">
-                                        <tbody id="accountsTable">
-
-                                        </tbody>
-                                    </table>
+                        <div class="col-lg my-1">
+                            <div id="actionTextContainer">
+                                <div class="card-text" id="actionInProgress"></div>
+                                <div class="card-text" id="fileInProgress"></div>
+                            </div>
+                            <div class="progress" id="actionProgressHolder">
+                                <div class="progress-bar progress-bar-striped progress-bar-animated"
+                                     role="progressbar" id="actionProgressBar" style="width: 0;"
+                                     aria-valuenow="0"
+                                     aria-valuemin="0" aria-valuemax="100">
                                 </div>
                             </div>
                         </div>
+
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!--ACCOUNTS LIST-->
+        <div class="card shadow mt-4" id="accountsCard">
+            <div class="card-header alert-secondary" data-toggle="collapse"
+                 data-target="#collapseAccounts" aria-expanded="false" aria-controls="collapseAccounts"
+                 id="accountListHeader" style="cursor: pointer">
+                <i class="collapseIcon fas fa-angle-down"></i>
+                <i class="collapseHeaderSeparator mr-3 ml-2"></i>
+                Current account: <span id="accountState"></span>
+            </div>
+            <div class="accordion" id="accordionAccounts">
+                <div id="collapseAccounts" class="collapse customCollapse" data-parent="#accountListHeader">
+                    <div class="card-body" id="accountsListBody">
+                        <div id="accountsListEmptyZone">
+                            <div class="container-fluid text-muted d-flex empty-kernel-info">
+                                <div class="container-fluid justify-content-center align-self-center text-center">
+                                    <h3>Not other accounts detected</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="accountsListZone" style="display: none;">
+                            <h4 class="text-center">Available Accounts</h4>
+                            <table class="table">
+                                <tbody id="accountsTable">
+
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
+            </div>
+        </div>
 
+        <!--MODERATOR INFO-->
+        <div class="card shadow my-5">
+            <div class="card-header alert-secondary" id="moderatorInfoHeader"
+                 data-toggle="collapse"
+                 data-target="#collapseModerator" aria-expanded="false"
+                 aria-controls="collapseModerator"
+                 style="cursor: pointer">
+                <i class="collapseIcon fas fa-angle-down"></i>
+                <i class="collapseHeaderSeparator mr-3 ml-2"></i>
+                <i id="moderatorConnectionInfoIcon" class="fas fa-question"
+                   style="width: 20px;font-size: 1.1em"></i>
+                Moderator Information
+                <span id="moderatorConnectedAddress" style="float: right;">
+                            Advanced connected to default
+                        </span>
+            </div>
+            <div class="accordion" id="accordionModerator">
+                <div id="collapseModerator" class="collapse customCollapse"
+                     data-parent="#moderatorInfoHeader">
+                    <div class="card-body" id="moderatorInfoBody">
+                        <div id="moderatorInfoEmptyZone">
+                            <div class="container-fluid text-muted d-flex">
+                                <div class="container-fluid justify-content-center align-self-center text-center">
+                                    <h3 id="moderatorInfoEmptyText">Not connected</h3>
+                                </div>
+                            </div>
+                        </div>
+                        <div id="moderatorInfoZone">
+                            <div id="moderatorButtons">
+                                <a class="moderator-registration-link" target="_blank" href="">
+                                    <button class="btn btn-primary btn-lg">
+                                        <i class="fas fa-sign-in-alt" style="width: 25px"></i>
+                                        Register
+                                    </button>
+                                </a>
+                                <a class="moderator-contact-link" target="_blank" href="">
+                                    <button class="btn btn-primary btn-lg">
+                                        <i class="fas fa-at" style="width: 25px"></i>
+                                        Contact
+                                    </button>
+                                </a>
+                                <a class="moderator-search-link" target="_blank" href="">
+                                    <button class="btn btn-primary btn-lg">
+                                        <i class="fas fa-search" style="width: 25px"></i>
+                                        Search
+                                    </button>
+                                </a>
+                            </div>
+                            <div id="moderatorAdditionalInfoZone" class="mt-2">
+                                <h4 class="text-center">Additional Information</h4>
+                                <table class="table">
+                                    <tbody id="moderatorInfoTable">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                        <button class="btn btn-warning mb-2" id="advancedOptionsButton" style="float: right">
+                            <i class="fas fa-cog" style="width: 20px;"></i>
+                            Advanced Options
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="actionLoadingScreen" style="display: none;">
+        <div class="text-center" style="margin: auto">
+            <i class="fas fa-circle-notch fa-spin fa-fw"></i>
+            Loading...
+            <div id="actionLoadingScreenSub">
+                The larger the files, the longer this will take.
             </div>
         </div>
     </div>
 
     <!--FOOTER-->
-    <footer class="p-0 shadow">
+    <footer class="shadow">
         <div class="container-fluid text-center">
             <div class="row">
                 <div class="col-sm-6 p-3">
@@ -732,11 +510,16 @@
 <script src="js/lib/bootstrap-notify.min.js"></script>
 <script src="js/lib/web3.min.js"></script>
 <script src="js/lib/crypto-js.js"></script>
+<script src="js/lib/auto-resize.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/js-cookie@2/src/js.cookie.min.js"></script>
 <!-- COMMON -->
 <script src="js/ULCDocCommons.js"></script>
 <!-- UI RELATED -->
 <script src="js/ui/UIListItem.js"></script>
 <script src="js/ui/UIUtils.js"></script>
+<script src="js/ui/UIKernelManager.js"></script>
+<script src="js/ui/UIModeratorManager.js"></script>
+<script src="js/ui/UIItemDetailsManager.js"></script>
 <script src="js/ui/UIManager.js"></script>
 <!-- BLOCKCHAIN RELATED -->
 <script src="js/abi/ULCDocKernel_ABI.js"></script>

@@ -51,10 +51,12 @@ function humanFileSize(bytes, si) {
 
 function getMimeTypeIcon(file) {
     let icon = "";
-    for (let mimeType in MIME_TYPE_ICONS) {
-        if (file.type.search(mimeType) !== -1) {
-            icon = MIME_TYPE_ICONS[mimeType];
-            break;
+    if (file !== undefined) {
+        for (let mimeType in MIME_TYPE_ICONS) {
+            if (file.type.search(mimeType) !== -1) {
+                icon = MIME_TYPE_ICONS[mimeType];
+                break;
+            }
         }
     }
     if (icon === "")
@@ -277,4 +279,51 @@ let onImgLoad = function(selector, callback){
             });
         }
     });
+};
+
+let isValueInObject = function (val, object) {
+    let isIn = false;
+    for (let i of Object.keys(object)) {
+        if (object[i] === val) {
+            isIn = true;
+            break;
+        }
+    }
+    return isIn;
+};
+
+/**
+ *
+ * @param colorClass {COLOR_CLASSES}
+ * @return {String}
+ */
+let getJConfirmTypeFromColorClass = function (colorClass) {
+    let type = '';
+    switch (colorClass) {
+        case COLOR_CLASSES.info:
+            type = 'blue';
+            break;
+        case COLOR_CLASSES.danger:
+            type = 'red';
+            break;
+        case COLOR_CLASSES.success:
+            type = 'green';
+            break;
+        case COLOR_CLASSES.warning:
+            type = 'orange';
+            break;
+        default:
+            type = '';
+            break;
+    }
+    return type;
+};
+
+let copyToClipboard = function (text) {
+    let textContainer = document.createElement('input');
+    document.body.appendChild(textContainer);
+    textContainer.value = text;
+    textContainer.select();
+    document.execCommand('copy');
+    document.body.removeChild(textContainer);
 };

@@ -1,0 +1,536 @@
+/*
+	This file is part of ULCDocuments Web App.
+	ULCDocuments Web App is free software: you can redistribute it and/or modify
+	it under the terms of the GNU General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+	ULCDocuments Web App is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+	GNU General Public License for more details.
+	You should have received a copy of the GNU General Public License
+	along with ULCDocuments Web App.  If not, see <http://www.gnu.org/licenses/>.
+*/
+
+/*  ULCDOCUMENTS MAIN CSS
+*  @author Arnaud VERGNET <arnaud.vergnet@netc.fr>
+*  Dev Entity: Blockchain-Elite (https://www.blockchain-elite.fr/)
+*/
+
+.editExtraDataTable th {
+    width: auto;
+}
+
+#loadingScreen, #baseContainer {
+    margin-bottom: 0;
+    /* Height of the footer in-app */
+    padding: 0 0 310px;
+}
+
+#baseContainer {
+    max-width: 1600px;
+}
+
+#loadingScreen {
+    height: 700px;
+}
+
+#loadingScreen div {
+    width: 100%;
+    font-size: 3rem;
+    color: #696969;
+    cursor: default;
+}
+
+#actionButtonContainer {
+    display: flex;
+    align-content: center;
+    align-items: center;
+}
+
+#actionButtons {
+    font-weight: bold;
+    margin: 0 auto 0 auto;
+    display: inline-flex;
+    height: 100%;
+}
+
+#buttonsCard {
+    margin: 0;
+    width: 100%;
+}
+
+#buttonsCard .card-body {
+    padding: 10px;
+}
+
+#checkButton.btn-info {
+    height: inherit;
+}
+
+.sign-next-step-logo {
+    font-size: 2em;
+    margin: auto;
+}
+
+.item-select-checkbox {
+    margin: auto;
+    width: 25px;
+    height: 25px;
+    padding: 0;
+    border: 1px solid rgba(0,0,0,.125);
+}
+
+.item-select-checkbox i {
+    font-size: 1.1rem;
+}
+
+.item-select-checkbox-container {
+    display: flex;
+}
+
+.item-subtitle {
+    min-height: 30px;
+}
+
+.adress-image {
+    width: 80%;
+}
+
+.item-type-icon {
+    font-size: 2.5rem;
+    margin: auto;
+}
+
+.remove-list-item-button {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    font-size: 1.4rem;
+    transition: 0.2s;
+}
+
+.remove-list-item-button:hover {
+    transform: scale(1.3);
+}
+
+.item-card {
+    cursor: pointer;
+    transition: 0.3s;
+}
+.item-card li {
+    background: none !important;
+}
+
+.file-hover {
+    transform: scale(1.02);
+}
+
+.file-selected {
+    transform: scale(1.05);
+}
+
+#fileContainer {
+    overflow-y: auto;
+    transition: 0.3s;
+    height: 0;
+}
+
+#textBox {
+    width: 100%;
+    height: 100%;
+}
+
+#hashBox {
+    width: 100%;
+    height: 100%;
+}
+
+.empty-item-list, .empty-file-details{
+    min-height: 100%;
+}
+
+.drop-hover {
+    background: #cbc8c8;
+    border-radius: 40px;
+}
+
+#dropZone {
+    transition: 0.5s;
+}
+
+.item-type-icon i {
+    font-size: 3rem;
+    vertical-align: middle;
+    width: 100%;
+}
+
+.item-state-icon {
+    font-size: 1.5rem;
+    vertical-align: middle;
+}
+
+.main-card-nav button {
+    font-size: 1.5rem;
+}
+
+#actionProgressHolder {
+    height: 1.5rem;
+    font-size: 1.2em;
+}
+
+.collapseIcon {
+    font-size: 1.5em;
+}
+
+.collapseHeaderSeparator {
+    border-left: solid 1px #7b7b7b;
+}
+
+.text-area {
+    width: 100%;
+    min-height: 100px;
+    overflow-y: visible;
+}
+
+.empty-item-list {
+    cursor: pointer;
+}
+
+.text-state-icon, .hash-state-icon {
+    width: 3rem;
+}
+
+#textBox, #dropZone, #hashBox {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    min-height: inherit; /* Chrome fix for height: 100%*/
+    width: 100%;
+    height: 100%;
+}
+#fileContainer {
+    display: flex;
+    flex-flow: column;
+}
+
+#FileBlockchainInfoZone {
+    max-height: 800px;
+    overflow-y: auto;
+    margin-bottom: 20px;
+}
+
+#fileBlockchainInfoZone .row {
+    width: 100%;
+}
+
+.custom-checkbox {
+    line-height: 30px;
+}
+
+#moderatorButtons {
+    width: -moz-fit-content;
+    width: fit-content;
+    margin: auto;
+}
+
+#kernelImgContainer {
+    display: flex;
+}
+
+#kernelImg {
+    max-height: 300px;
+    max-width: 300px;
+    margin: auto 2rem auto auto;
+}
+
+#kernelInfoHeader {
+    min-height: 50px;
+    height: fit-content;
+    margin: 20px auto;
+    display: flex;
+}
+
+#kernelInfoHeader button {
+    margin: 3px 0;
+}
+
+#kernelInfoHeader .row {
+    margin: auto 0;
+}
+
+#kernelInfoBody {
+    height: 400px;
+    padding: 0;
+    overflow-y: auto;
+}
+
+#kernelInfoZone {
+    display: inline-flex;
+    margin: 0;
+    height: 100%;
+    width: 100%;
+}
+
+#kernelInfoCol {
+    margin: auto;
+    display: inline-flex;
+}
+
+#kernelInfoText {
+    display: block;
+    margin: auto auto auto 0;
+    padding-left: 2rem;
+    height: fit-content;
+    height: -moz-fit-content;
+    text-align: left;
+    color: #212529;
+}
+
+#kernelAdditionalInfoZone {
+    display: block;
+}
+
+#signActionButtonContainer {
+    display: inline-flex;
+}
+
+#buttonsContainer {
+    display: flex;
+}
+
+#kernelInfoEmptyZone {
+    height: 100%;
+    display: flex;
+}
+
+#kernelInputButtons {
+    display: flex;
+}
+
+#kernelInputButtons a, #kernelInputButtons button{
+    margin: auto;
+}
+
+#kernelAddressInput {
+    max-width: 600px;
+    margin: auto;
+}
+
+#mainUIContainer {
+    height: 100%;
+}
+
+#kernelInput, #moderatorInput {
+    margin: 0 5px;
+    width: available;
+    width: -moz-available;
+}
+
+#moderatorConnectedAddress, #kernelConnectedAddress {
+    word-break: break-all;
+}
+
+.item-name {
+    font-weight: bold;
+}
+
+.start-app-container {
+    min-height: 250px;
+}
+
+#fileListCard, #filesRow {
+    height: 100%;
+}
+
+#detailsZone {
+    color: #212529;
+}
+
+#actionButtonsMobileContainer {
+    display: none;
+}
+
+#buttonsCardContainer {
+    position: fixed;
+    padding: 0;
+    bottom: 0;
+    width: 100%;
+    right: 0;
+    z-index: 100;
+    height: 100px;
+    transition: 0.3s;
+    border-radius: 0;
+    border-top: 1px solid rgba(0,0,0,.125);;
+}
+
+#kernelInfoContainer {
+    height: 100%;
+}
+
+#kernelConnectionShowMoreButton {
+    display: none !important;
+}
+
+#fileInProgress {
+    min-height: 24px;
+}
+
+#actionLoadingScreen {
+    display: flex;
+    position: fixed;
+    z-index: 90;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: #e2e2e2;
+    width: 100vw;
+    height: 100vh;
+    top: 0;
+    right: 0;
+    font-size: 3rem;
+}
+
+#actionLoadingScreenSub {
+    font-size: 2rem;
+}
+
+#ropstenWarning {
+    position: fixed;
+    top: 55px;
+    width: 100%;
+    z-index: 10;
+    padding: 10px 40px;
+    text-align: center;
+}
+
+#ropstenWarningCloseIcon {
+    position: absolute;
+    top: 0;
+    right: 0;
+    padding: 10px;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+#ropstenWarningCloseIcon:hover {
+    transform: scale(1.5);
+}
+
+#ropstenWarningClosePermanent {
+    color: #990000;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+#ropstenWarningClosePermanent:hover {
+    color: #5c0000;
+}
+
+@media
+only screen and (max-width: 991px) {
+
+    #fileListContainer {
+        min-height: 500px;
+        margin-bottom: 20px;
+    }
+
+    #buttonsCardContainer {
+        height: 250px;
+        transform: translateY(150px);
+    }
+
+    #actionButtonsMobileContainer {
+        display: block;
+    }
+
+    #actionButtonsMobileToggle {
+        z-index: 110;
+        position: absolute;
+        top: 0;
+        right: 0;
+        font-size: 3rem;
+        cursor: pointer;
+        height: 100px;
+        width: 100%;
+        color: #7b7b7b;
+    }
+
+    #actionButtonsMobileToggleIcon {
+        position: absolute;
+        top: 0;
+        right: 0;
+        padding: 20px;
+        transition: 0.3s;
+    }
+
+    #actionButtonsMobileFade {
+        height: 250px;
+        width: 100%;
+        z-index: 105;
+        position: absolute;
+        top: 0;
+        right: 0;
+        background: linear-gradient(to bottom, rgba(255,255,255,0) 0%,rgba(255,255,255,0.7) 20%,rgba(255,255,255,1) 80%);
+    }
+
+    #buttonsCardContainer.shown {
+        transform: translateY(0);
+    }
+
+    #buttonsCardContainer.shown #actionButtonsMobileToggle{
+        width: auto;
+        height: auto;
+    }
+
+    #buttonsCardContainer.shown #actionButtonsMobileToggleIcon{
+        transform: rotate(180deg);
+    }
+
+    #kernelConnectionShowMoreButton {
+        display: inline;
+    }
+}
+
+#kernelInfoColumn {
+    display: flex;
+    flex-flow: column;
+}
+
+@media
+only screen and (max-width: 991px) {
+}
+
+
+@media
+only screen and (max-width: 767px) {
+    #kernelInfoText {
+        margin: 0;
+        padding: 0;
+        text-align: center;
+        border: none !important;
+    }
+
+    #kernelInfoZone, #kernelInfoCol, #kernelInfoCol div {
+        display: block;
+    }
+
+    #kernelImg {
+        margin: auto;
+    }
+
+    #kernelInfoZone {
+        text-align: center;
+    }
+}
+
+@media
+only screen and (max-width: 575px) {
+
+    #textBox, #dropZone, #hashBox {
+        padding-left: 0.3rem;
+        padding-right: 0.3rem;
+    }
+
+    #loadingScreen, #baseContainer {
+        /* Height of the footer */
+        padding-bottom: 450px;
+    }
+}
