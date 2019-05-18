@@ -305,13 +305,13 @@ function UIManager() {
     let showTestnetWarning = function () {
         if (Cookies.get('hide-ropsten-warning') === undefined){
             $.selector_cache('#ropstenWarning').show();
-            animateCss($.selector_cache('#ropstenWarning'), 'fadeInDown faster');
+            animateCss($.selector_cache('#ropstenWarning'), 'fadeInRight faster');
         }
 
     };
 
     let hideTestnetWarning = function () {
-        animateCss($.selector_cache('#ropstenWarning'), 'fadeOutUp faster', function () {
+        animateCss($.selector_cache('#ropstenWarning'), 'fadeOutRight faster', function () {
             $.selector_cache('#ropstenWarning').hide();
         });
     };

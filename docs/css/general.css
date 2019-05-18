@@ -396,7 +396,7 @@
     position: fixed;
     top: 55px;
     width: 100%;
-    z-index: 10;
+    z-index: 1050; /* above navbar shadow*/
     padding: 10px 40px;
     text-align: center;
 }
