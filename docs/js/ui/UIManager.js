@@ -305,13 +305,13 @@ function UIManager() {
     let showTestnetWarning = function () {
         if (Cookies.get('hide-ropsten-warning') === undefined){
             $.selector_cache('#ropstenWarning').show();
-            animateCss($.selector_cache('#ropstenWarning'), 'fadeInDown faster');
+            animateCss($.selector_cache('#ropstenWarning'), 'fadeInRight faster');
         }
 
     };
 
     let hideTestnetWarning = function () {
-        animateCss($.selector_cache('#ropstenWarning'), 'fadeOutUp faster', function () {
+        animateCss($.selector_cache('#ropstenWarning'), 'fadeOutRight faster', function () {
             $.selector_cache('#ropstenWarning').hide();
         });
     };
@@ -487,7 +487,8 @@ function UIManager() {
             _kernelManager.showKernelInput();
         });
         $.selector_cache('#kernelConnectionShareButton').on('click', function () {
-            copyToClipboard(window.location.href);
+            let baseUrl = 'https://ulcdocuments.blockchain-elite.fr/ulcdoc_interactor.html#mode:check&kernel:';
+            copyToClipboard(baseUrl + _kernelManager.getCurrentAddress());
             sendNotification(TypeInfo.Good, 'Link Copied', 'The link to this page has been copied in your clipboard.')
         });
 
