@@ -487,7 +487,8 @@ function UIManager() {
             _kernelManager.showKernelInput();
         });
         $.selector_cache('#kernelConnectionShareButton').on('click', function () {
-            copyToClipboard(window.location.href);
+            let baseUrl = 'https://ulcdocuments.blockchain-elite.fr/ulcdoc_interactor.html#mode:check&kernel:';
+            copyToClipboard(baseUrl + _kernelManager.getCurrentAddress());
             sendNotification(TypeInfo.Good, 'Link Copied', 'The link to this page has been copied in your clipboard.')
         });
 
