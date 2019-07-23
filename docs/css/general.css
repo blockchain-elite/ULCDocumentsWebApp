@@ -232,6 +232,11 @@
     width: -moz-fit-content;
     width: fit-content;
     margin: auto;
+
+}
+
+#moderatorAddress, #kernelAddress {
+    word-break: break-all;
 }
 
 #kernelImgContainer {
@@ -326,14 +331,6 @@
     margin: 0 5px;
     width: available;
     width: -moz-available;
-}
-
-#moderatorConnectedAddress, #kernelConnectedAddress {
-    word-break: break-all;
-}
-
-#moderatorName {
-    word-break: normal;
 }
 
 .item-name {

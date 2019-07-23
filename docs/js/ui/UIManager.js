@@ -1770,10 +1770,10 @@ function UIManager() {
                 if (_moderatorManager.isConnectedToDefault()) {
                     let modName = _currentNetworkType === TypeConnection.Mainnet ? 'Blockchain Élite ULCDocuments Official' : 'Blockchain Élite ULCDocuments Testnet';
                     $.selector_cache('#moderatorConnectedAddress').html("Currently connected to default: " +
-                        "<strong>" + modName + "</strong>");
+                        "<strong id='moderatorName'>" + modName + "</strong>");
                 } else
                     $.selector_cache('#moderatorConnectedAddress').html("Currently connected to: " +
-                        "'<strong>" + _moderatorManager.getCurrentAddress() + "</strong>'");
+                        "'<strong id='moderatorAddress'>" + _moderatorManager.getCurrentAddress() + "</strong>'");
                 setDOMColor($.selector_cache('#moderatorInfoHeader'), COLOR_CLASSES.success);
                 _moderatorManager.setModeratorInfo(connectionInfo, "");
                 break;
