@@ -494,11 +494,9 @@ function UIManager() {
 
         $.selector_cache('#actionButtonsMobileToggle').on('click', function () {
             if ($.selector_cache('#buttonsCardContainer').hasClass('shown')) {
-                $.selector_cache('#buttonsCardContainer').removeClass('shown');
-                $.selector_cache('#actionButtonsMobileFade').fadeIn(300);
+                hideMobileActionButtonsContainer();
             } else {
-                $.selector_cache('#buttonsCardContainer').addClass('shown');
-                $.selector_cache('#actionButtonsMobileFade').fadeOut(300);
+                showMobileActionButtonsContainer();
             }
         });
 
@@ -527,6 +525,15 @@ function UIManager() {
             });
         });
     };
+
+    let showMobileActionButtonsContainer = function () {
+        $.selector_cache('#buttonsCardContainer').addClass('shown');
+    };
+
+    let hideMobileActionButtonsContainer = function () {
+        $.selector_cache('#buttonsCardContainer').removeClass('shown');
+    };
+
 
     /**
      * Show the content of the tab based on its type
@@ -573,6 +580,7 @@ function UIManager() {
      */
     let checkStart = function () {
         UI.resetProgress(); // reset progress
+        showMobileActionButtonsContainer();
         resetElementsFromList(getCurrentList());
         if (_currentTab !== TAB_TYPE.file)
             cleanList(); // remove invalid test/hash entries before checking
