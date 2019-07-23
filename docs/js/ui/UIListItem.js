@@ -23,13 +23,13 @@
 let itemDOMElement =
     '    <div class="card item-card mb-3 shadow-sm item-state-unknown">\n' +
     '        <div class="card-body p-0">' +
-    '            <div class="row">' +
+    '            <div class="row" style="margin: 0">' +
     '                <div class="col-1 pr-0 multi-selection item-select-checkbox-container" style="display: none;">' +
     '                   <div class="btn item-select-checkbox">' +
     '                       <i class="item-select-checkbox-icon fas fa-check" style="display: none"></i>' +
     '                   </div>' +
     '                </div>' +
-    '                <div class="col-1 mx-1 d-flex">' +
+    '                <div class="col-1 mx-2 d-flex" style="padding: 0; min-width: 40px">' +
     '                    <i class="item-type-icon"></i>' +
     '                </div>' +
     '                <div class="col pl-1" style="max-width: 60%">' +

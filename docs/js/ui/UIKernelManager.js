@@ -326,10 +326,10 @@ function UIKernelManager() {
      */
     let setKernelConnectedAddress = function (kernelInfo) {
         if (kernelInfo.has(kernelReservedKeys.name)) {
-            $.selector_cache('#kernelConnectedAddress').html("Currently connected to : <strong><span id='moderatorName'></span></strong>");
+            $.selector_cache('#kernelConnectedAddress').html("<strong><span id='moderatorName'></span></strong>");
             $('#moderatorName').text(kernelInfo.get(kernelReservedKeys.name));
 
         } else
-            $.selector_cache('#kernelConnectedAddress').text("Currently connected to : '" + _currentKernelAddress + "'");
+            $.selector_cache('#kernelConnectedAddress').text("'" + _currentKernelAddress + "'");
     };
 }

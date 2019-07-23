@@ -168,6 +168,7 @@
 .item-state-icon {
     font-size: 1.5rem;
     vertical-align: middle;
+    padding: 0;
 }
 
 .main-card-nav button {
@@ -238,6 +239,7 @@
 }
 
 #kernelImg {
+    width: 100%;
     max-height: 300px;
     max-width: 300px;
     margin: auto 2rem auto auto;
@@ -328,6 +330,10 @@
 
 #moderatorConnectedAddress, #kernelConnectedAddress {
     word-break: break-all;
+}
+
+#moderatorName {
+    word-break: normal;
 }
 
 .item-name {
