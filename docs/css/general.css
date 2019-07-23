@@ -78,7 +78,7 @@
     width: 25px;
     height: 25px;
     padding: 0;
-    border: 1px solid rgba(0,0,0,.125);
+    border: 1px solid rgba(0, 0, 0, .125);
 }
 
 .item-select-checkbox i {
@@ -87,6 +87,9 @@
 
 .item-select-checkbox-container {
     display: flex;
+    padding: 0;
+    margin-left: 5px;
+    min-width: 30px;
 }
 
 .item-subtitle {
@@ -118,6 +121,7 @@
     cursor: pointer;
     transition: 0.3s;
 }
+
 .item-card li {
     background: none !important;
 }
@@ -146,7 +150,7 @@
     height: 100%;
 }
 
-.empty-item-list, .empty-file-details{
+.empty-item-list, .empty-file-details {
     min-height: 100%;
 }
 
@@ -209,6 +213,7 @@
     width: 100%;
     height: 100%;
 }
+
 #fileContainer {
     display: flex;
     flex-flow: column;
@@ -314,7 +319,7 @@
     display: flex;
 }
 
-#kernelInputButtons a, #kernelInputButtons button{
+#kernelInputButtons a, #kernelInputButtons button {
     margin: auto;
 }
 
@@ -363,7 +368,7 @@
     height: 100px;
     transition: 0.3s;
     border-radius: 0;
-    border-top: 1px solid rgba(0,0,0,.125);;
+    border-top: 1px solid rgba(0, 0, 0, .125);;
 }
 
 #kernelInfoContainer {
@@ -427,8 +432,7 @@
     color: #5c0000;
 }
 
-@media
-only screen and (max-width: 991px) {
+@media only screen and (max-width: 991px) {
 
     #fileListContainer {
         min-height: 500px;
@@ -456,7 +460,7 @@ only screen and (max-width: 991px) {
         color: #7b7b7b;
         display: flex;
         background-color: white;
-        border: 1px solid rgba(0,0,0,.125);
+        border: 1px solid rgba(0, 0, 0, .125);
         border-radius: .25rem;
     }
 
@@ -469,7 +473,7 @@ only screen and (max-width: 991px) {
         transform: translateY(0);
     }
 
-    #buttonsCardContainer.shown #actionButtonsMobileToggleIcon{
+    #buttonsCardContainer.shown #actionButtonsMobileToggleIcon {
         transform: rotate(180deg);
     }
 
@@ -483,13 +487,11 @@ only screen and (max-width: 991px) {
     flex-flow: column;
 }
 
-@media
-only screen and (max-width: 991px) {
+@media only screen and (max-width: 991px) {
 }
 
 
-@media
-only screen and (max-width: 767px) {
+@media only screen and (max-width: 767px) {
     #kernelInfoText {
         margin: 0;
         padding: 0;
@@ -510,8 +512,7 @@ only screen and (max-width: 767px) {
     }
 }
 
-@media
-only screen and (max-width: 575px) {
+@media only screen and (max-width: 575px) {
 
     #textBox, #dropZone, #hashBox {
         padding-left: 0.3rem;
