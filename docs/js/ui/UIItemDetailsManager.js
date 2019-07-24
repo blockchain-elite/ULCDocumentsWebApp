@@ -77,8 +77,8 @@ function UIItemDetailsManager() {
             '</tr>\n' +
             '<tr>\n' +
             '<th>Document Type</th>\n' +
-            '<td>\n' +
-            '<div class="dropdown">\n' +
+            '<td style="display: flex;">\n' +
+            '<div class="dropdown" style="margin: auto">\n' +
             '<button class="btn btn-info dropdown-toggle"\n' +
             'type="button" id="docFamilyDropdownButton"\n' +
             'data-toggle="dropdown" aria-haspopup="true"\n' +
@@ -403,7 +403,7 @@ function UIItemDetailsManager() {
 
     /**
      *
-     * @param item {ListItem}
+     * @param items {ListItem[]|FileListItem[]|TextListItem[]|HashListItem[]}
      */
     let setupSourceInputField = function (items) {
         let sourceInput = $("#infoSourceInput");
@@ -442,7 +442,7 @@ function UIItemDetailsManager() {
     /**
      * Generate the dropdown menu based on kernel document family.
      *
-     * @param item {ListItem} The item we are editing
+     * @param items {ListItem[]|FileListItem[]|TextListItem[]|HashListItem[]} The items we are editing
      */
     let createDocFamilyDropDown = function (items) {
         let dropdownButton = $("#docFamilyDropdownButton");
@@ -490,7 +490,7 @@ function UIItemDetailsManager() {
         }
     };
 
-    let isCustomExtraDataDifferent = function(items) {
+    let isCustomExtraDataDifferent = function (items) {
         let different = false;
         let data = items[0].getCustomExtraData();
         for (let i = 0; i < items.length; i++) {
@@ -513,7 +513,7 @@ function UIItemDetailsManager() {
 
     /**
      * Create input fields with values from the item.
-     * @param item {ListItem} The list item to take values from
+     * @param items {ListItem[]|FileListItem[]|TextListItem[]|HashListItem[]} The items to take values from
      */
     let createSavedExtraDataInputFields = function (items) {
         $('#fileBlockchainEditExtraDataTable').html(''); // Clear the list to recreate it
@@ -543,10 +543,11 @@ function UIItemDetailsManager() {
     /**
      * Create a new input fields in the edit blockchain zone.
      *
-     * @param item {ListItem} The list item we are editing
+     * @param items {ListItem[]|FileListItem[]|TextListItem[]|HashListItem[]} The items we are editing
      * @param index {Number} The index of the last input field created
      * @param key {String} The default value for the key input field
      * @param value {String} The default value for the value input field
+     * @param isDiff {boolean} Are the items different
      */
     let createNewExtraDataInputField = function (items, index, key, value, isDiff) {
         let placeholder = 'Enter your data here';
@@ -594,14 +595,14 @@ function UIItemDetailsManager() {
 
     /**
      * Setup event handlers for blockchain edit buttons
-     * @param item {ListItem} The list item we are editing
+     * @param items {ListItem[]|FileListItem[]|TextListItem[]|HashListItem[]} The items we are editing
      */
     let setupExtraDataControlButtons = function (items) {
         // Set event handlers
         $("#editExtraDataAddButton").off('click').on('click', function () { // Reset event handler
             if (items.length === 1 || !isCustomExtraDataDifferent(items)) {
                 createNewExtraDataInputField(items, items[0].getCustomExtraData().length, '', '', false);
-            } else  {
+            } else {
                 createNewExtraDataInputField(items, 1, '', '', false);
             }
         });
@@ -617,7 +618,7 @@ function UIItemDetailsManager() {
     let setBlockchainInfoMessage = function (items) {
         let message = undefined;
         if (items.length === 1)
-            message = _blockchainErrorMsg.get(UI.getCurrentAppMode()).get(items[0].getType())
+            message = _blockchainErrorMsg.get(UI.getCurrentAppMode()).get(items[0].getType());
         if (message !== undefined)
             setBlockchainInfoErrorText(message[0], message[1]);
         else
