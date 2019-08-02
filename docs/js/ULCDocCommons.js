@@ -22,10 +22,6 @@
 const UIManagerPrefix = "UI";
 const ULCDocModMasterPrefix = "MASTER";
 
-const officialBlockchainEliteModerator = "0x0"; //not published yet
-const ropstenBlockchainEliteModerator = "0xafAC243f4ECfa5E91EF0aB0f43A5235D74D67dBe"; // V3
-const devBlockchainEliteModerator = "0x0"; //internal node related.
-
 const TypeInfo = {
   Info: 1, //this is a simple information
   Good: 2, //this information is good news
@@ -58,50 +54,25 @@ const TypeElement = {
   Unknown : 11 // Object not yet checked
 };
 
-// Special keys used in moderator info Map
-const moderatorReservedKeys = {
-    status: 'connection-status',
-    contact: 'contact-link',
-    register: 'registration-link',
-    search: 'search-link'
-};
+fetchSignStatus = function(signPending, _isSignedByAddress){
+    this.signPending = _signPending;
+    this.isSignedByAddress = _isSignedByAddress;
+}
 
-//Used when we query Moderator
-const resultQueryStatus = {
-    unknown : 'unknown',
-    revoked : 'revoked',
-    initialized : 'initialized',
-    confirmed : 'confirmed',
-    inError : 'error'
-};
+/**
+ * @title Specific error if there is a conflict between web3 network and URL network.
+ * @param _message {String} message displayed
+ * @param _network {TypeConnection} the network which injected wallet is.
+ */
+networkConflictError = function(_message, _network){
+        this.constructor.prototype.__proto__ = Error.prototype;
+        this.name = this.constructor.name;
+        this.message = _message;
+        this.network = _network;
+}
 
-// Special keys used in kernel info Map
-const kernelReservedKeys = {
-    name: 'name',
-    revokedReason : 'revokedReason',
-    isOrganisation: 'isOrganisation',
-    version: 'version',
-    url: 'url',
-    mail: 'mail',
-    phone: 'phone',
-    status: 'resultQuery-status',
-    img: 'img',
-    physicalAddress: 'physicalAddress',
-    extraData: 'extra-data'
-};
-
-// Special keys used in element info Map
-const elementReservedKeys = {
-    status: 'element-status',
-    date: 'date',
-    source: 'source',
-    documentFamily: 'document_family',
-    revokedReason : 'revoked_reason',
-    extraData: 'extra-data'
-};
-
-//Special Keys used in fetch purpose
-const fetchElementReservedKeys = {
-    signNeed : 'signatures-needed',
-    signPending: 'signatures-pending'
-};
+blockchainError = function(_message){
+    this.constructor.prototype.__proto__ = Error.prototype;
+    this.name = this.constructor.name;
+    this.message = _message;
+}

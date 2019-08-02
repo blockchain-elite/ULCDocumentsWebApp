@@ -13,7 +13,7 @@
   You should have received a copy of the GNU Lesser General Public License
   along with the   ULCDocuments Connector (ie: all files inside ABI folder)  . If not, see <http://www.gnu.org/licenses/>. */
 
-ULCDocKernelABI = [
+var ULCDocKernelV5_ABI = [
   {
     "constant": true,
     "inputs": [
@@ -31,8 +31,64 @@ ULCDocKernelABI = [
     ],
     "payable": false,
     "stateMutability": "view",
-    "type": "function",
-    "signature": "0x022914a7"
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_SignatureHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getHeritableDocFamily",
+    "outputs": [
+      {
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_SignatureHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "isSigned",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_SignatureHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getHeritableRevokedReason",
+    "outputs": [
+      {
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
   },
   {
     "constant": true,
@@ -51,23 +107,7 @@ ULCDocKernelABI = [
     ],
     "payable": false,
     "stateMutability": "view",
-    "type": "function",
-    "signature": "0x0b0adf27"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "_SignatureHash",
-        "type": "bytes32"
-      }
-    ],
-    "name": "confirmDocument",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function",
-    "signature": "0x0bee6c88"
+    "type": "function"
   },
   {
     "constant": true,
@@ -81,43 +121,45 @@ ULCDocKernelABI = [
     ],
     "payable": false,
     "stateMutability": "view",
-    "type": "function",
-    "signature": "0x0db02622"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "_nb",
-        "type": "uint256"
-      }
-    ],
-    "name": "setOperatorsForChange",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function",
-    "signature": "0x1052a537"
+    "type": "function"
   },
   {
     "constant": true,
     "inputs": [
       {
-        "name": "",
-        "type": "uint256"
+        "name": "_SignatureHash",
+        "type": "bytes32"
       }
     ],
-    "name": "PRETENTED_REF_MODERATOR",
+    "name": "getDocFamily",
     "outputs": [
       {
         "name": "",
-        "type": "address"
+        "type": "string"
       }
     ],
     "payable": false,
     "stateMutability": "view",
-    "type": "function",
-    "signature": "0x1114ee2c"
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_SignatureHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getRevokedDate",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
   },
   {
     "constant": true,
@@ -136,8 +178,45 @@ ULCDocKernelABI = [
     ],
     "payable": false,
     "stateMutability": "view",
-    "type": "function",
-    "signature": "0x13e7c9d8"
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_SignatureHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "isHeritableSigned",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_SignatureHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getSignatureVersion",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint16"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
   },
   {
     "constant": false,
@@ -147,12 +226,25 @@ ULCDocKernelABI = [
         "type": "bytes32"
       }
     ],
-    "name": "clearRevokeProcess",
+    "name": "requestClearDocument",
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
-    "type": "function",
-    "signature": "0x15989006"
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "_nextContract",
+        "type": "address"
+      }
+    ],
+    "name": "requestNextContract",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
   },
   {
     "constant": false,
@@ -166,8 +258,7 @@ ULCDocKernelABI = [
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
-    "type": "function",
-    "signature": "0x2604b799"
+    "type": "function"
   },
   {
     "constant": true,
@@ -186,8 +277,7 @@ ULCDocKernelABI = [
     ],
     "payable": false,
     "stateMutability": "view",
-    "type": "function",
-    "signature": "0x2902643c"
+    "type": "function"
   },
   {
     "constant": false,
@@ -201,8 +291,7 @@ ULCDocKernelABI = [
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
-    "type": "function",
-    "signature": "0x2e020f20"
+    "type": "function"
   },
   {
     "constant": true,
@@ -221,14 +310,60 @@ ULCDocKernelABI = [
     ],
     "payable": false,
     "stateMutability": "view",
-    "type": "function",
-    "signature": "0x36f3de14"
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "CONTRACT_VERSION",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint16"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_SignatureHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getSource",
+    "outputs": [
+      {
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "getTotalDocumentCounter",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
   },
   {
     "constant": false,
     "inputs": [
       {
-        "name": "_doRequestContest",
+        "name": "_requestDigest",
         "type": "bytes32"
       }
     ],
@@ -236,8 +371,7 @@ ULCDocKernelABI = [
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
-    "type": "function",
-    "signature": "0x3ad3116e"
+    "type": "function"
   },
   {
     "constant": false,
@@ -255,28 +389,59 @@ ULCDocKernelABI = [
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
-    "type": "function",
-    "signature": "0x3bbd9264"
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_SignatureHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "isRevoked",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_SignatureHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getHeritableRevokedDate",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
   },
   {
     "constant": false,
-    "inputs": [],
-    "name": "unpause",
+    "inputs": [
+      {
+        "name": "_nb",
+        "type": "uint256"
+      }
+    ],
+    "name": "requestOperatorsForChange",
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
-    "type": "function",
-    "signature": "0x3f4ba83a"
-  },
-  {
-    "constant": false,
-    "inputs": [],
-    "name": "kill",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function",
-    "signature": "0x41c0e1b5"
+    "type": "function"
   },
   {
     "constant": true,
@@ -295,8 +460,7 @@ ULCDocKernelABI = [
     ],
     "payable": false,
     "stateMutability": "view",
-    "type": "function",
-    "signature": "0x4f55ef94"
+    "type": "function"
   },
   {
     "constant": true,
@@ -310,8 +474,7 @@ ULCDocKernelABI = [
     ],
     "payable": false,
     "stateMutability": "view",
-    "type": "function",
-    "signature": "0x52583290"
+    "type": "function"
   },
   {
     "constant": false,
@@ -325,38 +488,7 @@ ULCDocKernelABI = [
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
-    "type": "function",
-    "signature": "0x570f5c96"
-  },
-  {
-    "constant": true,
-    "inputs": [],
-    "name": "paused",
-    "outputs": [
-      {
-        "name": "",
-        "type": "bool"
-      }
-    ],
-    "payable": false,
-    "stateMutability": "view",
-    "type": "function",
-    "signature": "0x5c975abb"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "_SignatureHash",
-        "type": "bytes32"
-      }
-    ],
-    "name": "confirmRevokeDocument",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function",
-    "signature": "0x61719cf6"
+    "type": "function"
   },
   {
     "constant": true,
@@ -370,29 +502,60 @@ ULCDocKernelABI = [
     ],
     "payable": false,
     "stateMutability": "view",
-    "type": "function",
-    "signature": "0x6398932f"
+    "type": "function"
   },
   {
     "constant": false,
+    "inputs": [
+      {
+        "name": "_signatureHashes",
+        "type": "bytes32[]"
+      }
+    ],
+    "name": "requestSignatureList",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "DocumentCounter",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
     "inputs": [
       {
         "name": "_SignatureHash",
         "type": "bytes32"
       }
     ],
-    "name": "clearDocument",
-    "outputs": [],
+    "name": "getHeritableSignedDate",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
     "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function",
-    "signature": "0x70543d43"
+    "stateMutability": "view",
+    "type": "function"
   },
   {
     "constant": false,
     "inputs": [
       {
-        "name": "_doRequestContest",
+        "name": "_requestDigest",
         "type": "bytes32"
       }
     ],
@@ -400,14 +563,13 @@ ULCDocKernelABI = [
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
-    "type": "function",
-    "signature": "0x74435c11"
+    "type": "function"
   },
   {
     "constant": false,
     "inputs": [
       {
-        "name": "_allKeys",
+        "name": "_signatureHashes",
         "type": "bytes32[]"
       },
       {
@@ -419,8 +581,21 @@ ULCDocKernelABI = [
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
-    "type": "function",
-    "signature": "0x75705914"
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "_SignatureHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "requestSignature",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
   },
   {
     "constant": true,
@@ -434,52 +609,26 @@ ULCDocKernelABI = [
     ],
     "payable": false,
     "stateMutability": "view",
-    "type": "function",
-    "signature": "0x7c6f3158"
+    "type": "function"
   },
   {
-    "constant": false,
-    "inputs": [],
-    "name": "clearKill",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function",
-    "signature": "0x7c7e61f6"
-  },
-  {
-    "constant": false,
+    "constant": true,
     "inputs": [
       {
-        "name": "_index",
-        "type": "uint256"
-      },
-      {
-        "name": "_moderatorAdress",
-        "type": "address"
+        "name": "_SignatureHash",
+        "type": "bytes32"
       }
     ],
-    "name": "removePretendedModerator",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function",
-    "signature": "0x7ef1a125"
-  },
-  {
-    "constant": false,
-    "inputs": [
+    "name": "getHeritableSource",
+    "outputs": [
       {
-        "name": "_allKeys",
-        "type": "bytes32[]"
+        "name": "",
+        "type": "string"
       }
     ],
-    "name": "confirmDocumentList",
-    "outputs": [],
     "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function",
-    "signature": "0x80ca1e26"
+    "stateMutability": "view",
+    "type": "function"
   },
   {
     "constant": true,
@@ -502,33 +651,7 @@ ULCDocKernelABI = [
     ],
     "payable": false,
     "stateMutability": "view",
-    "type": "function",
-    "signature": "0x829ab9fa"
-  },
-  {
-    "constant": false,
-    "inputs": [],
-    "name": "pause",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function",
-    "signature": "0x8456cb59"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "_moderatorAddress",
-        "type": "address"
-      }
-    ],
-    "name": "addPretendedModerator",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function",
-    "signature": "0x89b69340"
+    "type": "function"
   },
   {
     "constant": false,
@@ -542,28 +665,31 @@ ULCDocKernelABI = [
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
-    "type": "function",
-    "signature": "0x914b1f9d"
+    "type": "function"
   },
   {
-    "constant": true,
-    "inputs": [],
-    "name": "Contract_Version",
-    "outputs": [
+    "constant": false,
+    "inputs": [
       {
-        "name": "",
-        "type": "uint8"
+        "name": "_nb",
+        "type": "uint256"
       }
     ],
+    "name": "requestOwnersForChange",
+    "outputs": [],
     "payable": false,
-    "stateMutability": "view",
-    "type": "function",
-    "signature": "0x929e928a"
+    "stateMutability": "nonpayable",
+    "type": "function"
   },
   {
     "constant": true,
-    "inputs": [],
-    "name": "DOCUMENTS_COUNTER",
+    "inputs": [
+      {
+        "name": "_SignatureHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getSignedDate",
     "outputs": [
       {
         "name": "",
@@ -572,8 +698,35 @@ ULCDocKernelABI = [
     ],
     "payable": false,
     "stateMutability": "view",
-    "type": "function",
-    "signature": "0x9bc19126"
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "PREVIOUS_CONTRACT",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "_SignatureHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "requestClearRevoke",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
   },
   {
     "constant": true,
@@ -587,8 +740,45 @@ ULCDocKernelABI = [
     ],
     "payable": false,
     "stateMutability": "view",
-    "type": "function",
-    "signature": "0xa5bc9cd3"
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_SignatureHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getRevokedReason",
+    "outputs": [
+      {
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_SignatureHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "isHeritableRevoked",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
   },
   {
     "constant": false,
@@ -606,8 +796,40 @@ ULCDocKernelABI = [
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
-    "type": "function",
-    "signature": "0xaf8d92da"
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "isFreezed",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_SignatureHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getHeritableExtraData",
+    "outputs": [
+      {
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
   },
   {
     "constant": true,
@@ -621,8 +843,26 @@ ULCDocKernelABI = [
     ],
     "payable": false,
     "stateMutability": "view",
-    "type": "function",
-    "signature": "0xc23fff0b"
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "operatorList",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
   },
   {
     "constant": true,
@@ -636,8 +876,7 @@ ULCDocKernelABI = [
     ],
     "payable": false,
     "stateMutability": "view",
-    "type": "function",
-    "signature": "0xcb8a67ed"
+    "type": "function"
   },
   {
     "constant": false,
@@ -655,8 +894,40 @@ ULCDocKernelABI = [
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
-    "type": "function",
-    "signature": "0xd24094db"
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_SignatureHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "getHeritableSignatureVersion",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint16"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "nextContract",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
   },
   {
     "constant": true,
@@ -675,94 +946,54 @@ ULCDocKernelABI = [
     ],
     "payable": false,
     "stateMutability": "view",
-    "type": "function",
-    "signature": "0xdbc385de"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "_newContractAddress",
-        "type": "address"
-      }
-    ],
-    "name": "requestUpgradeSmartContract",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function",
-    "signature": "0xe3502cfe"
+    "type": "function"
   },
   {
     "constant": true,
     "inputs": [
       {
         "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "ownerList",
+    "outputs": [
+      {
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [],
+    "name": "requestFreeze",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_SignatureHash",
         "type": "bytes32"
       }
     ],
-    "name": "SIGNATURES_BOOK",
+    "name": "getExtraData",
     "outputs": [
       {
-        "name": "initialized",
-        "type": "bool"
-      },
-      {
-        "name": "signed",
-        "type": "bool"
-      },
-      {
-        "name": "revoked",
-        "type": "bool"
-      },
-      {
-        "name": "signed_date",
-        "type": "uint256"
-      },
-      {
-        "name": "revoked_date",
-        "type": "uint256"
-      },
-      {
-        "name": "document_family",
-        "type": "uint16"
-      },
-      {
-        "name": "signature_version",
-        "type": "uint8"
-      },
-      {
-        "name": "revoked_reason",
-        "type": "string"
-      },
-      {
-        "name": "source",
-        "type": "string"
-      },
-      {
-        "name": "extra_data",
+        "name": "",
         "type": "string"
       }
     ],
     "payable": false,
     "stateMutability": "view",
-    "type": "function",
-    "signature": "0xe39921e0"
-  },
-  {
-    "constant": false,
-    "inputs": [
-      {
-        "name": "_nb",
-        "type": "uint256"
-      }
-    ],
-    "name": "setOwnersForChange",
-    "outputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "function",
-    "signature": "0xe7fe80e1"
+    "type": "function"
   },
   {
     "constant": true,
@@ -785,8 +1016,105 @@ ULCDocKernelABI = [
     ],
     "payable": false,
     "stateMutability": "view",
-    "type": "function",
-    "signature": "0xee7aed7d"
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "name": "SignedContent",
+    "outputs": [
+      {
+        "name": "signed_date",
+        "type": "uint256"
+      },
+      {
+        "name": "revoked_date",
+        "type": "uint256"
+      },
+      {
+        "name": "document_family",
+        "type": "uint16"
+      },
+      {
+        "name": "initialized",
+        "type": "bool"
+      },
+      {
+        "name": "signed",
+        "type": "bool"
+      },
+      {
+        "name": "revoked",
+        "type": "bool"
+      },
+      {
+        "name": "source",
+        "type": "string"
+      },
+      {
+        "name": "extra_data",
+        "type": "string"
+      },
+      {
+        "name": "revoked_reason",
+        "type": "string"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [
+      {
+        "name": "_SignatureHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "isInitialized",
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": true,
+    "inputs": [],
+    "name": "getHeritableTotalDocumentCounter",
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "payable": false,
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "constant": false,
+    "inputs": [
+      {
+        "name": "_SignatureHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "requestRevokeDocument",
+    "outputs": [],
+    "payable": false,
+    "stateMutability": "nonpayable",
+    "type": "function"
   },
   {
     "constant": false,
@@ -812,29 +1140,13 @@ ULCDocKernelABI = [
     "outputs": [],
     "payable": false,
     "stateMutability": "nonpayable",
-    "type": "function",
-    "signature": "0xff9ff59a"
-  },
-  {
-    "inputs": [],
-    "payable": false,
-    "stateMutability": "nonpayable",
-    "type": "constructor",
-    "signature": "constructor"
+    "type": "function"
   },
   {
     "anonymous": false,
     "inputs": [],
-    "name": "Paused",
-    "type": "event",
-    "signature": "0x9e87fac88ff661f02d44f95383c817fece4bce600a3dab7a54406878b965e752"
-  },
-  {
-    "anonymous": false,
-    "inputs": [],
-    "name": "Unpaused",
-    "type": "event",
-    "signature": "0xa45f47fdea8a1efdd9029a5691c7f759c32b7c698632b563573e155625d16933"
+    "name": "Freezed",
+    "type": "event"
   },
   {
     "anonymous": false,
@@ -846,8 +1158,7 @@ ULCDocKernelABI = [
       }
     ],
     "name": "OwnershipNewInteractor",
-    "type": "event",
-    "signature": "0x7a1dfee0fed66bbe753e7cacf687555c3b90262b467ca4051bc9db78ecb7b718"
+    "type": "event"
   },
   {
     "anonymous": false,
@@ -859,8 +1170,7 @@ ULCDocKernelABI = [
       }
     ],
     "name": "OwnershipLossInteractor",
-    "type": "event",
-    "signature": "0xcfb43782fb4b42dbddd63f2679e351f90b2861659c5970fd96e516431372e439"
+    "type": "event"
   },
   {
     "anonymous": false,
@@ -877,8 +1187,7 @@ ULCDocKernelABI = [
       }
     ],
     "name": "OwnershipTransferred",
-    "type": "event",
-    "signature": "0x8be0079c531659141344cd1fd0a4f28419497f9722a3daafe3b4186f6b6457e0"
+    "type": "event"
   },
   {
     "anonymous": false,
@@ -890,8 +1199,7 @@ ULCDocKernelABI = [
       }
     ],
     "name": "OperatorNewInteractor",
-    "type": "event",
-    "signature": "0x3729c74abdcd437a168ed923de0c7e42158e276aefad2dab3b083cb5c5ac5f9a"
+    "type": "event"
   },
   {
     "anonymous": false,
@@ -903,8 +1211,7 @@ ULCDocKernelABI = [
       }
     ],
     "name": "OperatorLossInteractor",
-    "type": "event",
-    "signature": "0x9415f62f3f8684284be8469a0d615e731ea44d32b4dfb40be4ef52c873040e05"
+    "type": "event"
   },
   {
     "anonymous": false,
@@ -921,7 +1228,6 @@ ULCDocKernelABI = [
       }
     ],
     "name": "OperatorshipTransferred",
-    "type": "event",
-    "signature": "0xb37ff92c23eca455dbbd028d9cb869f69e16485d5ef15286fc394c721a5d5dc1"
+    "type": "event"
   }
 ];
