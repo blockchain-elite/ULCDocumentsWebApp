@@ -23,56 +23,63 @@ const UIManagerPrefix = "UI";
 const ULCDocModMasterPrefix = "MASTER";
 
 const TypeInfo = {
-  Info: 1, //this is a simple information
-  Good: 2, //this information is good news
-  Warning: 3, //this information need special attention
-  Critical: 4 //this information is critical
+    Info: 1, //this is a simple information
+    Good: 2, //this information is good news
+    Warning: 3, //this information need special attention
+    Critical: 4 //this information is critical
 };
 
 const TypeConnection = {
-    Mainnet : 1,  //Mainnet Ethereum
-    Morden : 2,  //Morden testnet
-    Ropsten : 3, //Ropsten testnet
-    Rinkeby : 4, //Rinkeby testnet
-    Kovan : 42, //Kovan testnet
-    Unkown : 0 //Unknown testnet
+    Mainnet: 1,  //Mainnet Ethereum
+    Morden: 2,  //Morden testnet
+    Ropsten: 3, //Ropsten testnet
+    Rinkeby: 4, //Rinkeby testnet
+    Kovan: 42, //Kovan testnet
+    Unkown: 0 //Unknown testnet
 };
 
 const TypeElement = {
     /* BLOCKCHAIN ANSWER RELATED */
-  Signed: 1, //the element is signed by the kernel
-  Revoked : 2,
-  Fake: 3,  //the element is not signed by the kernel
-  Invalid: 4, //an error occured when asking the kernel
-  Pending : 5, // Process to sign the document is started but not OK
+    Signed: 1, //the element is signed by the kernel
+    Revoked: 2,
+    Fake: 3,  //the element is not signed by the kernel
+    Invalid: 4, //an error occured when asking the kernel
+    Pending: 5, // Process to sign the document is started but not OK
     /* UI RELATED */
-  Computing : 6, // computing hash
-  Loading : 7, // loading object
-  TxProcessing: 8, // The transaction is being processed
-  TransactionSuccess: 9, // The transaction was a success
-  TransactionFailure: 10,  // The transaction failed
-  Unknown : 11 // Object not yet checked
+    Computing: 6, // computing hash
+    Loading: 7, // loading object
+    TxProcessing: 8, // The transaction is being processed
+    TransactionSuccess: 9, // The transaction was a success
+    TransactionFailure: 10,  // The transaction failed
+    Unknown: 11 // Object not yet checked
 };
 
-fetchSignStatus = function(signPending, _isSignedByAddress){
-    this.signPending = _signPending;
-    this.isSignedByAddress = _isSignedByAddress;
-}
+/**
+ * Object containing fetch information
+ *
+ * @param signPending {number} The number of current signatures
+ * @param isSignedByAddress {boolean} whether the current user signed this document
+ */
+fetchSignStatus = function (signPending, isSignedByAddress) {
+    this.signPending = signPending;
+    this.isSignedByAddress = isSignedByAddress;
+};
 
 /**
- * @title Specific error if there is a conflict between web3 network and URL network.
- * @param _message {String} message displayed
+ * Specific error if there is a conflict between web3 network and URL network.
+ *
+ * @param _message {string} message displayed
  * @param _network {TypeConnection} the network which injected wallet is.
  */
-networkConflictError = function(_message, _network){
-        this.constructor.prototype.__proto__ = Error.prototype;
-        this.name = this.constructor.name;
-        this.message = _message;
-        this.network = _network;
-}
-
-blockchainError = function(_message){
+networkConflictError = function (_message, _network) {
     this.constructor.prototype.__proto__ = Error.prototype;
     this.name = this.constructor.name;
     this.message = _message;
-}
+    this.network = _network;
+};
+
+blockchainError = function (_message) {
+    this.constructor.prototype.__proto__ = Error.prototype;
+    this.name = this.constructor.name;
+    this.message = _message;
+};
