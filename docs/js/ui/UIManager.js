@@ -37,6 +37,7 @@ const HASH_APP_MODE = [
 const HASH_PARAM_NAMES = { // Hash parameters to use when reading URL
     appMode: 'mode',
     kernelAddress: 'kernel',
+    network: 'network'
 };
 
 const MIME_TYPE_ICONS = { // FontAwesome icon based on file mime type
@@ -198,6 +199,110 @@ function UIManager() {
         log('Detected following app mode: ' + HASH_APP_MODE[type]);
     };
 
+
+    /**
+     * Get the current network from the url
+     */
+    let detectCurrentNetwork = function () {
+        let hashNetwork = capitalizeFirstLetter(getUrlHashParameter(HASH_PARAM_NAMES.network));
+        // if there is a specified network in the url and if it is valid, save it
+        if (hashNetwork !== undefined && TypeConnection[hashNetwork] !== undefined) {
+            connectToNetwork(TypeConnection[hashNetwork]);
+        } else { // else, ask the user
+            showNetworkSelectionPopup('Select the network',
+                'The link you followed did not specify a network. Which one do you want to use ?')
+        }
+    };
+
+
+    let showNetworkSelectionPopup = function (title, message) {
+        $.confirm({
+            title: title,
+            content: message +
+                '<ul>' +
+                '<li><strong>Mainnet:</strong> Signatures can be trusted, use this if unsure.</li>' +
+                '<li><strong>Ropsten:</strong> Signatures cannot be trusted, use only for test purposes.</li>' +
+                '</ul>',
+            type: 'blue',
+            theme: JQUERY_CONFIRM_THEME,
+            columnClass: 'xlarge',
+            icon: 'fas fa-question',
+            typeAnimated: true,
+            buttons: {
+                mainnet: {
+                    text: 'Mainnet',
+                    btnClass: 'btn-green',
+                    action: function () {
+                        connectToNetwork(TypeConnection.Mainnet);
+                    }
+                },
+                ropsten: {
+                    text: 'Ropsten',
+                    btnClass: 'btn-orange',
+                    action: function () {
+                        connectToNetwork(TypeConnection.Ropsten);
+                    }
+                },
+            },
+        });
+    };
+
+    let getNetworkName = function (network) {
+        let networkName;
+        for (let type in TypeConnection) {
+            if (TypeConnection[type] === network) {
+                networkName = type;
+                break;
+            }
+        }
+        return networkName;
+    };
+
+    let connectToNetwork = function (network) {
+        setUrlHashParameter(HASH_PARAM_NAMES.network, getNetworkName(network));
+        startApp(network)
+            .then((networkObject) => {
+                _currentNetworkType = network;
+                updateNetworkConnectedUI(network);
+                updateWalletStateUI(networkObject.isUsingInjector);
+                updateModeratorConnection(networkObject.moderatorObject);
+                tryReadyUI();
+            })
+            .catch((err) => {
+                console.log(err.selectedNetwork);
+                console.log(err.web3Network);
+                showNetworkConflictPopup(err.selectedNetwork, err.web3Network)
+            });
+    };
+
+    let showNetworkConflictPopup = function (sNetwork, web3Network) {
+        $.confirm({
+            title: 'Network conflict detected',
+            content: 'You are trying to connect to from Metamask. ' +
+                'Please reconnect using the same network as Metamask, or set Metamask to use the network specified in the link.<br/>' +
+                'Please note, selecting a different network from the link you followed may result in untrustable data.' +
+                '<ul>' +
+                '<li><strong>Mainnet:</strong> Signatures can be trusted, use this if unsure.</li>' +
+                '<li><strong>Ropsten:</strong> Signatures cannot be trusted, use only for test purposes.</li>' +
+                '</ul>',
+            type: 'orange',
+            theme: JQUERY_CONFIRM_THEME,
+            columnClass: 'xlarge',
+            icon: 'fas fa-warning',
+            typeAnimated: true,
+            buttons: {
+                reconnect: {
+                    text: 'Reconnect using Metamask network',
+                    btnClass: 'btn-orange',
+                    action: function () {
+                        connectToNetwork(web3Network);
+                    }
+                },
+            },
+        });
+    };
+
+
     /**
      * Set the UI to fade In/Out to switch type
      *
@@ -296,14 +401,14 @@ function UIManager() {
         });
         // Connect to kernel
         if (_kernelManager.getCurrentAddress() !== '')
-            UI.connectToKernel();
+            UI.tryKernelConnection(_kernelManager.getCurrentAddress());
     };
 
     /**
      * Show a warning when using a testnet
      */
     let showTestnetWarning = function () {
-        if (Cookies.get('hide-ropsten-warning') === undefined){
+        if (Cookies.get('hide-ropsten-warning') === undefined) {
             $.selector_cache('#ropstenWarning').show();
             animateCss($.selector_cache('#ropstenWarning'), 'fadeInRight faster');
         }
@@ -334,16 +439,49 @@ function UIManager() {
         }
     };
 
-    this.connectToKernel = function () {
+    this.tryKernelConnection = function (address) {
         _kernelManager.setKernelConnectionLoading(true);
-        setUrlHashParameter(HASH_PARAM_NAMES.kernelAddress, _kernelManager.getCurrentAddress());
-        updateKernelAddress(_kernelManager.getCurrentAddress()); // Call to ULCDocMaster
+        setUrlHashParameter(HASH_PARAM_NAMES.kernelAddress, address);
+        queryKernelAddress(address)
+            .then((kernelIdentity) => {
+                _kernelManager.setCurrentKernelIdentity(kernelIdentity);
+                if (kernelIdentity.confirmed) {
+                    connectToKernel();
+                } else {
+                    console.log(kernelIdentity);
+                    UI.promptKernelConnectionWarnAnswer();
+                }
+            })
+            .catch((err) => {
+                console.log(err);
+                log('Error fetching kernel information', TypeInfo.Warning);
+                updateKernelConnectionBox(KERNEL_CONNECTION_TYPE.error);
+            });
     };
 
-    this.connectToModerator = function () {
+    let connectToKernel = function() {
+        updateKernel(_kernelManager.getCurrentAddress())
+            .then((kernelConfig) => {
+                _kernelManager.setCurrentKernelConfig(kernelConfig);
+                updateKernelConnectionBox(KERNEL_CONNECTION_TYPE.connected);
+            })
+            .catch((err) => {
+                console.log(err);
+                updateKernelConnectionBox(KERNEL_CONNECTION_TYPE.error);
+            });
+    };
+
+    this.connectToModerator = function (address) {
         _moderatorManager.setConnected(false);
         _moderatorManager.setModeratorConnectionLoading(true);
-        updateModeratorAddress(_moderatorManager.getCurrentAddress()); // Call to ULCDocMaster
+        updateModerator(address)
+            .then((moderatorInfo) => {
+                updateModeratorConnection(moderatorInfo);
+            })
+            .catch((err) => {
+                log('Could not connect to moderator');
+                updateModeratorConnection(undefined);
+            });
     };
 
     /**
@@ -381,7 +519,7 @@ function UIManager() {
         });
         $.selector_cache('#kernelAddressInputConnect').on('click', function () {
             _kernelManager.setCurrentAddress($.selector_cache('#kernelAddressInput').val());
-            UI.connectToKernel();
+            UI.tryKernelConnection(_kernelManager.getCurrentAddress());
         });
 
         $tabHolders[TAB_TYPE.file] // DropZone management
@@ -427,7 +565,7 @@ function UIManager() {
             hideTestnetWarning();
         });
         $.selector_cache('#ropstenWarningClosePermanent').on('click', function () {
-            Cookies.set('hide-ropsten-warning', '1', { expires: 365 });
+            Cookies.set('hide-ropsten-warning', '1', {expires: 365});
             hideTestnetWarning();
         });
         $.selector_cache("body")
@@ -668,8 +806,7 @@ function UIManager() {
         if (state !== UI_STATE.fetched) {
             $.selector_cache('.sign-next-step-logo').css('color', '#E9ECEF');
             $('.multi-selection').hide();
-        }
-        else {
+        } else {
             $.selector_cache('.sign-next-step-logo').css('color', '#17A2B8');
             $('.multi-selection').show();
         }
@@ -1421,7 +1558,7 @@ function UIManager() {
             let height = $(window).height() - 200; // Header + action buttons
             $.selector_cache("#mainCard").css('min-height', height);
         } else {
-            let height = $(window).height() -200; // Header + action buttons
+            let height = $(window).height() - 200; // Header + action buttons
             $.selector_cache("#mainCard").css('height', height);
         }
     };
@@ -1534,7 +1671,7 @@ function UIManager() {
      * If we are removing the last file, display the empty file list template.
      *
      * @param index {Number} The file unique index.
-    */
+     */
     this.removeItemFromList = function (index) {
         $("#" + getCurrentListItem(index).getId()).remove();
         getCurrentList().delete(index);
@@ -1563,8 +1700,8 @@ function UIManager() {
         setupDOMDimensions();
         UI.updateCheckButtonState();
         UI.setUIElementsState(UI_STATE.none);
-        _kernelManager.setKernelInfo(undefined, undefined);
-        _moderatorManager.setModeratorInfo(undefined, 'Connection in progress...');
+        updateKernelConnectionBox(KERNEL_CONNECTION_TYPE.notConnected);
+        updateModeratorConnection(undefined);
         for (let i of Object.keys(TAB_TYPE)) {
             resetTabZone(TAB_TYPE[i]);
         }
@@ -1573,6 +1710,7 @@ function UIManager() {
         UI.resetProgress();
         this.updateAccounts(undefined);
         _canUseDropZone = true;
+        detectCurrentNetwork();
     };
 
     let setAppVersion = function () {
@@ -1588,37 +1726,29 @@ function UIManager() {
      * Display additional information using tooltips.
      *
      * @param connectionType {TypeConnection} The type of connection to display.
-     * @param infoType {TypeInfo} The type of information, to choose which tooltip to display.
      */
-    this.updateNetworkConnectedUI = function (connectionType, infoType) {
+    let updateNetworkConnectedUI = function (connectionType) {
         // reset badge
         $.selector_cache('#networkTypeField').attr('class', 'badge');
         log('Setting network connected UI', TypeInfo.Info);
-        switch (infoType) {
-            case TypeInfo.Good:
+        switch (connectionType) {
+            case TypeConnection.Mainnet:
                 $.selector_cache('#networkTypeField').attr('data-original-title', 'You are connected to a public server');
                 $.selector_cache('#networkTypeField').addClass('badge-success');
-                _moderatorManager.setDefaultAddress(officialBlockchainEliteModerator);
+                _moderatorManager.setDefaultAddress(getDefaultModerator(false));
                 break;
-            case TypeInfo.Warning:
+            case TypeConnection.Ropsten:
                 $.selector_cache('#networkTypeField').attr('data-original-title', 'You are connected to a test server');
                 $.selector_cache('#networkTypeField').addClass('badge-warning');
-                _moderatorManager.setDefaultAddress(ropstenBlockchainEliteModerator);
+                _moderatorManager.setDefaultAddress(getDefaultModerator(true));
                 break;
-            case TypeInfo.Critical:
+            default:
                 $.selector_cache('#networkTypeField').attr('data-original-title', 'Could not connect');
                 $.selector_cache('#networkTypeField').addClass('badge-danger');
                 _moderatorManager.setDefaultAddress('');
                 break;
         }
-        for (let type in TypeConnection) {
-            if (TypeConnection[type] === connectionType) {
-                $.selector_cache('#networkTypeField').html(type);
-                break;
-            }
-        }
-        _currentNetworkType = connectionType;
-        _moderatorManager.setCurrentAddress(_moderatorManager.getDefaultAddress());
+        $.selector_cache('#networkTypeField').html(getNetworkName(connectionType));
     };
 
     /**
@@ -1627,7 +1757,7 @@ function UIManager() {
      *
      * @param isInjected {Boolean} Whether the wallet is injected or infura.
      */
-    this.updateWalletStateUI = function (isInjected) {
+    let updateWalletStateUI = function (isInjected) {
         // reset badge
         $.selector_cache('#connectionTypeField').attr('class', 'badge');
         log('Setting wallet injected state to: ' + isInjected, TypeInfo.Info);
@@ -1644,29 +1774,25 @@ function UIManager() {
         }
         UI.updateMainUIState();
         UI.updateCheckButtonState();
-
-        tryReadyUI();
     };
 
     /**
      * Show a dialog to the user asking for connection confirmation
-     *
-     * @param status {resultQueryStatus} The status of the connection
-     * @param revokedReason {String} The reason
      */
-    this.promptKernelConnectionWarnAnswer = function (status, revokedReason) {
+    this.promptKernelConnectionWarnAnswer = function () {
+        let status = _kernelManager.getKernelStatus();
         let message = '';
         switch (status) {
-            case resultQueryStatus.revoked:
+            case KERNEL_REFERENCEMENT_STATUS.revoked:
                 message = 'The Kernel you are connecting to has been revoked by the moderator.\n' +
                     'This mean the moderator does not recognize the kernel anymore and cannot prove its identity.\n' +
                     'revoked reason: ' + revokedReason;
                 break;
-            case resultQueryStatus.initialized:
+            case KERNEL_REFERENCEMENT_STATUS.initialized:
                 message = 'The Moderator knows the Kernel you are connecting to, but has not yet passed security confirmation.' +
                     'As such, it cannot provide information on its identity.';
                 break;
-            case resultQueryStatus.unknown:
+            case KERNEL_REFERENCEMENT_STATUS.notReferenced:
                 message = 'The Kernel you are connecting is unknown to the Moderator. It is impossible to prove its identity.';
                 break;
         }
@@ -1687,11 +1813,11 @@ function UIManager() {
                         btnClass: 'btn-orange',
                         action: function () {
                             log('Connection insecure');
-                            updateKernelObject(_kernelManager.getCurrentAddress(), undefined);
+                            connectToKernel();
                         }
                     },
                     cancel: function () {
-                        UI.updateKernelConnection(undefined, undefined);
+                        updateKernelConnectionBox(KERNEL_CONNECTION_TYPE.notConnected);
                     },
                 }
             });
@@ -1701,44 +1827,35 @@ function UIManager() {
     /**
      * Set the kernel connection information.
      *
-     * @param connectionStatus {TypeInfo} The connection status
-     * @param moderatorInfo {Map} The connection information
-     * Reserved keys :
-     * 'connection-status' for a TypeInfo describing the connection.
-     * 'img' for the image url. Not setting this key will not show an image.
-     * 'extra-data' for a map containing additional data.
-     *
+     * @param connectionType {KERNEL_CONNECTION_TYPE} The connection status
      */
-    this.updateKernelConnection = function (connectionStatus, moderatorInfo) {
+    let updateKernelConnectionBox = function (connectionType) {
+        console.log(_kernelManager.getCurrentKernelIdentity());
+        console.log(_kernelManager.getCurrentKernelConfig());
         _isAccountsListAvailable = false; // Kernel operators may change
         resetAllElements(); // Element signatures are different from each kernel
         _kernelManager.setKernelConnectionLoading(false);
-        switch (connectionStatus) {
-            case TypeInfo.Good:
-                $.selector_cache('#kernelConnectionInfoIcon').attr('class', 'fas fa-check-circle text-success');
-                _kernelManager.setKernelInfo(moderatorInfo, TypeInfo.Good);
+        switch (connectionType) {
+            case KERNEL_CONNECTION_TYPE.connected:
+                if (_kernelManager.getKernelStatus() === KERNEL_REFERENCEMENT_STATUS.referenced)
+                    $.selector_cache('#kernelConnectionInfoIcon').attr('class', 'fas fa-check-circle text-success');
+                else
+                    $.selector_cache('#kernelConnectionInfoIcon').attr('class', 'fas fa-exclamation-triangle text-warning');
+                _kernelManager.setKernelInfoBox(KERNEL_CONNECTION_TYPE.connected);
                 if (_currentAppMode === APP_MODE.sign)
                     askForAccounts();
                 _kernelManager.setConnected(true);
                 break;
-            case TypeInfo.Warning:
-                $.selector_cache('#kernelConnectionInfoIcon').attr('class', 'fas fa-exclamation-triangle text-warning');
-                $.selector_cache('#kernelConnectedAddress').html("Currently connected to : '" + _kernelManager.getCurrentAddress() + "'");
-                _kernelManager.setKernelInfo(undefined, TypeInfo.Warning);
-                if (_currentAppMode === APP_MODE.sign)
-                    askForAccounts();
-                _kernelManager.setConnected(true);
-                break;
-            case TypeInfo.Critical:
+            case KERNEL_CONNECTION_TYPE.error:
                 $.selector_cache('#kernelConnectionInfoIcon').attr('class', 'fas fa-times text-danger');
                 $.selector_cache('#kernelConnectedAddress').html("Could not connect to '" + _kernelManager.getCurrentAddress() + "'");
-                _kernelManager.setKernelInfo(undefined, TypeInfo.Critical);
+                _kernelManager.setKernelInfoBox(KERNEL_CONNECTION_TYPE.error);
                 _kernelManager.setConnected(false);
                 break;
-            default:
+            case KERNEL_CONNECTION_TYPE.notConnected:
                 $.selector_cache('#kernelConnectionInfoIcon').attr('class', 'fas fa-question');
                 $.selector_cache('#kernelConnectedAddress').html("Not Connected");
-                _kernelManager.setKernelInfo(undefined, undefined);
+                _kernelManager.setKernelInfoBox(KERNEL_CONNECTION_TYPE.notConnected);
                 _kernelManager.setConnected(false);
                 break;
         }
@@ -1747,45 +1864,34 @@ function UIManager() {
     };
 
     /**
-     * Set the moderator info.
+     * Set the moderator connection info.
      *
-     * @param connectionInfo {Map} Map containing moderator info.
-     *  Reserved keys :
-     * 'connection-status' for a TypeInfo describing the connection.
-     * 'registration_link' for a link to the registration page.
-     * 'contact_link' for a link to the contact page.
+     * @param moderatorInfo {Object} Object containing moderator info.
      */
-    this.updateModeratorConnection = function (connectionInfo) {
-        let connectionType = TypeInfo.Info;
-        if (connectionInfo !== undefined && connectionInfo.has(moderatorReservedKeys.status))
-            connectionType = connectionInfo.get(moderatorReservedKeys.status);
-
+    let updateModeratorConnection = function (moderatorInfo) {
+        log('Updating moderator input UI', TypeInfo.Info);
         _moderatorManager.setConnected(true);
         _moderatorManager.setModeratorConnectionLoading(false);
-        log('Updating moderator input UI', TypeInfo.Info);
-        UI.updateKernelConnection(undefined, undefined); // Reset the kernel connection
-        switch (connectionType) {
-            case TypeInfo.Good:
-                $.selector_cache('#moderatorConnectionInfoIcon').attr('class', 'fas fa-check-circle text-success');
-                if (_moderatorManager.isConnectedToDefault()) {
-                    let modName = _currentNetworkType === TypeConnection.Mainnet ? 'Blockchain Élite ULCDocuments Official' : 'Blockchain Élite ULCDocuments Testnet';
-                    $.selector_cache('#moderatorConnectedAddress').html("Currently connected to default: " +
-                        "<strong id='moderatorName'>" + modName + "</strong>");
-                } else
-                    $.selector_cache('#moderatorConnectedAddress').html("Currently connected to: " +
-                        "'<strong id='moderatorAddress'>" + _moderatorManager.getCurrentAddress() + "</strong>'");
-                setDOMColor($.selector_cache('#moderatorInfoHeader'), COLOR_CLASSES.success);
-                _moderatorManager.setModeratorInfo(connectionInfo, "");
-                break;
-            case TypeInfo.Critical:
-                _kernelManager.setConnected(false);
-                $.selector_cache('#moderatorConnectionInfoIcon').attr('class', 'fas fa-times text-danger');
-                $.selector_cache('#moderatorConnectedAddress').html("Could not connect to '" + _moderatorManager.getCurrentAddress() + "'");
-                setDOMColor($.selector_cache('#moderatorInfoHeader'), COLOR_CLASSES.danger);
-                _moderatorManager.setModeratorInfo(undefined, 'Connection could not be established, falling back to default');
-                break;
+        updateKernelConnectionBox(KERNEL_CONNECTION_TYPE.notConnected); // Reset the kernel connection
+        if (moderatorInfo !== undefined) {
+            _moderatorManager.setCurrentAddress(moderatorInfo.address);
+            $.selector_cache('#moderatorConnectionInfoIcon').attr('class', 'fas fa-check-circle text-success');
+            if (_moderatorManager.isConnectedToDefault()) {
+                let modName = _currentNetworkType === TypeConnection.Mainnet ? 'Blockchain Élite ULCDocuments Official' : 'Blockchain Élite ULCDocuments Testnet';
+                $.selector_cache('#moderatorConnectedAddress').html("Currently connected to default: " +
+                    "<strong id='moderatorName'>" + modName + "</strong>");
+            } else
+                $.selector_cache('#moderatorConnectedAddress').html("Currently connected to: " +
+                    "'<strong id='moderatorAddress'>" + _moderatorManager.getCurrentAddress() + "</strong>'");
+            setDOMColor($.selector_cache('#moderatorInfoHeader'), COLOR_CLASSES.success);
+            _moderatorManager.setModeratorInfo(moderatorInfo, "");
+        } else {
+            _kernelManager.setConnected(false);
+            $.selector_cache('#moderatorConnectionInfoIcon').attr('class', 'fas fa-times text-danger');
+            $.selector_cache('#moderatorConnectedAddress').html("Could not connect to '" + _moderatorManager.getCurrentAddress() + "'");
+            setDOMColor($.selector_cache('#moderatorInfoHeader'), COLOR_CLASSES.danger);
+            _moderatorManager.setModeratorInfo(undefined, 'Connection could not be established, falling back to default');
         }
-        tryReadyUI();
         UI.updateCheckButtonState();
     };
 

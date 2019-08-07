@@ -65,18 +65,15 @@ fetchSignStatus = function (signPending, isSignedByAddress) {
     this.isSignedByAddress = isSignedByAddress;
 };
 
-/**
- * Specific error if there is a conflict between web3 network and URL network.
- *
- * @param _message {string} message displayed
- * @param _network {TypeConnection} the network which injected wallet is.
- */
-networkConflictError = function (_message, _network) {
-    this.constructor.prototype.__proto__ = Error.prototype;
-    this.name = this.constructor.name;
-    this.message = _message;
-    this.network = _network;
-};
+class NetworkConflictError extends Error {
+    constructor(selectedNetwork, web3Network) {
+        super();
+        this.name = 'NetworkConflictError';
+        this.message = 'Selected network is different from injected web3';
+        this.selectedNetwork = selectedNetwork;
+        this.web3Network = web3Network;
+    }
+}
 
 blockchainError = function (_message) {
     this.constructor.prototype.__proto__ = Error.prototype;

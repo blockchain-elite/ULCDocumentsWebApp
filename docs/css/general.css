@@ -240,7 +240,7 @@
 
 }
 
-#moderatorAddress, #kernelAddress {
+#moderatorAddress, #kernelPhysicalAddress {
     word-break: break-all;
 }
 

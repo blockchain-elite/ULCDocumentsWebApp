@@ -26,11 +26,15 @@ let myKernel;
 
 let currentAddress;
 
+function getDefaultModerator(isRopsten) {
+    return isRopsten ? ULCDocAPI.DEFAULT_ADDRESS.BCE_MOD_ROPSTEN : ULCDocAPI.DEFAULT_ADDRESS.BCE_MOD_MAINNET;
+}
+
 /**
  * Function that is loaded at the beginning.
  *
  * @param sNetwork {TypeConnection} the network to connect for the current session
- * @throws {networkConflictError} is injected web3 network is different from sNetwork
+ * @throws {NetworkConflictError} is injected web3 network is different from sNetwork
  * @throws {Error} is TypeConnection is not supported.
  * @throws {blockchainError} is error occurred during blockchain-side process.
  * @return {Promise<Object>} if the app uses an injected wallet or not,
@@ -74,9 +78,8 @@ async function startApp(sNetwork) {
         case "private":
             convertedNetwork = TypeConnection.Unkown;
     }
-
     if (sNetwork !== convertedNetwork) {
-        throw new networkConflictError("Network conflict", convertedNetwork);
+        throw new NetworkConflictError(sNetwork, convertedNetwork);
     }
 
     if (ULCDocAPI.usingInjector()) {

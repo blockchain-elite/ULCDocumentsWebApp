@@ -87,7 +87,7 @@ function UIModeratorManager() {
                         UI.setVerbose(false);
                         UI.setOptimizerEnabled(true);
                         _currentModeratorAddress = _defaultModeratorAddress;
-                        UI.connectToModerator();
+                        UI.connectToModerator(_currentModeratorAddress);
                     }
                 },
                 formSubmit: {
@@ -126,7 +126,7 @@ function UIModeratorManager() {
                     btnClass: 'btn-orange',
                     action: function () {
                         _currentModeratorAddress = address;
-                        UI.connectToModerator();
+                        UI.connectToModerator(_currentModeratorAddress);
                     }
                 },
                 cancel: function () {
@@ -165,48 +165,49 @@ function UIModeratorManager() {
      * Fill the moderator info table with information.
      * Display an error if info is undefined.
      *
-     * @param info {Map} Result Map or undefined to use the error text.
+     * @param info {Object} Result Object or undefined to use the error text.
      * @param errorText {String} Error text to display if result is undefined.
      */
     this.setModeratorInfo = function (info, errorText) {
         $.selector_cache("#moderatorInfoBody").fadeOut('fast', function () {
-            if (info !== undefined && info.size > 0) {
+            if (info !== undefined) {
                 logMe(UIManagerPrefix, 'Setting moderator info', TypeInfo.Info);
                 $.selector_cache('#moderatorInfoZone').show();
                 $.selector_cache('#moderatorInfoEmptyZone').hide();
                 // Reserved fields
-                if (info.has(moderatorReservedKeys.register))
-                    $.selector_cache(".moderator-registration-link").attr('href', info.get(moderatorReservedKeys.register));
+                if (info.registerURL !== undefined)
+                    $.selector_cache(".moderator-registration-link").attr('href', info.registerURL);
                 else {
                     $.selector_cache(".moderator-registration-link").hide();
                     logMe(UIManagerPrefix, 'No moderator registration link provided', TypeInfo.Warning);
                 }
-                if (info.has(moderatorReservedKeys.contact))
-                    $.selector_cache(".moderator-contact-link").attr('href', info.get(moderatorReservedKeys.contact));
+                if (info.moderatorURL !== undefined)
+                    $.selector_cache(".moderator-contact-link").attr('href', info.moderatorURL);
                 else {
                     $.selector_cache(".moderator-contact-link").hide();
                     logMe(UIManagerPrefix, 'No moderator contact link provided', TypeInfo.Warning);
                 }
-                if (info.has(moderatorReservedKeys.search))
-                    $.selector_cache(".moderator-search-link").attr('href', info.get(moderatorReservedKeys.search));
+                if (info.searchURL !== undefined)
+                    $.selector_cache(".moderator-search-link").attr('href', info.searchURL);
                 else {
                     $.selector_cache(".moderator-search-link").hide();
                     logMe(UIManagerPrefix, 'No moderator search link provided', TypeInfo.Warning);
                 }
 
                 // Other fields
-                let $moderatorInfoTable = $.selector_cache("#moderatorInfoTable");
+                // let $moderatorInfoTable = $.selector_cache("#moderatorInfoTable");
                 let isInfoEmpty = true;
-                for (let [key, value] of info) {
-                    if (!isValueInObject(key, moderatorReservedKeys)) {
-                        isInfoEmpty = false;
-                        $moderatorInfoTable.append(
-                            "<tr>\n" +
-                            "<th scope='row'>" + capitalizeFirstLetter(key) + "</th>\n" +
-                            "<td>" + value + "</td>\n" +
-                            "</tr>");
-                    }
-                }
+                // TODO make it work with new api
+                // for (let [key, value] of info) {
+                //     if (!isValueInObject(key, moderatorReservedKeys)) {
+                //         isInfoEmpty = false;
+                //         $moderatorInfoTable.append(
+                //             "<tr>\n" +
+                //             "<th scope='row'>" + capitalizeFirstLetter(key) + "</th>\n" +
+                //             "<td>" + value + "</td>\n" +
+                //             "</tr>");
+                //     }
+                // }
                 if (isInfoEmpty)
                     $.selector_cache("#moderatorAdditionalInfoZone").hide();
             } else {

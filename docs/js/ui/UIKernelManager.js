@@ -1,8 +1,23 @@
+let KERNEL_CONNECTION_TYPE = {
+    connected: 1,
+    loading: 2,
+    error: 3,
+    notConnected: 4,
+};
+
+let KERNEL_REFERENCEMENT_STATUS = {
+    referenced: 0,
+    notReferenced: 1,
+    initialized: 2,
+    revoked: 3,
+    error: 4,
+};
+
 function UIKernelManager() {
     let _isKernelConnected = false; // Is the user connected to a valid kernel ?
-    let _currentKernelInfo = new Map();
+    let _currentKernelIdentity = {};
     let _currentKernelAddress = ""; // The current kernel address the user is connected to
-    let _isReferenced = false;
+    let _currentKernelConfig = {};
 
     let kernelInfoDOM = '<div class="row" id="kernelInfoZone">\n' +
         '<div class="col-lg" id="kernelInfoCol">\n' +
@@ -17,9 +32,9 @@ function UIKernelManager() {
         '<i class="fas fa-phone" style="width: 20px"></i>\n' +
         '<span id="kernelPhone">#PHONE</span>\n' +
         '</p>\n' +
-        '<p id="kernelAddressContainer">\n' +
+        '<p id="kernelPhysicalAddressContainer">\n' +
         '<i class="fas fa-map-marker-alt" style="width: 20px"></i>\n' +
-        '<a id="kernelAddress" href="" target="_blank">#Address</a>\n' +
+        '<a id="kernelPhysicalAddress" href="" target="_blank">#Address</a>\n' +
         '</p>\n' +
         '<p id="kernelUrlContainer">\n' +
         '<i class="fas fa-globe" style="width: 20px"></i>\n' +
@@ -80,11 +95,43 @@ function UIKernelManager() {
         _currentKernelAddress = val;
     };
 
-    let fillKernelInfo = function () {
-        if (_isReferenced) {
+    this.setCurrentKernelIdentity = function (kernelIdentity) {
+        _currentKernelIdentity = kernelIdentity;
+    };
+
+    this.getCurrentKernelIdentity = function () {
+        return _currentKernelIdentity;
+    };
+
+    this.setCurrentKernelConfig = function (kernelConfig) {
+        _currentKernelConfig = kernelConfig;
+    };
+
+    this.getCurrentKernelConfig = function () {
+        return _currentKernelConfig;
+    };
+
+    this.getKernelStatus = function() {
+        let status = KERNEL_REFERENCEMENT_STATUS.error;
+
+        if (_currentKernelIdentity !== undefined) {
+            if (_currentKernelIdentity.initialized && _currentKernelIdentity.confirmed && !_currentKernelIdentity.revoked)
+                status = KERNEL_REFERENCEMENT_STATUS.referenced;
+            else if (_currentKernelIdentity.initialized && _currentKernelIdentity.confirmed && _currentKernelIdentity.revoked)
+                status = KERNEL_REFERENCEMENT_STATUS.revoked;
+            else if (_currentKernelIdentity.initialized && !_currentKernelIdentity.confirmed)
+                status = KERNEL_REFERENCEMENT_STATUS.initialized;
+            else if (!_currentKernelIdentity.initialized)
+                status = KERNEL_REFERENCEMENT_STATUS.notReferenced;
+        }
+        return status;
+    };
+
+    this.fillKernelIdentity = function () {
+        if (this.getKernelStatus() === KERNEL_REFERENCEMENT_STATUS.referenced) {
             $.selector_cache('#kernelInfoContainer').html(kernelInfoDOM);
-            setKernelReservedFields(_currentKernelInfo);
-            setKernelExtraData(_currentKernelInfo);
+            setKernelReservedFields(_currentKernelIdentity);
+            setKernelExtraData(_currentKernelIdentity);
         } else
             $.selector_cache('#kernelInfoContainer').html(kernelInfoWarningDOM);
     };
@@ -153,7 +200,7 @@ function UIKernelManager() {
                             UI.setUIMode(APP_MODE.sign, false);
                         }
                         _currentKernelAddress = address;
-                        UI.connectToKernel();
+                        UI.tryKernelConnection(_currentKernelAddress);
                     }
                 },
                 cancel: function () {
@@ -178,7 +225,7 @@ function UIKernelManager() {
             $.selector_cache('#kernelConnectedAddress').html('Connection in progress...');
             $.selector_cache('#kernelConnectionInfoIcon').attr('class', 'fas fa-circle-notch fa-spin fa-fw');
             $.selector_cache('#kernelConnectionLoadingIcon').attr('class', 'fas fa-circle-notch fa-spin fa-fw');
-            this.setKernelInfo(undefined, TypeInfo.Info);
+            this.setKernelInfoBox(KERNEL_CONNECTION_TYPE.loading);
         } else {
             $.selector_cache('#kernelConnectionLoadingIcon').attr('class', 'fas fa-arrow-right');
         }
@@ -188,57 +235,47 @@ function UIKernelManager() {
      * Fill the kernel info table with information from result.
      * Display an error if result is undefined.
      *
-     * @param result {Map} Result dictionary or undefined to use the error text.
-     * @param errorType {TypeInfo} Type of the error.
+     * @param kernelConnectionStatus {KERNEL_CONNECTION_TYPE} he connection type to set the UI in
      */
-    this.setKernelInfo = function (result, errorType) {
+    this.setKernelInfoBox = function (kernelConnectionStatus) {
         $.selector_cache('#kernelInputForm').hide();
         $.selector_cache('#kernelLoadingIcon').hide();
-        if (result !== undefined) {
+        if (kernelConnectionStatus === KERNEL_CONNECTION_TYPE.connected) {
             logMe(UIManagerPrefix, 'Setting kernel info', TypeInfo.Info);
             $.selector_cache('#kernelInfoZone').show();
             $.selector_cache('#kernelInfoEmptyZone').hide();
             $.selector_cache('#kernelConnectionEditButton').show();
             $.selector_cache('#kernelConnectionShowMoreButton').show();
             $.selector_cache('#kernelConnectionShareButton').show();
-            _currentKernelInfo = result;
-            setKernelConnectedAddress(result);
-            _isReferenced = true;
-        } else {
+
+            setCurrentKernelConnectedAddress();
+        } else { // kernel is not connected
             $.selector_cache('#kernelInfoZone').hide();
             $.selector_cache('#kernelInfoEmptyZone').show();
             $.selector_cache('#kernelConnectionEditButton').hide();
             $.selector_cache('#kernelConnectionShowMoreButton').hide();
             $.selector_cache('#kernelConnectionShareButton').hide();
-
             let errorText = "";
-            switch (errorType) {
-                case TypeInfo.Warning:
-                    _isReferenced = false;
-                    $.selector_cache('#kernelConnectionShowMoreButton').show();
-                    $.selector_cache('#kernelConnectionEditButton').show();
-                    $.selector_cache('#kernelConnectionShareButton').show();
-                    $.selector_cache('#kernelInfoEmptyZone').hide();
-                    break;
-                case TypeInfo.Critical:
+            switch (kernelConnectionStatus) {
+                case KERNEL_CONNECTION_TYPE.error:
                     errorText = 'Connection could not be established, please enter a valid address below:';
                     $.selector_cache('#kernelConnectionEditButton').show();
                     $.selector_cache('#kernelInputForm').show();
                     break;
-                case TypeInfo.Info:
+                case KERNEL_CONNECTION_TYPE.loading:
                     errorText = 'Loading...';
                     $.selector_cache('#kernelLoadingIcon').show();
                     break;
-                default:
+                case KERNEL_CONNECTION_TYPE.notConnected:
                     errorText = 'Not connected, please enter a kernel address below';
                     $.selector_cache('#kernelConnectionEditButton').show();
                     $.selector_cache('#kernelInputForm').show();
                     break;
             }
-            this.updateKernelButtonsState();
             $.selector_cache("#kernelInfoEmptyText").html(errorText);
+            this.updateKernelButtonsState();
         }
-        fillKernelInfo();
+        this.fillKernelIdentity();
     };
 
     /**
@@ -254,48 +291,48 @@ function UIKernelManager() {
     /**
      * Set the value for the reserved Kernel fields
      *
-     * @param kernelInfo {Map} The information received from backend
+     * @param kernelInfo {Object} The information received from backend
      */
     let setKernelReservedFields = function (kernelInfo) {
-        if (kernelInfo.has(kernelReservedKeys.img) && kernelInfo.get(kernelReservedKeys.img) !== "") {
-            $("#kernelImg").attr('src', kernelInfo.get(kernelReservedKeys.img)).hide();
+        if (kernelInfo.imageURL !== undefined && kernelInfo.imageURL !== '') {
+            $("#kernelImg").attr('src', kernelInfo.imageURL).hide();
             onImgLoad("#kernelImg", function () {
                 $("#kernelImg").fadeIn('fast');
             });
         }
 
-        if (kernelInfo.has(kernelReservedKeys.name) && kernelInfo.get(kernelReservedKeys.name) !== "")
-            $("#kernelName").text(kernelInfo.get(kernelReservedKeys.name));
+        if (kernelInfo.name !== undefined && kernelInfo.name !== "")
+            $("#kernelName").text(kernelInfo.name);
         else
-            $("#kernelName").text(kernelInfo.get('Kernel Information'));
+            $("#kernelName").text('Kernel Information');
 
-        if (kernelInfo.has(kernelReservedKeys.isOrganisation) && kernelInfo.get(kernelReservedKeys.isOrganisation) === true)
+        if (kernelInfo.organization !== undefined && kernelInfo.organization === true)
             $("#kernelOrganization").text('This entity is an organization');
         else
             $("#kernelOrganization").text('This entity is not an organization');
 
-        if (kernelInfo.has(kernelReservedKeys.phone) && kernelInfo.get(kernelReservedKeys.phone) !== '')
-            $("#kernelPhone").text(kernelInfo.get(kernelReservedKeys.phone));
+        if (kernelInfo.phone && kernelInfo.phone !== '')
+            $("#kernelPhone").text(kernelInfo.phone);
         else
             $("#kernelPhoneContainer").hide();
 
-        if (kernelInfo.has(kernelReservedKeys.physicalAddress) && kernelInfo.get(kernelReservedKeys.physicalAddress) !== '') {
-            $("#kernelAddress").text(kernelInfo.get(kernelReservedKeys.physicalAddress)).attr('href', OSM_QUERY_LINK + kernelInfo.get(kernelReservedKeys.physicalAddress));
+        if (kernelInfo.physicalAddress && kernelInfo.physicalAddress !== '') {
+            $("#kernelPhysicalAddress").text(kernelInfo.physicalAddress).attr('href', OSM_QUERY_LINK + kernelInfo.physicalAddress);
         } else
-            $("#kernelAddressContainer").hide();
+            $("#kernelPhysicalAddressContainer").hide();
 
-        if (kernelInfo.has(kernelReservedKeys.url) && kernelInfo.get(kernelReservedKeys.url) !== "") {
-            $("#kernelUrl").attr('href', kernelInfo.get(kernelReservedKeys.url)).text(kernelInfo.get(kernelReservedKeys.url));
+        if (kernelInfo.url && kernelInfo.url !== "") {
+            $("#kernelUrl").attr('href', kernelInfo.url).text(kernelInfo.url);
         } else
             $("#kernelUrlContainer").hide();
 
-        if (kernelInfo.has(kernelReservedKeys.mail) && kernelInfo.get(kernelReservedKeys.mail) !== "") {
-            $("#kernelMail").attr('href', 'mailto:' + kernelInfo.get(kernelReservedKeys.mail)).text(kernelInfo.get(kernelReservedKeys.mail));
+        if (kernelInfo.mail && kernelInfo.mail !== "") {
+            $("#kernelMail").attr('href', 'mailto:' + kernelInfo.mail).text(kernelInfo.mail);
         } else
             $("#kernelMailContainer").hide();
 
-        if (kernelInfo.has(kernelReservedKeys.version) && kernelInfo.get(kernelReservedKeys.version) !== "")
-            $("#kernelVersion").text('Version ' + kernelInfo.get(kernelReservedKeys.version));
+        if (kernelInfo.version !== undefined)
+            $("#kernelVersion").text('Version ' + kernelInfo.version);
         else
             $("#kernelVersion").hide();
     };
@@ -303,12 +340,12 @@ function UIKernelManager() {
     /**
      * Set the extra data for the kernel
      *
-     * @param kernelInfo {Map} The information received from backend
+     * @param kernelInfo {Object} The information received from backend
      */
     let setKernelExtraData = function (kernelInfo) {
-        if (kernelInfo.get(kernelReservedKeys.extraData) !== undefined && kernelInfo.get(kernelReservedKeys.extraData).size) {
+        if (kernelInfo.extraData !== undefined && kernelInfo.extraData.size) {
             let $kernelExtraDataTable = $("#kernelExtraDataTable");
-            for (let [key, value] of kernelInfo.get(kernelReservedKeys.extraData)) {
+            for (let [key, value] of kernelInfo.extraData) {
                 $kernelExtraDataTable.append(
                     "<tr>\n" +
                     "<th scope='row'>" + capitalizeFirstLetter(key) + "</th>\n" +
@@ -321,13 +358,11 @@ function UIKernelManager() {
 
     /**
      * Set the current connected kernel name, or address if not referenced by moderator
-     *
-     * @param kernelInfo {Map} The information received from backend
      */
-    let setKernelConnectedAddress = function (kernelInfo) {
-        if (kernelInfo.has(kernelReservedKeys.name)) {
-            $.selector_cache('#kernelConnectedAddress').html("<strong><span id='kernelName'></span></strong>");
-            $('#kernelName').text(kernelInfo.get(kernelReservedKeys.name));
+    let setCurrentKernelConnectedAddress = function () {
+        if (_currentKernelIdentity.name !== undefined) {
+            $.selector_cache('#kernelConnectedAddress').html("<strong><span id='kernelAddress'></span></strong>");
+            $('#kernelAddress').text(_currentKernelIdentity.name);
 
         } else {
             $.selector_cache('#kernelConnectedAddress').html("<span id='kernelAddress'></span>");
