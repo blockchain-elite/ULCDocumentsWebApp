@@ -1050,7 +1050,7 @@ ULCDocAPI.DependancyError = function(message){
  */
 ULCDocAPI.DEFAULT_ADDRESS = new function () {
     this.BCE_MOD_MAINNET = "";
-    this.BCE_MOD_ROPSTEN = "0x5ea18f6d4cd7c3189bf179a501937b110f0f731d";
+    this.BCE_MOD_ROPSTEN = "0x7829C83A83040Df97a6c1555bd0f9Fe9c979AfC9";
 };
 
 /**
