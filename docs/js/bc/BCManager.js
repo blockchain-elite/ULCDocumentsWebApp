@@ -36,7 +36,7 @@ function getDefaultModerator(isRopsten) {
  * @param sNetwork {TypeConnection} the network to connect for the current session
  * @throws {NetworkConflictError} is injected web3 network is different from sNetwork
  * @throws {Error} is TypeConnection is not supported.
- * @throws {blockchainError} is error occurred during blockchain-side process.
+ * @throws {ULCDocAPI.BlockchainQueryError} is error occurred during blockchain-side process.
  * @return {Promise<Object>} if the app uses an injected wallet or not,
  * and the default moderator config object
  */
@@ -91,11 +91,7 @@ async function startApp(sNetwork) {
 
     CONF_TYPE_CONNECTION = sNetwork;
 
-    try {
         return {isUsingInjector: ULCDocAPI.usingInjector(), moderatorObject: await myModerator.connect()};
-    } catch (e) {
-        throw new blockchainError(e.message);
-    }
 }
 
 /**
@@ -104,7 +100,7 @@ async function startApp(sNetwork) {
  *
  * @param kernelAddress {String} the kernel to check
  * @throws {Error} if app not started
- * @throws {blockchainError} if error occured during query.
+ * @throws {ULCDocAPI.BlockchainQueryError} if error occured during query.
  * @returns {Promise<KernelIdentity>}
  */
 async function queryKernelAddress(kernelAddress) {
@@ -115,11 +111,7 @@ async function queryKernelAddress(kernelAddress) {
         throw new Error("moderator not connected");
     }
 
-    try {
         return await myModerator.query(kernelAddress);
-    } catch (e) {
-        throw new blockchainError(e.message);
-    }
 
 }
 
@@ -130,6 +122,7 @@ async function queryKernelAddress(kernelAddress) {
  * @param kernelAddress {String} new kernel you want to connect to.
  * @throws {Error} if invalid address
  * @throws {Error} if app not started
+ * @throws {ULCDocAPI.BlockchainQueryError}
  * @returns {Promise<KernelConfig>}
  */
 async function updateKernel(kernelAddress) {
@@ -140,13 +133,8 @@ async function updateKernel(kernelAddress) {
         throw new Error("App not started");
     }
 
-
-    try {
         myKernel = myInteractor.getKernel(kernelAddress);
         return myKernel.connect();
-    } catch (e) {
-        throw new Error(e.message);
-    }
 
 }
 
@@ -156,6 +144,7 @@ async function updateKernel(kernelAddress) {
  * @param {String} moderatorAddress new moderator address
  * @throws {Error} if app not started
  * @throws {Error} if bad address
+ * @throws {ULCDocAPI.BlockchainQueryError}
  * @return Promise<ModeratorConfig>
  **/
 async function updateModerator(moderatorAddress) {
@@ -166,13 +155,8 @@ async function updateModerator(moderatorAddress) {
         throw new Error("App not started");
     }
 
-
-    try {
         myModerator = myInteractor.getModerator(moderatorAddress);
         return myModerator.connect();
-    } catch (e) {
-        throw new Error(e.message);
-    }
 
 }
 
@@ -187,6 +171,7 @@ async function updateModerator(moderatorAddress) {
  * Function that check if the file is signed by the kernel
  *
  * @param  {File} myFile a file object to check
+ * @throws {ULCDocAPI.BlockchainQueryError}
  * @fires hashAvailable the hash when it's calculated
  * @return Promise<DocumentData>
  */
@@ -214,6 +199,7 @@ async function checkFile(myFile) {
  * Function that check if the text is signed by the kernel
  *
  * @param myText {string} the text to hash
+ * @throws {ULCDocAPI.BlockchainQueryError}
  * @fires hashAvailable the hash when it's calculated
  * @return Promise<DocumentData>
  */
@@ -230,6 +216,7 @@ async function checkText(myText) {
  * Function that check if the hash is signed by the kernel
  *
  * @param myHash {string} the hash to check
+ * @throws {ULCDocAPI.BlockchainQueryError}
  * @return Promise<DocumentData>
  */
 async function checkHash(myHash) {
@@ -252,7 +239,7 @@ async function checkHash(myHash) {
 
 /**
  * Function that check if the client's addresses can publish signatures.
- *
+ * @throws {ULCDocAPI.BlockchainQueryError}
  * @return Promise<Map> Map using string keys and boolean values
  */
 async function requestAccountInfo() {
@@ -279,6 +266,7 @@ async function requestAccountInfo() {
  * get how much signatures already added and know if current account already signed the document.
  *
  * @param myHash {String} the hash of the document
+ * @throws {ULCDocAPI.BlockchainQueryError}
  * @return Promise<fetchSignStatus>
  */
 async function fetchHash(myHash) {
