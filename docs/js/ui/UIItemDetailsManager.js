@@ -138,7 +138,7 @@ function UIItemDetailsManager() {
     this.displayItemListProps = function (items) {
         itemPropPopup.onOpenBefore = function () {
             $('#itemTextInput').autoResize();
-            $('#itemHashType').text(getHashAlgorithm());
+            $('#itemHashType').text(UI.getKernelManager().getCurrentKernelConfig().hashMethod);
             UI.getItemDetailsManager().setupItemPopup(items);
             $("#copyHashButton").on('click', function () {
                 copyToClipboard(items[0].getHash());
@@ -247,7 +247,7 @@ function UIItemDetailsManager() {
     let canDisplayBlockchainInformation = function (items) {
         let canDisplay = true;
         for (let i = 0; i < items.length; i++) {
-            if (items[i].getInformation() === undefined || items[i].getInformation().size === 0) {
+            if (items[i].getDocumentData() === undefined || !items[i].getDocumentData().signed) {
                 canDisplay = false;
                 break;
             }
@@ -258,7 +258,7 @@ function UIItemDetailsManager() {
     let canDisplayBlockchainExtraData = function (items) {
         let canDisplay = true;
         for (let i = 0; i < items.length; i++) {
-            if (items[i].getExtraData() === undefined || items[i].getExtraData().size === 0) {
+            if (items[i].getDocumentData().extra_data === undefined || items[i].getDocumentData().extra_data.size === 0) {
                 canDisplay = false;
                 break;
             }
@@ -293,8 +293,8 @@ function UIItemDetailsManager() {
 
 
         // Set the number of signatures needed
-        if (item !== undefined && item.getNeededSign() > 0 && item.getType() !== TypeElement.Unknown)
-            $("#itemNumSignProp").text(item.getNumSign() + "/" + item.getNeededSign()).show();
+        if (item !== undefined && UI.getKernelManager().getCurrentKernelConfig().operatorsForChange > 0 && item.getType() !== TypeElement.Unknown)
+            $("#itemNumSignProp").text(item.getNumSign() + "/" + UI.getKernelManager().getCurrentKernelConfig().operatorsForChange).show();
         else
             $("#itemNumSignContainer").hide();
         // Set the Tx url if available
@@ -358,23 +358,26 @@ function UIItemDetailsManager() {
         if (items.length === 1)
             item = items[0];
 
-        if (item !== undefined && item.getInformation().get(elementReservedKeys.date) !== undefined)
-            $('#fileBlockchainDate').html('<i class="far fa-clock mr-2"></i>Signed on ' + item.getInformation().get(elementReservedKeys.date));
+        let docData = {};
+        if (item !== undefined)
+            docData = item.getDocumentData();
+
+        if (item !== undefined && docData.signed_date !== '')
+            $('#fileBlockchainDate').html('<i class="far fa-clock mr-2"></i>Signed on ' + docData.signed_date);
         else if (item !== undefined)
             $('#fileBlockchainDate').text('');
         else
             $('#fileBlockchainDate').html('<i class="far fa-clock mr-2"></i> Signature date different.');
 
-        if (item !== undefined && (item.getInformation().get(elementReservedKeys.source) === '' || item.getInformation().get(elementReservedKeys.source) === undefined))
+        if (item !== undefined && docData.source === '')
             $('#fileBlockchainSource').text('No source provided.');
         else if (item !== undefined)
-            $('#fileBlockchainSource').text('Source: ' + item.getInformation().get(elementReservedKeys.source));
+            $('#fileBlockchainSource').text('Source: ' + docData.source);
         else
             $('#fileBlockchainSource').text('Source is different.');
 
-        if (item !== undefined && item.getInformation().get(elementReservedKeys.documentFamily) !== '0') {
-            let family = getCompatibleFamily()[item.getInformation().get(elementReservedKeys.documentFamily)]; // Get the document family string
-            $('#fileBlockchainFamily').text('Signed as: ' + family);
+        if (item !== undefined && docData.document_family !== '') {
+            $('#fileBlockchainFamily').text('Signed as: ' + docData.document_family);
         } else if (item !== undefined)
             $('#fileBlockchainFamily').text('');
         else
@@ -388,7 +391,7 @@ function UIItemDetailsManager() {
         extraDataTable.html('');
         let counter = 0;
         if (items.length === 1) {
-            for (let [key, value] of items[0].getExtraData()) {
+            for (let [key, value] of items[0].getDocumentData().extra_data) {
                 counter++;
                 extraDataTable.append(
                     "<tr>\n" +
@@ -407,15 +410,13 @@ function UIItemDetailsManager() {
      */
     let setupSourceInputField = function (items) {
         let sourceInput = $("#infoSourceInput");
-        if (items.length === 1 && items[0].getInformation().has(elementReservedKeys.source))
-            sourceInput.val(items[0].getInformation().get(elementReservedKeys.source));
-        else if (items.length === 1)
-            sourceInput.val('');
+        if (items.length === 1)
+            sourceInput.val(items[0].getDocumentData().source);
         else {
             let different = false;
-            let src = items[0].getInformation().get(elementReservedKeys.source);
+            let src = items[0].getDocumentData().source;
             for (let i = 0; i < items.length; i++) {
-                if (items[i].getInformation().get(elementReservedKeys.source) !== src) {
+                if (items[i].getDocumentData().source !== src) {
                     different = true;
                     break;
                 }
@@ -426,16 +427,11 @@ function UIItemDetailsManager() {
                 sourceInput.val(src);
         }
 
-
         sourceInput.off('change keyup paste').on('change keyup paste', function () { // reset callback
             let val = sourceInput.val();
             for (let i = 0; i < items.length; i++) {
-                if (val !== '')
-                    items[i].getInformation().set(elementReservedKeys.source, val);
-                else
-                    items[i].getInformation().delete(elementReservedKeys.source);
+                items[i].getDocumentData().source = val;
             }
-
         });
     };
 
@@ -447,38 +443,27 @@ function UIItemDetailsManager() {
     let createDocFamilyDropDown = function (items) {
         let dropdownButton = $("#docFamilyDropdownButton");
         let dropdownMenu = $("#docFamilyDropdownMenu");
-        let docFamilyArray = getCompatibleFamily();
+        let docFamilyArray = UI.getKernelManager().getCurrentKernelConfig().docFamily;
         // clear menu
         dropdownMenu.html('');
         // Generate dropdown menu entries
-        for (let i = 0; i < getCompatibleFamily().length; i++) {
+        for (let i = 0; i < docFamilyArray.length; i++) {
             dropdownMenu.append("<button class='dropdown-item btn' id='dropdownButton" + i + "'>" + docFamilyArray[i] + "</button>");
             $("#dropdownButton" + i).on('click', function () {
                 dropdownButton.text(docFamilyArray[i]);
                 for (let j = 0; j < items.length; j++) {
-                    if (i !== 0)
-                        items[j].getInformation().set(elementReservedKeys.documentFamily, i);
-                    else
-                        items[j].getInformation().delete(elementReservedKeys.documentFamily);
+                    items[j].getDocumentData().document_family_id = i;
                 }
-
             });
         }
         // Set default value
-        if (items.length === 1 && items[0].getInformation().has(elementReservedKeys.documentFamily))
-            dropdownButton.text(docFamilyArray[items[0].getInformation().get(elementReservedKeys.documentFamily)]);
-        else if (items.length === 1)
-            dropdownButton.text(docFamilyArray[0]);
+        if (items.length === 1)
+            dropdownButton.text(docFamilyArray[items[0].getDocumentData().document_family_id]);
         else {
             let different = false;
-            let type = 0;
-            if (items[0].getInformation().has(elementReservedKeys.documentFamily))
-                type = items[0].getInformation().get(elementReservedKeys.documentFamily);
+            let type = items[0].getDocumentData().document_family_id;
             for (let i = 0; i < items.length; i++) {
-                let iType = 0;
-                if (items[i].getInformation().has(elementReservedKeys.documentFamily))
-                    iType = items[i].getInformation().get(elementReservedKeys.documentFamily);
-                if (iType !== type) {
+                if (items[i].getDocumentData().document_family_id !== type) {
                     different = true;
                     break;
                 }

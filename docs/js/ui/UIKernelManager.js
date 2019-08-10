@@ -79,38 +79,78 @@ function UIKernelManager() {
         '</div>' +
         '</div>';
 
+    /**
+     * If we are connected to the current kernel. If this is false, every other information can be ignored
+     * @return {boolean}
+     */
     this.isConnected = function () {
         return _isKernelConnected;
     };
 
+    /**
+     * Set the connected state of the current kernel
+     * @param val {boolean}
+     */
     this.setConnected = function (val) {
         _isKernelConnected = val;
     };
 
+    /**
+     * Get the current Kernel address
+     * @return {string}
+     */
     this.getCurrentAddress = function () {
         return _currentKernelAddress;
     };
 
+    /**
+     * The set current kernel address
+     * @param val {string}
+     */
     this.setCurrentAddress = function (val) {
         _currentKernelAddress = val;
     };
 
+    /**
+     * Set the current kernel identity.
+     * Must receive a KernelIdentity Object from ULCDoc API
+     * @param kernelIdentity {KernelIdentity}
+     */
     this.setCurrentKernelIdentity = function (kernelIdentity) {
         _currentKernelIdentity = kernelIdentity;
     };
 
+    /**
+     * Get the current kernel Identity.
+     * Returns a KernelIdentity Object form ULCDoc API
+     * @return {KernelIdentity}
+     */
     this.getCurrentKernelIdentity = function () {
         return _currentKernelIdentity;
     };
 
+    /**
+     * Set the current kernel configuration.
+     * Must receive a KernelConfig Object form ULCDoc API
+     * @param kernelConfig {KernelConfig}
+     */
     this.setCurrentKernelConfig = function (kernelConfig) {
         _currentKernelConfig = kernelConfig;
     };
 
+    /**
+     * Get the current kernel configuration.
+     * Returns a KernelConfig Object from ULCDoc API
+     * @returns  {KernelConfig}
+     */
     this.getCurrentKernelConfig = function () {
         return _currentKernelConfig;
     };
 
+    /**
+     * Get the current kernel status depending on information in it's kernel identity object.
+     * @return {KERNEL_REFERENCEMENT_STATUS}
+     */
     this.getKernelStatus = function() {
         let status = KERNEL_REFERENCEMENT_STATUS.error;
 
@@ -127,6 +167,9 @@ function UIKernelManager() {
         return status;
     };
 
+    /**
+     * Set current kernel info box to display information or a warning
+     */
     this.fillKernelIdentity = function () {
         if (this.getKernelStatus() === KERNEL_REFERENCEMENT_STATUS.referenced) {
             $.selector_cache('#kernelInfoContainer').html(kernelInfoDOM);
@@ -233,7 +276,6 @@ function UIKernelManager() {
 
     /**
      * Fill the kernel info table with information from result.
-     * Display an error if result is undefined.
      *
      * @param kernelConnectionStatus {KERNEL_CONNECTION_TYPE} he connection type to set the UI in
      */

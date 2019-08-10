@@ -363,7 +363,14 @@ function UIManager() {
     let askForAccounts = function () {
         if (!_isAccountsListAvailable) {
             _isLoadingAccounts = true;
-            requestAccountInfo();
+            requestAccountInfo()
+                .then((accountsMaps) => {
+                    updateAccounts(accountsMaps);
+                })
+                .catch((err) => {
+                    console.log(err);
+                    updateAccounts(undefined);
+                });
         }
     };
 
@@ -459,7 +466,7 @@ function UIManager() {
             });
     };
 
-    let connectToKernel = function() {
+    let connectToKernel = function () {
         updateKernel(_kernelManager.getCurrentAddress())
             .then((kernelConfig) => {
                 _kernelManager.setCurrentKernelConfig(kernelConfig);
@@ -1062,48 +1069,69 @@ function UIManager() {
             log('Checking next item', TypeInfo.Info);
             updateProgress(_itemsProcessedCounter, false);
             let currentItem = getCurrentListItemByIndex(_itemsProcessedCounter);
-            if (_currentAppMode === APP_MODE.check) {
+            customCheckItem(currentItem, (hash) => {
+                updateElementHash(currentItem, hash);
+                if (_currentAppMode === APP_MODE.check)
+                    customFetchItem(currentItem);
+            });
+            if (_currentAppMode === APP_MODE.check)
                 $.selector_cache('#actionInProgress').html('Checking...');
-                if (currentItem.getHash() !== '') {
-                    currentItem.setType(TypeElement.Loading);
-                    checkHash(currentItem.getHash(), currentItem.getIndex());
-                } else {
-                    switch (_currentTab) {
-                        case TAB_TYPE.file:
-                            checkFile(currentItem.getFile(), currentItem.getIndex());
-                            break;
-                        case TAB_TYPE.text:
-                            checkText(currentItem.getText(), currentItem.getIndex());
-                            break;
-                        case TAB_TYPE.hash:
-                            checkHash(currentItem.getHash(), currentItem.getIndex());
-                            break;
-                    }
-                }
-            } else {
+            else
                 $.selector_cache('#actionInProgress').html('Fetching information...');
-                // Do not calculate the hash if we already have it
-                if (currentItem.getHash() !== '')
-                    fetchHash(currentItem.getHash(), currentItem.getIndex());
-                else {
-                    switch (_currentTab) {
-                        case TAB_TYPE.file:
-                            fetchFile(currentItem.getFile(), currentItem.getIndex());
-                            break;
-                        case TAB_TYPE.text:
-                            fetchText(currentItem.getText(), currentItem.getIndex());
-                            break;
-                        case TAB_TYPE.hash:
-                            fetchHash(currentItem.getHash(), currentItem.getIndex());
-                            break;
-                    }
-                }
 
-            }
         } else if (_currentAppMode === APP_MODE.check) // If we finished checking
             endCheck();
         else  // if we finished fetching
             trySign();
+    };
+
+    /**
+     *
+     * @param currentItem {ListItem|TextListItem|FileListItem|HashListItem}
+     * @param onHashAvailable {Function}
+     */
+    let customCheckItem = function (currentItem, onHashAvailable) {
+        // Do not calculate the hash if we already have it
+        if (currentItem instanceof HashListItem || currentItem.getHash() !== '') {
+            currentItem.setType(TypeElement.Loading);
+            checkHash(currentItem.getHash())
+                .then((docData) => {
+                    updateElementInfo(currentItem, docData)
+                })
+                .catch((err) => {
+                    console.log(err);
+                    updateElementInfo(currentItem, undefined);
+                });
+        } else if (currentItem instanceof FileListItem) {
+            checkFile(currentItem.getFile(), onHashAvailable)
+                .then((docData) => {
+                    updateElementInfo(currentItem, docData)
+                })
+                .catch((err) => {
+                    console.log(err);
+                    updateElementInfo(currentItem, undefined);
+                });
+        } else {
+            checkText(currentItem.getText(), onHashAvailable)
+                .then((docData) => {
+                    updateElementInfo(currentItem, docData)
+                })
+                .catch((err) => {
+                    console.log(err);
+                    updateElementInfo(currentItem, undefined);
+                });
+        }
+    };
+
+    let customFetchItem = function (currentItem) {
+        fetchHash(currentItem.getHash())
+            .then((signStatus) => {
+                console.log(signStatus);
+            })
+            .catch((err) => {
+                console.log(err);
+                updateElementInfo(currentItem, undefined);
+            });
     };
 
     /**
@@ -1262,30 +1290,22 @@ function UIManager() {
                         _elementsToSign = getCurrentList().size;
                         _elementSigned = 0;
                         $.selector_cache('#actionInProgress').html('Signing...');
-
-                        if (!_isOptimizerEnabled) {
-                            log('Signing without optimizer', TypeInfo.Info);
-                            _itemsProcessedCounter = 0;
-                            for (_itemsProcessedCounter = 0; _itemsProcessedCounter < getCurrentList().size; _itemsProcessedCounter++) {
-                                updateProgress(_itemsProcessedCounter, false);
-                                let currentItem = getCurrentListItemByIndex(_itemsProcessedCounter);
-                                signDocument(currentItem.getHash(), getItemInfoToSign(currentItem), currentItem.getIndex());
-                            }
-                            endSign();
-                        } else {
-                            log('Signing with optimizer', TypeInfo.Info);
-                            let requests = [[], [], []];
-                            for (_itemsProcessedCounter = 0; _itemsProcessedCounter < getCurrentList().size; _itemsProcessedCounter++) {
-                                updateProgress(_itemsProcessedCounter, false);
-                                let currentItem = getCurrentListItemByIndex(_itemsProcessedCounter);
-                                requests[0].push(currentItem.getHash());
-                                requests[1].push(getItemInfoToSign(currentItem));
-                                requests[2].push(currentItem.getIndex());
-                            }
-                            updateProgress(_itemsProcessedCounter, true);
-                            signOptimisedDocuments(requests[0], requests[1], requests[2]);
+                        log('Signing...', TypeInfo.Info);
+                        let items = [];
+                        let indexes = [];
+                        for (_itemsProcessedCounter = 0; _itemsProcessedCounter < getCurrentList().size; _itemsProcessedCounter++) {
+                            updateProgress(_itemsProcessedCounter, false);
+                            let currentItem = getCurrentListItemByIndex(_itemsProcessedCounter);
+                            currentItem.getDocumentData().extra_data = customExtraToMap(currentItem.getCustomExtraData());
+                            items.push(currentItem.getDocumentData());
+                            indexes.push(currentItem.getIndex());
                         }
-
+                        updateProgress(_itemsProcessedCounter, true);
+                        signDocuments(items, indexes, _isOptimizerEnabled,
+                            (id, url) => updateTransactionTx(id, url),
+                            (id, receipt) => updateTransactionState(id, true),
+                            (id, error) => updateTransactionState(id, false));
+                        endSign();
                     }
                 },
                 cancel: function () {
@@ -1293,27 +1313,6 @@ function UIManager() {
                 },
             }
         });
-    };
-
-    /**
-     * Get a map containing information to sign, or undefined if no info has been entered
-     *
-     * @param item {ListItem} The list item to sign
-     * @return {Map<any, any>} The map of information to sign or undefined
-     */
-    let getItemInfoToSign = function (item) {
-        let infoMap = new Map(item.getInformation());
-        if (item.getNumSign() === 0) {// We are the first to sign, we can enter values
-            item.sanitizeCustomExtraData();
-            if (item.getCustomExtraData().length) {// We have valid extra data
-                item.setExtraData(customExtraToMap(item.getCustomExtraData()));
-                infoMap.set(elementReservedKeys.extraData, item.getExtraData());
-            }
-            if (infoMap.size === 0) //If no data, set map to undefined
-                infoMap = undefined;
-        } else // We are not the first one to sign, we cannot enter new values
-            infoMap = undefined;
-        return infoMap;
     };
 
     /**
@@ -1708,7 +1707,7 @@ function UIManager() {
         $('[data-toggle="tooltip"]').tooltip(); // enable Popper.js tooltips
         registerEvents();
         UI.resetProgress();
-        this.updateAccounts(undefined);
+        updateAccounts(undefined);
         _canUseDropZone = true;
         detectCurrentNetwork();
     };
@@ -1898,55 +1897,33 @@ function UIManager() {
     /**
      * Update the element associated to index.
      *
-     * @param index {Number} The file unique index.
-     * @param elementInfo {Map} Map containing file information
+     * @param currentItem {ListItem|FileListItem|TextListItem|HashListItem} The item to update
+     * @param docData {DocumentData}
      */
-    this.updateElement = function (index, elementInfo) {
+    let updateElementInfo = function (currentItem, docData) {
+        console.log(docData);
         let elementType = TypeElement.Unknown;
-        if (elementInfo !== undefined && elementInfo.has(elementReservedKeys.status)) {
-            elementType = elementInfo.get(elementReservedKeys.status);
-            // Separate basic info and extra data, and remove reserved keys from basic info
-            let extraData = undefined;
-            if (elementInfo.has(elementReservedKeys.extraData)) {
-                extraData = elementInfo.get(elementReservedKeys.extraData);
-                elementInfo.delete(elementReservedKeys.extraData);
-            }
-            let signNeed = 0;
-            let signNum = 0;
-            if (elementInfo.has(fetchElementReservedKeys.signNeed) && elementInfo.get(fetchElementReservedKeys.signNeed) > 0) {
-                signNeed = elementInfo.get(fetchElementReservedKeys.signNeed);
-                elementInfo.delete(fetchElementReservedKeys.signNeed);
-                if (elementInfo.has(fetchElementReservedKeys.signPending)) {
-                    signNum = elementInfo.get(fetchElementReservedKeys.signPending);
-                    elementInfo.delete(fetchElementReservedKeys.signPending);
-                }
-            }
-            elementInfo.delete(elementReservedKeys.status);
-            getCurrentListItem(index).setNumSign(signNum);
-            getCurrentListItem(index).setNeededSign(signNeed);
-            // Do not reset element info and extra data if transaction failed
-            getCurrentListItem(index).setInformation(elementInfo);
-            getCurrentListItem(index).setExtraData(extraData);
+        if (docData !== undefined && docData !== {}) {
+            elementType = docData.signed ? TypeElement.Signed : TypeElement.Fake;
+            currentItem.setDocumentData(docData);
         } else {
-            log('Element status unavailable, resetting to default.');
-            getCurrentListItem(index).setInformation(undefined);
-            getCurrentListItem(index).setExtraData(undefined);
+            log('Error occured.');
+            currentItem.setDocumentData({});
+            elementType = TypeElement.Invalid;
         }
         _itemsProcessedCounter += 1;
-        getCurrentListItem(index).setType(elementType);
+        currentItem.setType(elementType);
         checkNextItem();
     };
 
     /**
      * Update the hash of the element associated to index.
      *
-     * @param index {Number} The item unique index.
-     * @param hash {String} The hash to display.
+     * @param currentItem {ListItem|FileListItem|TextListItem|HashListItem} The item to update
      */
-    this.updateElementHash = function (index, hash) {
-        let item = getCurrentListItem(index);
-        item.setType(TypeElement.Loading); // We have the hash, we can start asking blockchain
-        item.setHash(hash);
+    let updateElementHash = function (currentItem, hash) {
+        currentItem.setType(TypeElement.Loading); // We have the hash, we can start asking blockchain
+        currentItem.setHash(hash);
     };
 
     /**
@@ -1957,7 +1934,7 @@ function UIManager() {
      *
      * @param accountsMap {Map} The accounts list
      */
-    this.updateAccounts = function (accountsMap) {
+    let updateAccounts = function (accountsMap) {
         $.selector_cache('#accountsListBody').fadeOut('fast', function () {
             if (accountsMap !== undefined && accountsMap.size !== 0) {
                 let isFirstElem = true;
@@ -2018,11 +1995,11 @@ function UIManager() {
     /**
      * Update the element to tell the user the transaction is currently being processed
      *
-     * @param index {Number} The item unique index
+     * @param id {number} The item unique index
      * @param url {String} The Tx url
      */
-    this.updateTransactionTx = function (index, url) {
-        let item = getCurrentListItem(index);
+    let updateTransactionTx = function (id, url) {
+        let item = getCurrentListItem(id);
         if (url !== undefined) {
             item.setTxUrl(url);
             item.setType(TypeElement.TxProcessing);
@@ -2032,13 +2009,13 @@ function UIManager() {
     /**
      * Update the element to tell the user the transaction has been completed, successfully or not
      *
-     * @param index {Number} The item unique index
+     * @param id {number} The item unique index
      * @param state {Boolean} Whether the transaction was successful or not
      */
-    this.updateTransactionState = function (index, state) {
+    let updateTransactionState = function (id, state) {
         // We unlocked the UI after sending the transactions,
         // so we must find the element in the right tab and check if it isn't removed
-        let item = getItemInAll(index);
+        let item = getCurrentListItem(id);
         if (item !== undefined) {
             if (state) {
                 item.setNumSign(item.getNumSign() + 1);

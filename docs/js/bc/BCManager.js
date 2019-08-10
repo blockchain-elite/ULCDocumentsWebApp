@@ -149,7 +149,7 @@ async function updateKernel(kernelAddress) {
  **/
 async function updateModerator(moderatorAddress) {
 
-    logMe(ULCDocModMasterPrefix, "updating moderator");
+    logMe(ULCDocModMasterPrefix, "Updating moderator");
 
     if (typeof myInteractor === 'undefined') {
         throw new Error("App not started");
@@ -171,13 +171,14 @@ async function updateModerator(moderatorAddress) {
  * Function that check if the file is signed by the kernel
  *
  * @param  {File} myFile a file object to check
+ * @param onHashAvailable {Function}
  * @throws {ULCDocAPI.BlockchainQueryError}
  * @fires hashAvailable the hash when it's calculated
  * @return Promise<DocumentData>
  */
-async function checkFile(myFile) {
+async function checkFile(myFile, onHashAvailable) {
 
-    logMe(ULCDocModMasterPrefix, "checking a new file...");
+    logMe(ULCDocModMasterPrefix, "Checking a new file...");
 
     let hash = await new Promise((resolve) => {
         let reader = new FileReader();
@@ -188,8 +189,8 @@ async function checkFile(myFile) {
         reader.readAsBinaryString(myFile);
     });
 
-    logMe(ULCDocModMasterPrefix, "Success Hashed !");
-    this.emit('hashAvailable', hash);
+    logMe(ULCDocModMasterPrefix, "File successfully hashed !");
+    onHashAvailable(hash);
 
     return await checkHash(hash);
 
@@ -199,15 +200,16 @@ async function checkFile(myFile) {
  * Function that check if the text is signed by the kernel
  *
  * @param myText {string} the text to hash
+ * @param onHashAvailable {Function}
  * @throws {ULCDocAPI.BlockchainQueryError}
  * @fires hashAvailable the hash when it's calculated
  * @return Promise<DocumentData>
  */
-async function checkText(myText) {
-    logMe(ULCDocModMasterPrefix, "checking a new text...");
+async function checkText(myText, onHashAvailable) {
+    logMe(ULCDocModMasterPrefix, "Checking a new text...");
     let hash = CryptoJS.SHA3(myText, {outputLength: 256}).toString();
-    logMe(ULCDocModMasterPrefix, "Success Hashed !");
-    this.emit('hashAvailable', hash);
+    logMe(ULCDocModMasterPrefix, "Text successfully hashed !");
+    onHashAvailable(hash);
     return await checkHash(hash);
 }
 
@@ -232,8 +234,6 @@ async function checkHash(myHash) {
     let myDoc = myKernel.createDocument(myHash);
 
     return await myDoc.load();
-
-
 }
 
 
@@ -279,8 +279,7 @@ async function fetchHash(myHash) {
 
     myHash = "0x" + myHash; // just adjusting to be compatible with bytes32 format.
 
-    let myDoc = myKernel.createDocument(myHash);
-    let myConfirmList = await myKernel.getConfirmList();
+    let myConfirmList = await myKernel.createDocument(myHash).getConfirmList();
     return new fetchSignStatus(myConfirmList.length, myConfirmList.includes(currentAddress));
 }
 
@@ -302,15 +301,14 @@ async function fetchHash(myHash) {
 /**
  * Function used to sign documents using ULCDocument
  *
- * @param myHashes {Array<string>} the hash to be signed
- * @param docs {Array<DocumentData>} the map with all specific info
- * @param indexes {Array<Object>} the index for event
+ * @param items {Array<DocumentData>} the map with all specific info
+ * @param indexes {Array<Object>}
  * @param optimized {boolean} optimized if we use optimised transactions or not
- * @fires txHashURL
- * @fires txSucceed
- * @fires txError
+ * @param onTxHashUrl {Function}
+ * @param onTxSucceed {Function}
+ * @param onTxError {Function}
  */
-function signDocuments(myHashes, docs, indexes, optimized) {
+function signDocuments(items, indexes, optimized, onTxHashUrl, onTxSucceed, onTxError) {
     //We assume here all conditions are filled (if we force here then blockchain security will handle it)
 
     if (!ULCDocAPI.usingInjector()) {
@@ -320,23 +318,23 @@ function signDocuments(myHashes, docs, indexes, optimized) {
         throw new Error("no kernel loaded");
     }
 
-    for (let i in myHashes) {
-        if (!isHashValidFormat(myHashes[i])) {
-            throw new Error("Invalid hash format.");
-        } else {
-            myHashes[i] = "0x" + myHashes[i];
-        }
-    }
-
+    // Add 0x to hashes to make them compatible 32byte format
+    // for (let i =0; i < items.length; i++) {
+    //     if (!isHashValidFormat(items[i].hash)) {
+    //         throw new Error("Invalid hash format.");
+    //     } else {
+    //         items[i].hash = "0x" + items[i].hash;
+    //     }
+    // }
 
     let signQueue = myKernel.createSignQueue(currentAddress,
-        (id, hash) => this.emit('txHashURL', {id: id, url: formatTxURL(hash)}),
-        (id, receipt) => this.emit('txSucceed', {id: id, receipt: receipt}),
-        (id, error) => this.emit('txError', {id: id, error: error}));
+        (id, url) => onTxHashUrl(id, formatTxURL(url)),
+        (id, receipt) => onTxSucceed(id, receipt),
+        (id, error) => onTxError(id, error));
 
-    for (let i = 0; i < myHashes.length; i++) {
-        let newDoc = myKernel.createDocument(myHashes[i]);
-        newDoc.setExtraData(docs[i].extra_data).setSource(docs[i].source).setDocumentFamily(docs[i].document_family_id);
+    for (let i = 0; i < items.length; i++) {
+        let newDoc = myKernel.createDocument(items[i].hash);
+        newDoc.setExtraData(items[i].extra_data).setSource(items[i].source).setDocumentFamily(items[i].document_family_id);
         signQueue.addDoc(newDoc, indexes[i]);
     }
 

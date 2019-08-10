@@ -59,8 +59,7 @@ class ListItem {
         this.index = index;
         this.id = idPrefix + index;
         this.hash = '';
-        this.information = new Map();
-        this.extraData = new Map();
+        this.documentData = undefined;
         this.customExtraData = [];
         this.$item = undefined;
         this.$removeButton = undefined;
@@ -78,8 +77,7 @@ class ListItem {
 
     reset() {
         this.setType(TypeElement.Unknown);
-        this.setInformation(new Map());
-        this.setExtraData(new Map());
+        this.setDocumentData(undefined);
         this.customExtraData = [];
         this.txUrl = '';
     }
@@ -128,24 +126,6 @@ class ListItem {
         return this.numSign;
     }
 
-    /**
-     * Set the number of signatures needed for this item
-     *
-     * @param num {Number} The number of signatures needed
-     */
-    setNeededSign(num) {
-        this.neededSign = num;
-    }
-
-    /**
-     * Get the number of signatures needed for this item
-     *
-     * @return {Number} The number of signatures needed
-     */
-    getNeededSign() {
-        return this.neededSign;
-    }
-
     clearCustomExtraData() {
         this.customExtraData = [];
     }
@@ -178,47 +158,15 @@ class ListItem {
     };
 
     /**
-     * Set the information to be displayed when clicked on this item.
-     * If the item is currently selected, update the details zone.
      *
-     * @param information {Map} Dictionary containing the information.
+     * @return {DocumentData}
      */
-    setInformation(information) {
-        this.information = new Map(information);
-        if (this.isSelected()) {
-            UI.getItemDetailsManager().setupItemPopup(this);
-        }
+    getDocumentData() {
+        return this.documentData;
     }
 
-    /**
-     * Return the information associated to this item.
-     *
-     * @return {Object}
-     */
-    getInformation() {
-        return this.information;
-    }
-
-    /**
-     * Set the extraData to be displayed when clicked on this item.
-     * If the item is currently selected, update the details zone.
-     *
-     * @param extraData {Map} The extra data to display
-     */
-    setExtraData(extraData) {
-        this.extraData = new Map(extraData);
-        if (this.isSelected()) {
-            UI.getItemDetailsManager().setupItemPopup(this);
-        }
-    }
-
-    /**
-     * Return the extra data associated to this item.
-     *
-     * @return {Object}
-     */
-    getExtraData() {
-        return this.extraData;
+    setDocumentData(docData) {
+        this.documentData = docData;
     }
 
     /**
@@ -378,7 +326,7 @@ class ListItem {
         this.$removeButton.prop('disabled', true);
         let object = this;
         animateCss($("#" + this.id), this.OUT_ANIM, function () {
-            UI.removeItemFromList(object.index, object.isSelected());
+            UI.removeItemFromList(object.index);
         });
     };
 
@@ -478,7 +426,7 @@ class HashListItem extends ListItem {
     createEntry(isAnimated) {
         super.createEntry($('#' + this.id), isAnimated);
         this.hashTitle = this.$item.find(".item-name");
-        this.hashTitle.text(getHashAlgorithm() + " n°" + this.index);
+        this.setTitle(this.index);
         this.itemHash = this.$item.find('.item-subtitle');
         this.setHash(this.hash);
         this.$item.find(".item-type-icon").addClass('fas fa-hashtag');
@@ -499,6 +447,6 @@ class HashListItem extends ListItem {
     }
 
     setTitle(id) {
-        this.hashTitle.text(getHashAlgorithm() + ' n°' + id);
+        this.hashTitle.text(UI.getKernelManager().getCurrentKernelConfig().hashMethod + ' n°' + id);
     }
 }
