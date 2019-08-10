@@ -487,6 +487,7 @@ function UIManager() {
             })
             .catch((err) => {
                 log('Could not connect to moderator');
+                console.log(err);
                 updateModeratorConnection(undefined);
             });
     };
@@ -1303,8 +1304,8 @@ function UIManager() {
                         updateProgress(_itemsProcessedCounter, true);
                         signDocuments(items, indexes, _isOptimizerEnabled,
                             (id, url) => updateTransactionTx(id, url),
-                            (id, receipt) => updateTransactionState(id, true),
-                            (id, error) => updateTransactionState(id, false));
+                            (id) => updateTransactionState(id, true),
+                            (id) => updateTransactionState(id, false));
                         endSign();
                     }
                 },
@@ -1529,27 +1530,6 @@ function UIManager() {
                     UI.removeItemFromList(item2.getIndex());
             }
         }
-    };
-
-    /**
-     * Get the item identified by its index in every item list, starting by the current for performance reasons
-     *
-     * @param index {Number} The unique item identifier
-     * @return {ListItem} The item found, or undefined
-     */
-    let getItemInAll = function (index) {
-        let finalItem = getCurrentListItem(index);
-        if (finalItem === undefined) {
-            for (let tabList of _itemList.values()) {
-                for (let itemList of tabList.values()) {
-                    for (let item of itemList.values()) {
-                        if (item.getIndex() === index)
-                            finalItem = item;
-                    }
-                }
-            }
-        }
-        return finalItem;
     };
 
     let setupDOMDimensions = function () {
@@ -1784,8 +1764,7 @@ function UIManager() {
         switch (status) {
             case KERNEL_REFERENCEMENT_STATUS.revoked:
                 message = 'The Kernel you are connecting to has been revoked by the moderator.\n' +
-                    'This mean the moderator does not recognize the kernel anymore and cannot prove its identity.\n' +
-                    'revoked reason: ' + revokedReason;
+                    'This mean the moderator does not recognize the kernel anymore and cannot prove its identity.';
                 break;
             case KERNEL_REFERENCEMENT_STATUS.initialized:
                 message = 'The Moderator knows the Kernel you are connecting to, but has not yet passed security confirmation.' +
@@ -1920,6 +1899,7 @@ function UIManager() {
      * Update the hash of the element associated to index.
      *
      * @param currentItem {ListItem|FileListItem|TextListItem|HashListItem} The item to update
+     * @param hash {string}
      */
     let updateElementHash = function (currentItem, hash) {
         currentItem.setType(TypeElement.Loading); // We have the hash, we can start asking blockchain

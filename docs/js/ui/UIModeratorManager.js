@@ -19,10 +19,6 @@ function UIModeratorManager() {
         _currentModeratorAddress = val;
     };
 
-    this.getDefaultAddress = function () {
-        return _defaultModeratorAddress;
-    };
-
     this.setDefaultAddress = function (val) {
         _defaultModeratorAddress = val;
     };

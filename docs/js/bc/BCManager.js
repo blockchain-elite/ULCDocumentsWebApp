@@ -26,42 +26,44 @@ let myKernel;
 
 let currentAddress;
 
+/**
+ * Get default moderator address
+ *
+ * @param isRopsten {boolean} Are we using Ropsten Network ?
+ * @return {string} The default moderator address
+ */
 function getDefaultModerator(isRopsten) {
     return isRopsten ? ULCDocAPI.DEFAULT_ADDRESS.BCE_MOD_ROPSTEN : ULCDocAPI.DEFAULT_ADDRESS.BCE_MOD_MAINNET;
 }
 
 /**
- * Function that is loaded at the beginning.
+ * Function used to start blockchain-related services.
+ * This must be called at the very beginning.
  *
- * @param sNetwork {TypeConnection} the network to connect for the current session
+ * @param selectedNetwork {TypeConnection} the network to connect for the current session
  * @throws {NetworkConflictError} is injected web3 network is different from sNetwork
  * @throws {Error} is TypeConnection is not supported.
  * @throws {ULCDocAPI.BlockchainQueryError} is error occurred during blockchain-side process.
  * @return {Promise<Object>} if the app uses an injected wallet or not,
  * and the default moderator config object
  */
-async function startApp(sNetwork) {
-    // UI call startApp with code provided from GET url.
-
-    logMe(ULCDocModMasterPrefix, "Blockchain app starting ...");
+async function startApp(selectedNetwork) {
+    logMe(ULCDocModMasterPrefix, "Backend starting ...");
 
     let networkProvider;
     let moderatorAddress;
-
-    if (sNetwork === TypeConnection.Mainnet) {
+    if (selectedNetwork === TypeConnection.Mainnet) {
         networkProvider = ULCDocAPI.getInfuraMainnetWeb3();
         moderatorAddress = ULCDocAPI.DEFAULT_ADDRESS.BCE_MOD_MAINNET;
-    } else if (sNetwork === TypeConnection.Ropsten) {
+    } else if (selectedNetwork === TypeConnection.Ropsten) {
         networkProvider = ULCDocAPI.getInfuraRopstenWeb3();
         moderatorAddress = ULCDocAPI.DEFAULT_ADDRESS.BCE_MOD_ROPSTEN;
-    } else {
+    } else
         throw new Error("TypeConnection not supported");
-    }
 
     myInteractor = new ULCDocAPI(networkProvider);
 
-    //We check if there is a network conflict or not.
-
+    // Check if there is a network conflict or not
     let connectedNetwork = await myInteractor.getNetwork();
     let convertedNetwork;
 
@@ -78,9 +80,8 @@ async function startApp(sNetwork) {
         case "private":
             convertedNetwork = TypeConnection.Unkown;
     }
-    if (sNetwork !== convertedNetwork) {
-        throw new NetworkConflictError(sNetwork, convertedNetwork);
-    }
+    if (selectedNetwork !== convertedNetwork)
+        throw new NetworkConflictError(selectedNetwork, convertedNetwork);
 
     if (ULCDocAPI.usingInjector()) {
         let allAddress = await myInteractor.getWalletAddresses();
@@ -88,126 +89,103 @@ async function startApp(sNetwork) {
     }
 
     myModerator = myInteractor.getModerator(moderatorAddress);
+    CONF_TYPE_CONNECTION = selectedNetwork;
 
-    CONF_TYPE_CONNECTION = sNetwork;
-
-        return {isUsingInjector: ULCDocAPI.usingInjector(), moderatorObject: await myModerator.connect()};
+    return {isUsingInjector: ULCDocAPI.usingInjector(), moderatorObject: await myModerator.connect()};
 }
 
 /**
  * Query the identity of the kernel referenced on the configured moderator.
- * Then you need to update the address or ask user if connect to unknown kernel.
+ * This does not connect to the specified kernel, you need to call updateKernel for this.
+ * This allows to detect for kernels not referenced on the current moderator before connecting,
+ * allowing the user to abort connection.
  *
- * @param kernelAddress {String} the kernel to check
- * @throws {Error} if app not started
- * @throws {ULCDocAPI.BlockchainQueryError} if error occured during query.
+ * @param kernelAddress {string} the address for the kernel to check
+ * @throws {Error} if backend is not started
+ * @throws {ULCDocAPI.BlockchainQueryError} if an error occurred during query
  * @returns {Promise<KernelIdentity>}
  */
 async function queryKernelAddress(kernelAddress) {
+    logMe(ULCDocModMasterPrefix, "Fetching new kernel identity...");
 
-    logMe(ULCDocModMasterPrefix, "New kernel query");
-
-    if (typeof myModerator === 'undefined') {
+    if (typeof myModerator === 'undefined')
         throw new Error("moderator not connected");
-    }
-
-        return await myModerator.query(kernelAddress);
-
+    return await myModerator.query(kernelAddress);
 }
 
 
 /**
- * Update the kernel object with the address provided
+ * Connect to the kernel with the specified address.
+ * Make sure you call queryKernelAddress before to get it's identity
  *
- * @param kernelAddress {String} new kernel you want to connect to.
- * @throws {Error} if invalid address
- * @throws {Error} if app not started
- * @throws {ULCDocAPI.BlockchainQueryError}
+ * @param kernelAddress {string} the address of the new kernel you want to connect to
+ * @throws {Error} if the address is invalid
+ * @throws {Error} if backend is not started
+ * @throws {ULCDocAPI.BlockchainQueryError} if an error occurred during query
  * @returns {Promise<KernelConfig>}
  */
 async function updateKernel(kernelAddress) {
+    logMe(ULCDocModMasterPrefix, "Connecting to a new kernel...");
 
-    logMe(ULCDocModMasterPrefix, "updating kernel");
-
-    if (typeof myInteractor === 'undefined') {
+    if (typeof myInteractor === 'undefined')
         throw new Error("App not started");
-    }
-
-        myKernel = myInteractor.getKernel(kernelAddress);
-        return myKernel.connect();
-
+    myKernel = myInteractor.getKernel(kernelAddress);
+    return myKernel.connect();
 }
 
 /**
- * Function that change the moderator address
+ * Connect to the new moderator with the specified address.
  *
- * @param {String} moderatorAddress new moderator address
- * @throws {Error} if app not started
- * @throws {Error} if bad address
- * @throws {ULCDocAPI.BlockchainQueryError}
+ * @param moderatorAddress {string} the address of the new moderator you want to connect to
+ * @throws {Error} if the address is invalid
+ * @throws {Error} if backend is not started
+ * @throws {ULCDocAPI.BlockchainQueryError} if an error occurred during query
  * @return Promise<ModeratorConfig>
  **/
 async function updateModerator(moderatorAddress) {
+    logMe(ULCDocModMasterPrefix, "Connecting to a new moderator...");
 
-    logMe(ULCDocModMasterPrefix, "Updating moderator");
-
-    if (typeof myInteractor === 'undefined') {
+    if (typeof myInteractor === 'undefined')
         throw new Error("App not started");
-    }
-
-        myModerator = myInteractor.getModerator(moderatorAddress);
-        return myModerator.connect();
-
+    myModerator = myInteractor.getModerator(moderatorAddress);
+    return myModerator.connect();
 }
 
-
 /**
- * @event hashAvailable Returns the document's hash
- * @type {string}
- */
-
-
-/**
- * Function that check if the file is signed by the kernel
+ * Check if the given file is signed by the kernel
  *
- * @param  {File} myFile a file object to check
- * @param onHashAvailable {Function}
- * @throws {ULCDocAPI.BlockchainQueryError}
- * @fires hashAvailable the hash when it's calculated
+ * @param file {File} the file object to check
+ * @param onHashAvailable {Function} function to call when the hash is available
+ * @throws {ULCDocAPI.BlockchainQueryError} if an error occurred during query
  * @return Promise<DocumentData>
  */
-async function checkFile(myFile, onHashAvailable) {
-
+async function checkFile(file, onHashAvailable) {
     logMe(ULCDocModMasterPrefix, "Checking a new file...");
 
     let hash = await new Promise((resolve) => {
         let reader = new FileReader();
         reader.onload = function (event) {
-            let data = event.target.result;
+            let data = event.target['result'];
             resolve(CryptoJS.SHA3(data, {outputLength: 256}).toString());
         };
-        reader.readAsBinaryString(myFile);
+        reader.readAsBinaryString(file);
     });
-
-    logMe(ULCDocModMasterPrefix, "File successfully hashed !");
+    logMe(ULCDocModMasterPrefix, "File successfully hashed!");
     onHashAvailable(hash);
-
     return await checkHash(hash);
-
 }
 
 /**
- * Function that check if the text is signed by the kernel
+ * Check if the given text is signed by the kernel
  *
- * @param myText {string} the text to hash
- * @param onHashAvailable {Function}
- * @throws {ULCDocAPI.BlockchainQueryError}
- * @fires hashAvailable the hash when it's calculated
+ * @param text {string} the text to check
+ * @param onHashAvailable {Function} function to call when the hash is available
+ * @throws {ULCDocAPI.BlockchainQueryError} if an error occurred during query
  * @return Promise<DocumentData>
  */
-async function checkText(myText, onHashAvailable) {
+async function checkText(text, onHashAvailable) {
     logMe(ULCDocModMasterPrefix, "Checking a new text...");
-    let hash = CryptoJS.SHA3(myText, {outputLength: 256}).toString();
+    let hash = CryptoJS.SHA3(text, {outputLength: 256}).toString();
     logMe(ULCDocModMasterPrefix, "Text successfully hashed !");
     onHashAvailable(hash);
     return await checkHash(hash);
@@ -215,110 +193,92 @@ async function checkText(myText, onHashAvailable) {
 
 
 /**
- * Function that check if the hash is signed by the kernel
+ * Check if the given hash is signed by the kernel
  *
- * @param myHash {string} the hash to check
- * @throws {ULCDocAPI.BlockchainQueryError}
+ * @param hash {string} the hash to check
  * @return Promise<DocumentData>
  */
-async function checkHash(myHash) {
-
-    if (typeof myKernel === 'undefined') {
+async function checkHash(hash) {
+    logMe(ULCDocModMasterPrefix, "Checking hash...");
+    if (typeof myKernel === 'undefined')
         throw new Error("kernel not loaded");
-    }
 
-    if (!isHashValidFormat(myHash)) throw new Error("Invalid hash format.");
-
-    myHash = "0x" + myHash; // just adjusting to be compatible with bytes32 format.
-
-    let myDoc = myKernel.createDocument(myHash);
-
+    if (!isHashValidFormat(hash))
+        throw new Error("Invalid hash format.");
+    hash = "0x" + hash; // just adjusting to be compatible with bytes32 format.
+    let myDoc = myKernel.createDocument(hash);
     return await myDoc.load();
 }
 
 
 /**
- * Function that check if the client's addresses can publish signatures.
- * @throws {ULCDocAPI.BlockchainQueryError}
+ * Get client accounts and check if thay can publish on the connected kernel.
+ *
+ * @throws {ULCDocAPI.BlockchainQueryError} if an error occurred during query
  * @return Promise<Map> Map using string keys and boolean values
  */
 async function requestAccountInfo() {
-
-    if (!ULCDocAPI.usingInjector()) {
+    logMe(ULCDocModMasterPrefix, "Requesting account info...");
+    if (!ULCDocAPI.usingInjector())
         throw new Error("No wallet injected");
-    }
-    if (typeof myKernel === 'undefined') {
+
+    if (typeof myKernel === 'undefined')
         throw new Error("no kernel loaded");
-    }
 
     let allAccountInfo = new Map();
     let localAccount = await myInteractor.getWalletAddresses();
 
-    for (let account of localAccount) {
+    for (let account of localAccount)
         allAccountInfo.set(account, await myKernel.canSign(account));
-    }
 
     return allAccountInfo;
-
 }
 
 /**
- * get how much signatures already added and know if current account already signed the document.
+ * Fetch information on the given hash to see the number of signatures
+ * and if the current user has already signed it.
+ * When signing, be sure to first use the right Check function to get more information and
+ * to compute the hash.
  *
- * @param myHash {String} the hash of the document
- * @throws {ULCDocAPI.BlockchainQueryError}
+ * @param hash {string} the hash of the document
+ * @throws {ULCDocAPI.BlockchainQueryError} if an error occurred during query
  * @return Promise<fetchSignStatus>
  */
-async function fetchHash(myHash) {
+async function fetchHash(hash) {
+    logMe(ULCDocModMasterPrefix, "Fetching hash...");
 
-    if (typeof myKernel === 'undefined') {
+    if (typeof myKernel === 'undefined')
         throw new Error("kernel not loaded");
-    }
 
-    if (!isHashValidFormat(myHash)) throw new Error("Invalid hash format.");
+    if (!isHashValidFormat(hash))
+        throw new Error("Invalid hash format.");
 
-    myHash = "0x" + myHash; // just adjusting to be compatible with bytes32 format.
-
-    let myConfirmList = await myKernel.createDocument(myHash).getConfirmList();
+    hash = "0x" + hash; // just adjusting to be compatible with bytes32 format.
+    let myConfirmList = await myKernel.createDocument(hash).getConfirmList();
     return new fetchSignStatus(myConfirmList.length, myConfirmList.includes(currentAddress));
 }
 
 /**
- * @event txHashURL Object containing the id of the item and the url used to view the transaction
- * @type {Object}
- */
-
-/**
- * @event txSucceed Object containing the id of the item and the transaction receipt. This is used to know when the transaction has been integrated into the blockchain
- * @type {Object}
- */
-
-/**
- * @event txError Object containing the id of the item and the error that occurred while processing the transaction
- * @type {Object}
- */
-
-/**
  * Function used to sign documents using ULCDocument
  *
- * @param items {Array<DocumentData>} the map with all specific info
- * @param indexes {Array<Object>}
- * @param optimized {boolean} optimized if we use optimised transactions or not
- * @param onTxHashUrl {Function}
- * @param onTxSucceed {Function}
- * @param onTxError {Function}
+ * @param items {Array<DocumentData>} the array with all specific info
+ * @param indexes {Array<Object>} the array containing indexes to identify documents
+ * @param optimized {boolean} if we use optimised transactions or not
+ * @param onTxHashUrl {Function} callback to use when the transaction hash url is available
+ * @param onTxSucceed {Function} callback to use when the transaction has succeeded
+ * @param onTxError {Function} callback to use when the transaction has failed
  */
 function signDocuments(items, indexes, optimized, onTxHashUrl, onTxSucceed, onTxError) {
     //We assume here all conditions are filled (if we force here then blockchain security will handle it)
 
-    if (!ULCDocAPI.usingInjector()) {
+    if (!ULCDocAPI.usingInjector())
         throw new Error("No wallet injected");
-    }
-    if (typeof myKernel === 'undefined') {
-        throw new Error("no kernel loaded");
-    }
 
-    // Add 0x to hashes to make them compatible 32byte format
+    if (typeof myKernel === 'undefined')
+        throw new Error("no kernel loaded");
+
+    // Add 0x to hashes to make them compatible with 32byte format
+    // Currently throws an error if we add 0x
     // for (let i =0; i < items.length; i++) {
     //     if (!isHashValidFormat(items[i].hash)) {
     //         throw new Error("Invalid hash format.");
@@ -337,6 +297,5 @@ function signDocuments(items, indexes, optimized, onTxHashUrl, onTxSucceed, onTx
         newDoc.setExtraData(items[i].extra_data).setSource(items[i].source).setDocumentFamily(items[i].document_family_id);
         signQueue.addDoc(newDoc, indexes[i]);
     }
-
     signQueue.requestSign(optimized);
 }

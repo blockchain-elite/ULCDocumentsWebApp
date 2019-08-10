@@ -281,17 +281,6 @@ let onImgLoad = function(selector, callback){
     });
 };
 
-let isValueInObject = function (val, object) {
-    let isIn = false;
-    for (let i of Object.keys(object)) {
-        if (object[i] === val) {
-            isIn = true;
-            break;
-        }
-    }
-    return isIn;
-};
-
 /**
  *
  * @param colorClass {COLOR_CLASSES}
@@ -327,3 +316,15 @@ let copyToClipboard = function (text) {
     document.execCommand('copy');
     document.body.removeChild(textContainer);
 };
+
+
+/** Function that creates human readable date from block.timestamp value
+ *
+ *  @param {Number} UnixTimestamp block.timestamp date
+ *  @return {String} converted date
+ */
+function formatHumanReadableDate(UnixTimestamp) {
+    //Because Blockchain Time is not trustable at +- 30 minutes
+    //There is not need to display minutes/secondes of this date.
+    return new Date(UnixTimestamp * 1000).toLocaleString([],{day: '2-digit', hour: '2-digit', year:'2-digit', month:'2-digit', timeZoneName:'short'});
+}

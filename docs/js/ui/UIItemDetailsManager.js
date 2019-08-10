@@ -35,7 +35,7 @@ function UIItemDetailsManager() {
             '<p class="text-muted" id="itemHashContainer">File\'s hash (<span id="itemHashType"></span>): <span\n' +
             'id="itemHashProp">HASH</span>\n' +
             '<button class="ml-2 btn btn-secondary" id="copyHashButton" data-toggle="tooltip"' +
-            'data-placement="bottom" title="Copy hash to clipboard" style="display: none">' +
+            ' data-placement="bottom" title="Copy hash to clipboard" style="display: none">' +
             '<i class="fas fa-copy"></i></button>' +
             '</p>\n' +
             '<a id="itemTxUrlProp" href="" target="_blank">\n' +
@@ -363,7 +363,7 @@ function UIItemDetailsManager() {
             docData = item.getDocumentData();
 
         if (item !== undefined && docData.signed_date !== '')
-            $('#fileBlockchainDate').html('<i class="far fa-clock mr-2"></i>Signed on ' + docData.signed_date);
+            $('#fileBlockchainDate').html('<i class="far fa-clock mr-2"></i>Signed on ' + formatHumanReadableDate(docData.signed_date));
         else if (item !== undefined)
             $('#fileBlockchainDate').text('');
         else
