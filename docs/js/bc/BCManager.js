@@ -52,6 +52,7 @@ async function startApp(selectedNetwork) {
 
     let networkProvider;
     let moderatorAddress;
+
     if (selectedNetwork === TypeConnection.Mainnet) {
         networkProvider = ULCDocAPI.getInfuraMainnetWeb3();
         moderatorAddress = ULCDocAPI.DEFAULT_ADDRESS.BCE_MOD_MAINNET;
@@ -83,6 +84,10 @@ async function startApp(selectedNetwork) {
         default:
             throw new Error("Impossible to detect type of network : " + connectedNetwork);
     }
+
+    console.log('selected : ' + selectedNetwork);
+    console.log('web3 : ' + convertedNetwork);
+
     if (selectedNetwork !== convertedNetwork)
         throw new NetworkConflictError(selectedNetwork, convertedNetwork);
 

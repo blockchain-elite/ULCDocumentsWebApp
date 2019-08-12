@@ -269,17 +269,46 @@ function UIManager() {
                 tryReadyUI();
             })
             .catch((err) => {
-                console.log(err.selectedNetwork);
-                console.log(err.web3Network);
-                showNetworkConflictPopup(err.selectedNetwork, err.web3Network)
+                console.log(err);
+                if (err instanceof NetworkConflictError) {
+                    console.log('coucou');
+                    showNetworkConflictPopup(err.selectedNetwork, err.web3Network)
+                } else {
+                    showUnsupportedNetworkPopup();
+                }
             });
     };
+
+    let showUnsupportedNetworkPopup = function() {
+        $.confirm({
+            title: 'Network Not supported',
+            content: 'The selected network is currently not supported.<br/>' +
+                'Please reconnect using Ropsten Network.',
+            type: 'red',
+            theme: JQUERY_CONFIRM_THEME,
+            columnClass: 'xlarge',
+            icon: 'fas fa-warning',
+            typeAnimated: true,
+            buttons: {
+                reconnect: {
+                    text: 'Reconnect using Ropsten',
+                    btnClass: 'btn-blue',
+                    action: function () {
+                        connectToNetwork(TypeConnection.Ropsten);
+                    }
+                },
+            },
+        });
+    };
+
 
     let showNetworkConflictPopup = function (sNetwork, web3Network) {
         $.confirm({
             title: 'Network conflict detected',
-            content: 'You are trying to connect to from Metamask. ' +
-                'Please reconnect using the same network as Metamask, or set Metamask to use the network specified in the link.<br/>' +
+            content: 'The link you followed is using <strong>' + getNetworkName(sNetwork) + '</strong> but Metamask is ' +
+                'configured to connect to <strong>' + getNetworkName(web3Network) + '</strong>. <br/>' +
+                'Please set Metamask to use <strong>' + getNetworkName(sNetwork) + '</strong> (recommended), ' +
+                'or click the button below to reconnect to the kernel using <strong>' + getNetworkName(web3Network) + '</strong>.<br/><br/>' +
                 'Please note, selecting a different network from the link you followed may result in untrustable data.' +
                 '<ul>' +
                 '<li><strong>Mainnet:</strong> Signatures can be trusted, use this if unsure.</li>' +
@@ -292,7 +321,7 @@ function UIManager() {
             typeAnimated: true,
             buttons: {
                 reconnect: {
-                    text: 'Reconnect using Metamask network',
+                    text: 'Reconnect using ' + getNetworkName(web3Network),
                     btnClass: 'btn-orange',
                     action: function () {
                         connectToNetwork(web3Network);
@@ -455,7 +484,6 @@ function UIManager() {
                 if (kernelIdentity.confirmed) {
                     connectToKernel();
                 } else {
-                    console.log(kernelIdentity);
                     UI.promptKernelConnectionWarnAnswer();
                 }
             })
@@ -1808,8 +1836,6 @@ function UIManager() {
      * @param connectionType {KERNEL_CONNECTION_TYPE} The connection status
      */
     let updateKernelConnectionBox = function (connectionType) {
-        console.log(_kernelManager.getCurrentKernelIdentity());
-        console.log(_kernelManager.getCurrentKernelConfig());
         _isAccountsListAvailable = false; // Kernel operators may change
         resetAllElements(); // Element signatures are different from each kernel
         _kernelManager.setKernelConnectionLoading(false);
@@ -1880,7 +1906,6 @@ function UIManager() {
      * @param docData {DocumentData}
      */
     let updateElementInfo = function (currentItem, docData) {
-        console.log(docData);
         let elementType = TypeElement.Unknown;
         if (docData !== undefined && docData !== {}) {
             elementType = docData.signed ? TypeElement.Signed : TypeElement.Fake;

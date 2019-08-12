@@ -74,9 +74,3 @@ class NetworkConflictError extends Error {
         this.web3Network = web3Network;
     }
 }
-
-blockchainError = function (_message) {
-    this.constructor.prototype.__proto__ = Error.prototype;
-    this.name = this.constructor.name;
-    this.message = _message;
-};
