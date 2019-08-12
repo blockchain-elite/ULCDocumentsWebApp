@@ -68,7 +68,7 @@ async function startApp(selectedNetwork) {
     let convertedNetwork;
 
     switch (connectedNetwork) {
-        case "mainnet":
+        case "main":
             convertedNetwork = TypeConnection.Mainnet;
             break;
         case "ropsten":
@@ -79,14 +79,12 @@ async function startApp(selectedNetwork) {
             break;
         case "private":
             convertedNetwork = TypeConnection.Unkown;
+            break;
+        default:
+            throw new Error("Impossible to detect type of network : " + connectedNetwork);
     }
     if (selectedNetwork !== convertedNetwork)
         throw new NetworkConflictError(selectedNetwork, convertedNetwork);
-
-    if (ULCDocAPI.usingInjector()) {
-        let allAddress = await myInteractor.getWalletAddresses();
-        currentAddress = allAddress[0];
-    }
 
     myModerator = myInteractor.getModerator(moderatorAddress);
     CONF_TYPE_CONNECTION = selectedNetwork;
@@ -199,7 +197,7 @@ async function checkText(text, onHashAvailable) {
  * @return Promise<DocumentData>
  */
 async function checkHash(hash) {
-    logMe(ULCDocModMasterPrefix, "Checking hash...");
+    logMe(ULCDocModMasterPrefix, "look for hash info in kernel...");
     if (typeof myKernel === 'undefined')
         throw new Error("kernel not loaded");
 
@@ -213,11 +211,14 @@ async function checkHash(hash) {
 
 /**
  * Get client accounts and check if thay can publish on the connected kernel.
- *
+ * You must call that function when you open sign module to setup default address to sign.
  * @throws {ULCDocAPI.BlockchainQueryError} if an error occurred during query
  * @return Promise<Map> Map using string keys and boolean values
  */
 async function requestAccountInfo() {
+
+    //@TODO : detect changes on default address and call UI to update info.
+
     logMe(ULCDocModMasterPrefix, "Requesting account info...");
     if (!ULCDocAPI.usingInjector())
         throw new Error("No wallet injected");
@@ -231,8 +232,11 @@ async function requestAccountInfo() {
     for (let account of localAccount)
         allAccountInfo.set(account, await myKernel.canSign(account));
 
+    currentAddress = localAccount[0];
+
     return allAccountInfo;
 }
+
 
 /**
  * Fetch information on the given hash to see the number of signatures

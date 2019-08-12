@@ -24,7 +24,7 @@
 function isHashValidFormat(check){
     let re = /[0-9a-f]{64}/g;
     let result = re.test(check);
-    logMe(ULCDocModMasterPrefix, "Hash to check=" + check + " | result=" + result.toString());
+    //logMe(ULCDocModMasterPrefix, "Check hash regEx : " + check + " | regExResult=" + result.toString());
     return result;
 }
 
