@@ -65,8 +65,8 @@ class ListItem {
         this.$removeButton = undefined;
         this.$selectedCheckbox = undefined;
         this.$selectedCheckboxIcon = undefined;
-        this.OUT_ANIM = 'fadeOutLeft faster';
-        this.IN_ANIM = 'fadeInLeft faster';
+        this.OUT_ANIM = 'zoomOut faster';
+        this.IN_ANIM = 'zoomIn faster';
         this.type = TypeElement.Unknown;
         this.appMode = appMode;
         this.numSign = 0;
@@ -304,10 +304,10 @@ class ListItem {
     /**
      * Create the UI entry from the template in the file list.
      */
-    createEntry(isAnimated) {
+    createEntry(isAnimated, tabHolder) {
         let $selector = $(itemDOMElement);
         $selector.attr('id', this.id);
-        UI.getCurrentTabHolder().append($selector);
+        tabHolder.append($selector);
         this.$item = $selector;
         this.$removeButton = this.$item.find(".remove-list-item-button");
         this.$removeButton.attr('id', 'buttonRemoveItem_' + this.index);
@@ -348,8 +348,8 @@ class FileListItem extends ListItem {
         this.file = file;
     }
 
-    createEntry(isAnimated) {
-        super.createEntry(isAnimated);
+    createEntry(isAnimated, tabHolder) {
+        super.createEntry(isAnimated, tabHolder);
         this.$item.find(".item-name").text(this.file.name);
         this.$item.find(".item-type-icon").addClass(getMimeTypeIcon(this.file));
         this.$item.find(".item-subtitle").text(humanFileSize(this.file.size, false));
@@ -378,8 +378,8 @@ class TextListItem extends ListItem {
         this.savedText = "";
     }
 
-    createEntry(isAnimated) {
-        super.createEntry($('#' + this.id), isAnimated);
+    createEntry(isAnimated, tabHolder) {
+        super.createEntry(isAnimated, tabHolder);
         this.textTitle = this.$item.find(".item-name");
         this.textTitle.text("Text n°" + this.index);
         this.itemText = this.$item.find('.item-subtitle');
@@ -423,8 +423,8 @@ class HashListItem extends ListItem {
         super(index, 'hashListItem_', appMode);
     }
 
-    createEntry(isAnimated) {
-        super.createEntry($('#' + this.id), isAnimated);
+    createEntry(isAnimated, tabHolder) {
+        super.createEntry(isAnimated, tabHolder);
         this.hashTitle = this.$item.find(".item-name");
         this.setTitle(this.index);
         this.itemHash = this.$item.find('.item-subtitle');

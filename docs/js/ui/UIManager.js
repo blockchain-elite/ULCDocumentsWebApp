@@ -460,15 +460,19 @@ function UIManager() {
      * Create the lists in every tab for the current app mode
      */
     let recreateAppModeItemList = function () {
+        console.log('recreating');
         for (let i of Object.keys(TAB_TYPE)) {
+            console.log(i);
             let tab = TAB_TYPE[i];
             let list = getList(_currentAppMode, tab);
+            console.log(list);
             if (list.size)
                 $tabHolders[tab].html(""); // Items available, clear the tab
             else
                 resetTabZone(tab); // Reset the zones
             for (let item of list.values()) {
-                item.createEntry(false);
+                console.log(item);
+                item.createEntry(false, $tabHolders[tab]);
             }
             updateDisplayIds(tab); // Update the ids for the list
         }
@@ -1019,7 +1023,7 @@ function UIManager() {
                     $tabHolders[TAB_TYPE.file].html(""); // init drop zone
                 }
                 let item = new FileListItem(_uniqueIdCounter, file, _currentAppMode);
-                item.createEntry(true);
+                item.createEntry(true, UI.getCurrentTabHolder());
                 getList(_currentAppMode, TAB_TYPE.file).set(_uniqueIdCounter, item);
                 UI.updateCheckButtonState();
                 UI.setUIElementsState(UI_STATE.none);
@@ -1046,7 +1050,7 @@ function UIManager() {
             item = new TextListItem(_uniqueIdCounter, _currentAppMode);
         else
             item = new HashListItem(_uniqueIdCounter, _currentAppMode);
-        item.createEntry(true);
+        item.createEntry(true, UI.getCurrentTabHolder());
         getCurrentList().set(_uniqueIdCounter, item);
         _uniqueIdCounter += 1;
         UI.updateCheckButtonState();
