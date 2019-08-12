@@ -30,7 +30,7 @@ function UIKernelManager() {
         '<p id="kernelOrganization">#ORGA</p>\n' +
         '<p id="kernelPhoneContainer">\n' +
         '<i class="fas fa-phone" style="width: 20px"></i>\n' +
-        '<span id="kernelPhone">#PHONE</span>\n' +
+        '<a id="kernelPhone">#PHONE</a>\n' +
         '</p>\n' +
         '<p id="kernelPhysicalAddressContainer">\n' +
         '<i class="fas fa-map-marker-alt" style="width: 20px"></i>\n' +
@@ -213,6 +213,7 @@ function UIKernelManager() {
             onOpenBefore: function () {
                 if (_currentKernelAddress === '')
                     $('#currentAddressForm').hide();
+                $("#kernelInput").prop('placeholder', _currentKernelAddress);
             },
             onContentReady: function () {
                 // when content is fetched & rendered in DOM
@@ -225,22 +226,15 @@ function UIKernelManager() {
                     keys: ['enter'],
                     action: function () {
                         let address = this.$content.find('#kernelInput').val();
-                        if (address === '') {
-                            $.alert({
-                                    title: 'error',
-                                    content: 'Please enter a value',
-                                    type: 'red',
-                                    theme: JQUERY_CONFIRM_THEME,
-                                    icon: 'fas fa-exclamation',
-                                    escapeKey: 'ok',
-                                    typeAnimated: true,
-                                }
-                            );
-                            return false;
-                        }
+                        if (address === '')
+                            address = _currentKernelAddress;
+
                         if (this.$content.find('#enableSignButton').is(':checked')) {
                             $.selector_cache("#signTab").show();
                             UI.setUIMode(APP_MODE.sign, false);
+                        } else {
+                            $.selector_cache("#signTab").hide();
+                            UI.setUIMode(APP_MODE.check, false);
                         }
                         _currentKernelAddress = address;
                         UI.tryKernelConnection(_currentKernelAddress);
@@ -354,7 +348,7 @@ function UIKernelManager() {
             $("#kernelOrganization").text('This entity is not an organization');
 
         if (kernelInfo.phone && kernelInfo.phone !== '')
-            $("#kernelPhone").text(kernelInfo.phone);
+            $("#kernelPhone").text(kernelInfo.phone).prop('href', 'tel:' + kernelInfo.phone);
         else
             $("#kernelPhoneContainer").hide();
 

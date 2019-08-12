@@ -343,7 +343,7 @@ function UIItemDetailsManager() {
                     UI.setUIElementsState(UI_STATE.none);
                 }
             }).show();
-            if (UI.getCurrentUIState() === UI_STATE.fetched) {
+            if (items[0].getType() !== TypeElement.Unknown) {
                 input.attr('disabled', true);
             }
         } else {

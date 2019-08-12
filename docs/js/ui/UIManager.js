@@ -279,7 +279,7 @@ function UIManager() {
             });
     };
 
-    let showUnsupportedNetworkPopup = function() {
+    let showUnsupportedNetworkPopup = function () {
         $.confirm({
             title: 'Network Not supported',
             content: 'The selected network is currently not supported.<br/>' +
@@ -380,8 +380,7 @@ function UIManager() {
             $.selector_cache('#checkButtonText').html('Fetch');
             $.selector_cache('#signActionButtonContainer').show();
             $.selector_cache('#accountsCard').show();
-            if (_kernelManager.isConnected())
-                askForAccounts();
+            askForAccounts();
         }
         recreateAppModeItemList();
         UI.updateMainUIState();
@@ -1100,7 +1099,7 @@ function UIManager() {
             let currentItem = getCurrentListItemByIndex(_itemsProcessedCounter);
             customCheckItem(currentItem, (hash) => {
                 updateElementHash(currentItem, hash);
-                if (_currentAppMode === APP_MODE.check)
+                if (_currentAppMode === APP_MODE.sign)
                     customFetchItem(currentItem);
             });
             if (_currentAppMode === APP_MODE.check)
@@ -1404,7 +1403,13 @@ function UIManager() {
      * based on current tab, wallet state and kernel ownership
      */
     this.updateMainUIState = function () {
-        if (!_kernelManager.isConnected()) {
+        if (_currentAppMode === APP_MODE.sign && _currentWalletState !== WALLET_STATE.injected) { // In sign mode without injected wallet
+            $.selector_cache('#mainUIContainer').hide();
+            $.selector_cache('#accountsCard').hide();
+            $.selector_cache('#loadingAccountsMessage').hide();
+            setMainUIError(true, "Wallet not injected",
+                "Please make sure you have metamask installed.", COLOR_CLASSES.warning, true);
+        } else if (!_kernelManager.isConnected()) {
             $.selector_cache('#mainUIContainer').hide();
             $.selector_cache('#accountsCard').hide();
             $.selector_cache('#loadingAccountsMessage').hide();
@@ -1414,12 +1419,6 @@ function UIManager() {
             $.selector_cache('#accountsCard').hide();
             $.selector_cache('#loadingAccountsMessage').hide();
             setMainUIError(false, "", "", undefined, false);
-        } else if (_currentWalletState !== WALLET_STATE.injected) { // In sign mode without injected wallet
-            $.selector_cache('#mainUIContainer').hide();
-            $.selector_cache('#accountsCard').hide();
-            $.selector_cache('#loadingAccountsMessage').hide();
-            setMainUIError(true, "Wallet not injected",
-                "Please make sure you have metamask installed.", COLOR_CLASSES.warning, true);
         } else if (_isLoadingAccounts) {
             $.selector_cache('#mainUIContainer').hide();
             $.selector_cache('#accountsCard').show();
