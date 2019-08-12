@@ -48,10 +48,11 @@ const TypeElement = {
     /* UI RELATED */
     Computing: 6, // computing hash
     Loading: 7, // loading object
-    TxProcessing: 8, // The transaction is being processed
-    TransactionSuccess: 9, // The transaction was a success
-    TransactionFailure: 10,  // The transaction failed
-    Unknown: 11 // Object not yet checked
+    awaitingMetamask: 8, // Wa wait for the user to confirm the transaction on metamask
+    TxProcessing: 9, // The transaction is being processed
+    TransactionSuccess: 10, // The transaction was a success
+    TransactionFailure: 11,  // The transaction failed
+    Unknown: 12 // Object not yet checked
 };
 
 /**

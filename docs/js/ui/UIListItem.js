@@ -232,6 +232,10 @@ class ListItem {
                 cardColor = COLOR_CLASSES.info;
                 iconClasses += 'fas fa-circle-notch fa-spin fa-fw';
                 break;
+            case TypeElement.awaitingMetamask: // Waiting metamask confirmation...
+                cardColor = COLOR_CLASSES.info;
+                iconClasses += 'fas fa-spinner fa-spin fa-fw';
+                break;
             case TypeElement.TxProcessing: // Waiting signature...
                 cardColor = COLOR_CLASSES.info;
                 iconClasses += 'fas fa-circle-notch fa-spin fa-fw';
@@ -245,7 +249,6 @@ class ListItem {
                     cardColor = COLOR_CLASSES.none;
                     iconClasses += 'fas fa-check';
                 }
-
                 break;
             case TypeElement.TransactionFailure: // Could not sign
                 cardColor = COLOR_CLASSES.danger;

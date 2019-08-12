@@ -88,6 +88,7 @@ ITEM_STATE_TEXT[TypeElement.Fake] = 'Not signed';
 ITEM_STATE_TEXT[TypeElement.Invalid] = 'Error';
 ITEM_STATE_TEXT[TypeElement.Pending] = 'Already signed by user';
 ITEM_STATE_TEXT[TypeElement.Revoked] = 'Signature revoked';
+ITEM_STATE_TEXT[TypeElement.awaitingMetamask] = 'Awaiting Metamask...';
 ITEM_STATE_TEXT[TypeElement.TxProcessing] = 'Processing...';
 ITEM_STATE_TEXT[TypeElement.TransactionFailure] = 'Signature failed';
 ITEM_STATE_TEXT[TypeElement.TransactionSuccess] = 'Signature sent';
@@ -1328,6 +1329,7 @@ function UIManager() {
                         for (_itemsProcessedCounter = 0; _itemsProcessedCounter < getCurrentList().size; _itemsProcessedCounter++) {
                             updateProgress(_itemsProcessedCounter, false);
                             let currentItem = getCurrentListItemByIndex(_itemsProcessedCounter);
+                            currentItem.setType(TypeElement.awaitingMetamask);
                             currentItem.getDocumentData().extra_data = customExtraToMap(currentItem.getCustomExtraData());
                             items.push(currentItem.getDocumentData());
                             indexes.push(currentItem.getIndex());
