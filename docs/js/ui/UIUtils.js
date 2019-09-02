@@ -51,10 +51,12 @@ function humanFileSize(bytes, si) {
 
 function getMimeTypeIcon(file) {
     let icon = "";
-    for (let mimeType in MIME_TYPE_ICONS) {
-        if (file.type.search(mimeType) !== -1) {
-            icon = MIME_TYPE_ICONS[mimeType];
-            break;
+    if (file !== undefined) {
+        for (let mimeType in MIME_TYPE_ICONS) {
+            if (file.type.search(mimeType) !== -1) {
+                icon = MIME_TYPE_ICONS[mimeType];
+                break;
+            }
         }
     }
     if (icon === "")
@@ -278,3 +280,51 @@ let onImgLoad = function(selector, callback){
         }
     });
 };
+
+/**
+ *
+ * @param colorClass {COLOR_CLASSES}
+ * @return {String}
+ */
+let getJConfirmTypeFromColorClass = function (colorClass) {
+    let type = '';
+    switch (colorClass) {
+        case COLOR_CLASSES.info:
+            type = 'blue';
+            break;
+        case COLOR_CLASSES.danger:
+            type = 'red';
+            break;
+        case COLOR_CLASSES.success:
+            type = 'green';
+            break;
+        case COLOR_CLASSES.warning:
+            type = 'orange';
+            break;
+        default:
+            type = '';
+            break;
+    }
+    return type;
+};
+
+let copyToClipboard = function (text) {
+    let textContainer = document.createElement('input');
+    document.body.appendChild(textContainer);
+    textContainer.value = text;
+    textContainer.select();
+    document.execCommand('copy');
+    document.body.removeChild(textContainer);
+};
+
+
+/** Function that creates human readable date from block.timestamp value
+ *
+ *  @param {Number} UnixTimestamp block.timestamp date
+ *  @return {String} converted date
+ */
+function formatHumanReadableDate(UnixTimestamp) {
+    //Because Blockchain Time is not trustable at +- 30 minutes
+    //There is not need to display minutes/secondes of this date.
+    return new Date(UnixTimestamp * 1000).toLocaleString([],{day: '2-digit', hour: '2-digit', year:'2-digit', month:'2-digit', timeZoneName:'short'});
+}

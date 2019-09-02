@@ -22,9 +22,7 @@
  *                      CONSTANTS
  **********************************************************/
 
-const APP_VERSION = 'beta 0.0.9';
-
-const APP_BASE_URL = 'https://ulcdocuments.blockchain-elite.fr/';
+const APP_VERSION = 'beta 0.0.10';
 
 const APP_MODE = {
     check: 0,
@@ -39,6 +37,7 @@ const HASH_APP_MODE = [
 const HASH_PARAM_NAMES = { // Hash parameters to use when reading URL
     appMode: 'mode',
     kernelAddress: 'kernel',
+    network: 'network'
 };
 
 const MIME_TYPE_ICONS = { // FontAwesome icon based on file mime type
@@ -82,12 +81,14 @@ const COLOR_CLASSES = {
 
 const ITEM_STATE_TEXT = {}; // Text based on item state to display in the UI
 ITEM_STATE_TEXT[TypeElement.Unknown] = 'Awaiting user';
+ITEM_STATE_TEXT[TypeElement.Computing] = 'Computing Hash...';
 ITEM_STATE_TEXT[TypeElement.Loading] = 'Asking Blockchain...';
 ITEM_STATE_TEXT[TypeElement.Signed] = 'Signed';
 ITEM_STATE_TEXT[TypeElement.Fake] = 'Not signed';
 ITEM_STATE_TEXT[TypeElement.Invalid] = 'Error';
 ITEM_STATE_TEXT[TypeElement.Pending] = 'Already signed by user';
 ITEM_STATE_TEXT[TypeElement.Revoked] = 'Signature revoked';
+ITEM_STATE_TEXT[TypeElement.awaitingMetamask] = 'Awaiting Metamask...';
 ITEM_STATE_TEXT[TypeElement.TxProcessing] = 'Processing...';
 ITEM_STATE_TEXT[TypeElement.TransactionFailure] = 'Signature failed';
 ITEM_STATE_TEXT[TypeElement.TransactionSuccess] = 'Signature sent';
@@ -124,38 +125,18 @@ function UIManager() {
         _itemList.get(key).set(TAB_TYPE.hash, new Map());
     }
 
-    let _blockchainErrorMsg = new Map();
-    _blockchainErrorMsg.set(APP_MODE.check, new Map());
-    _blockchainErrorMsg.set(APP_MODE.sign, new Map());
-
-    _blockchainErrorMsg.get(APP_MODE.check).set(TypeElement.Fake, ['This item is not signed', COLOR_CLASSES.danger]);
-    _blockchainErrorMsg.get(APP_MODE.check).set(TypeElement.Unknown, ['Click on check to display blockchain information', COLOR_CLASSES.info]);
-    _blockchainErrorMsg.get(APP_MODE.check).set(TypeElement.Invalid, ['An error occurred', COLOR_CLASSES.secondary]);
-    _blockchainErrorMsg.get(APP_MODE.check).set(TypeElement.Loading, ['Asking blockchain...', COLOR_CLASSES.info]);
-
-    _blockchainErrorMsg.get(APP_MODE.sign).set(TypeElement.Signed, ['This item is already signed', COLOR_CLASSES.danger]);
-    _blockchainErrorMsg.get(APP_MODE.sign).set(TypeElement.Pending, ['You already signed this item', COLOR_CLASSES.danger]);
-    _blockchainErrorMsg.get(APP_MODE.sign).set(TypeElement.Revoked, ['This item has been revoked and cannot be signed again', COLOR_CLASSES.danger]);
-    _blockchainErrorMsg.get(APP_MODE.sign).set(TypeElement.Unknown, ['Click on fetch to start editing blockchain information', COLOR_CLASSES.info]);
-    _blockchainErrorMsg.get(APP_MODE.sign).set(TypeElement.Invalid, ['An error occurred', COLOR_CLASSES.secondary]);
-    _blockchainErrorMsg.get(APP_MODE.sign).set(TypeElement.Loading, ['Asking blockchain...', COLOR_CLASSES.info]);
-    _blockchainErrorMsg.get(APP_MODE.sign).set(TypeElement.TxProcessing, ['Waiting for blockchain...', COLOR_CLASSES.info]);
-    _blockchainErrorMsg.get(APP_MODE.sign).set(TypeElement.TransactionSuccess, ['Signature successfully sent!', COLOR_CLASSES.success]);
-    _blockchainErrorMsg.get(APP_MODE.sign).set(TypeElement.TransactionFailure, ['Signature failed!', COLOR_CLASSES.danger]);
-
     const WALLET_STATE = {
         unknown: 0,
         injected: 1,
         infura: 2
     };
 
+    let _kernelManager = new UIKernelManager();
+    let _moderatorManager = new UIModeratorManager();
+    let _itemDetailsManager = new UIItemDetailsManager();
+
     let _uniqueIdCounter = 0; // unique id referencing a list item (file, text or hash)
     let _itemsProcessedCounter = 0; // The number of items in the current list (file text or hash) that have been checked
-    let _currentKernelAddress = ""; // The current kernel address the user is connected to
-    let _defaultModeratorAddress;
-    let _currentModeratorAddress; // The current moderator address the user is connected to
-    let _isModeratorConnected = false; // Is the user connected to a valid moderator ?
-    let _isKernelConnected = false; // Is the user connected to a valid kernel ?
     let _isVerbose = false; // Should we display additional information in the console
     let _isOptimizerEnabled = true; // Should we optimize signing ?
     let _canUseDropZone = true; // Can the user use the dropZone ?
@@ -170,6 +151,7 @@ function UIManager() {
     let _currentNetworkType = TypeConnection.Unkown;
     let _elementsToSign = 0;
     let _elementSigned = 0;
+    let _selectedItems = [];
 
     /* *********************************************************
      *                      JQUERY SELECTORS
@@ -185,11 +167,6 @@ function UIManager() {
         $("#fileTabSelector"),
         $("#textTabSelector"),
         $("#hashTabSelector")
-    ];
-    let $tabListItemTemplates = [
-        $("#fileListItemTemplate"),
-        $("#textListItemTemplate"),
-        $("#hashListItemTemplate")
     ];
     let $tabListEmptyTemplate = [
         $("#fileListEmptyTemplate"),
@@ -223,13 +200,146 @@ function UIManager() {
         log('Detected following app mode: ' + HASH_APP_MODE[type]);
     };
 
+
+    /**
+     * Get the current network from the url
+     */
+    let detectCurrentNetwork = function () {
+        let hashNetwork = capitalizeFirstLetter(getUrlHashParameter(HASH_PARAM_NAMES.network));
+        // if there is a specified network in the url and if it is valid, save it
+        if (hashNetwork !== undefined && TypeConnection[hashNetwork] !== undefined) {
+            connectToNetwork(TypeConnection[hashNetwork]);
+        } else { // else, ask the user
+            showNetworkSelectionPopup('Select the network',
+                'The link you followed did not specify a network. Which one do you want to use ?')
+        }
+    };
+
+
+    let showNetworkSelectionPopup = function (title, message) {
+        $.confirm({
+            title: title,
+            content: message +
+                '<ul>' +
+                '<li><strong>Mainnet:</strong> Signatures can be trusted, use this if unsure.</li>' +
+                '<li><strong>Ropsten:</strong> Signatures cannot be trusted, use only for test purposes.</li>' +
+                '</ul>',
+            type: 'blue',
+            theme: JQUERY_CONFIRM_THEME,
+            columnClass: 'xlarge',
+            icon: 'fas fa-question',
+            typeAnimated: true,
+            buttons: {
+                mainnet: {
+                    text: 'Mainnet',
+                    btnClass: 'btn-green',
+                    action: function () {
+                        connectToNetwork(TypeConnection.Mainnet);
+                    }
+                },
+                ropsten: {
+                    text: 'Ropsten',
+                    btnClass: 'btn-orange',
+                    action: function () {
+                        connectToNetwork(TypeConnection.Ropsten);
+                    }
+                },
+            },
+        });
+    };
+
+    let getNetworkName = function (network) {
+        let networkName;
+        for (let type in TypeConnection) {
+            if (TypeConnection[type] === network) {
+                networkName = type;
+                break;
+            }
+        }
+        return networkName;
+    };
+
+    let connectToNetwork = function (network) {
+        setUrlHashParameter(HASH_PARAM_NAMES.network, getNetworkName(network));
+        startApp(network)
+            .then((networkObject) => {
+                _currentNetworkType = network;
+                updateNetworkConnectedUI(network);
+                updateWalletStateUI(networkObject.isUsingInjector);
+                updateModeratorConnection(networkObject.moderatorObject);
+                tryReadyUI();
+            })
+            .catch((err) => {
+                console.log(err);
+                if (err instanceof NetworkConflictError) {
+                    console.log('coucou');
+                    showNetworkConflictPopup(err.selectedNetwork, err.web3Network)
+                } else {
+                    showUnsupportedNetworkPopup();
+                }
+            });
+    };
+
+    let showUnsupportedNetworkPopup = function () {
+        $.confirm({
+            title: 'Network Not supported',
+            content: 'The selected network is currently not supported.<br/>' +
+                'Please reconnect using Ropsten Network.',
+            type: 'red',
+            theme: JQUERY_CONFIRM_THEME,
+            columnClass: 'xlarge',
+            icon: 'fas fa-warning',
+            typeAnimated: true,
+            buttons: {
+                reconnect: {
+                    text: 'Reconnect using Ropsten',
+                    btnClass: 'btn-blue',
+                    action: function () {
+                        connectToNetwork(TypeConnection.Ropsten);
+                    }
+                },
+            },
+        });
+    };
+
+
+    let showNetworkConflictPopup = function (sNetwork, web3Network) {
+        $.confirm({
+            title: 'Network conflict detected',
+            content: 'The link you followed is using <strong>' + getNetworkName(sNetwork) + '</strong> but Metamask is ' +
+                'configured to connect to <strong>' + getNetworkName(web3Network) + '</strong>. <br/>' +
+                'Please set Metamask to use <strong>' + getNetworkName(sNetwork) + '</strong> (recommended), ' +
+                'or click the button below to reconnect to the kernel using <strong>' + getNetworkName(web3Network) + '</strong>.<br/><br/>' +
+                'Please note, selecting a different network from the link you followed may result in untrustable data.' +
+                '<ul>' +
+                '<li><strong>Mainnet:</strong> Signatures can be trusted, use this if unsure.</li>' +
+                '<li><strong>Ropsten:</strong> Signatures cannot be trusted, use only for test purposes.</li>' +
+                '</ul>',
+            type: 'orange',
+            theme: JQUERY_CONFIRM_THEME,
+            columnClass: 'xlarge',
+            icon: 'fas fa-warning',
+            typeAnimated: true,
+            buttons: {
+                reconnect: {
+                    text: 'Reconnect using ' + getNetworkName(web3Network),
+                    btnClass: 'btn-orange',
+                    action: function () {
+                        connectToNetwork(web3Network);
+                    }
+                },
+            },
+        });
+    };
+
+
     /**
      * Set the UI to fade In/Out to switch type
      *
      * @param type {APP_MODE} Sign or check type
      * @param firstRun {Boolean} Should we fadeIN/Out ?
      */
-    let setUIMode = function (type, firstRun) {
+    this.setUIMode = function (type, firstRun) {
         log('switching to ' + HASH_APP_MODE[type]);
         if (!firstRun) {
             $.selector_cache('#mainCardBody').fadeOut('fast', function () {
@@ -271,20 +381,25 @@ function UIManager() {
             $.selector_cache('#checkButtonText').html('Fetch');
             $.selector_cache('#signActionButtonContainer').show();
             $.selector_cache('#accountsCard').show();
-            if (_isKernelConnected)
-                askForAccounts();
+            askForAccounts();
         }
         recreateAppModeItemList();
-        updateMainUIState();
+        UI.updateMainUIState();
         UI.resetProgress();
-        fileListResetSelection();
         UI.updateCheckButtonState();
     };
 
     let askForAccounts = function () {
         if (!_isAccountsListAvailable) {
             _isLoadingAccounts = true;
-            requestAccountInfo();
+            requestAccountInfo()
+                .then((accountsMaps) => {
+                    updateAccounts(accountsMaps);
+                })
+                .catch((err) => {
+                    console.log(err);
+                    updateAccounts(undefined);
+                });
         }
     };
 
@@ -294,8 +409,8 @@ function UIManager() {
     let setDefaultFieldValues = function () {
         let kernelAddress = getUrlHashParameter(HASH_PARAM_NAMES.kernelAddress);
         if (kernelAddress !== undefined) {
-            _currentKernelAddress = kernelAddress;
-            $.selector_cache('#kernelAddressInput').val(_currentKernelAddress);
+            _kernelManager.setCurrentAddress(kernelAddress);
+            $.selector_cache('#kernelAddressInput').val(_kernelManager.getCurrentAddress());
         }
     };
 
@@ -303,11 +418,11 @@ function UIManager() {
      * Check if all the conditions are met to start using the app and show a warning if using testnet
      */
     let tryReadyUI = function () {
-        if (_isModeratorConnected && _currentWalletState !== WALLET_STATE.unknown
+        if (_moderatorManager.isConnected() && _currentWalletState !== WALLET_STATE.unknown
             && $.selector_cache('#loadingScreen').css('display') !== 'none') {
-            if (_currentNetworkType === TypeConnection.Mainnet)
-                readyUI();
-            else
+            readyUI();
+
+            if (_currentNetworkType !== TypeConnection.Mainnet)
                 showTestnetWarning();
         }
     };
@@ -321,38 +436,24 @@ function UIManager() {
             $.selector_cache('#baseContainer').fadeIn('fast');
         });
         // Connect to kernel
-        if (_currentKernelAddress !== '')
-            UI.connectToKernel();
+        if (_kernelManager.getCurrentAddress() !== '')
+            UI.tryKernelConnection(_kernelManager.getCurrentAddress());
     };
 
     /**
-     * Show a warning alowing the user to abort connection when using testnet
+     * Show a warning when using a testnet
      */
     let showTestnetWarning = function () {
-        $.confirm({
-            title: 'Untrusted network',
-            content: 'You are connected to a test network. Please note that signatures cannot be trusted and are only used for testing purposes.',
-            theme: JQUERY_CONFIRM_THEME,
-            type: 'orange',
-            icon: 'fas fa-exclamation-triangle',
-            escapeKey: 'cancel',
-            columnClass: 'medium',
-            typeAnimated: true,
-            buttons: {
-                confirm: {
-                    keys: ['enter'],
-                    btnClass: 'btn-orange',
-                    action: function () {
-                        readyUI();
-                    }
-                },
-                cancel: {
-                    text: 'Abort',
-                    action: function () {
-                        window.location = APP_BASE_URL;
-                    }
-                }
-            },
+        if (Cookies.get('hide-ropsten-warning') === undefined) {
+            $.selector_cache('#ropstenWarning').show();
+            animateCss($.selector_cache('#ropstenWarning'), 'fadeInRight faster');
+        }
+
+    };
+
+    let hideTestnetWarning = function () {
+        animateCss($.selector_cache('#ropstenWarning'), 'fadeOutRight faster', function () {
+            $.selector_cache('#ropstenWarning').hide();
         });
     };
 
@@ -360,24 +461,67 @@ function UIManager() {
      * Create the lists in every tab for the current app mode
      */
     let recreateAppModeItemList = function () {
+        console.log('recreating');
         for (let i of Object.keys(TAB_TYPE)) {
+            console.log(i);
             let tab = TAB_TYPE[i];
             let list = getList(_currentAppMode, tab);
+            console.log(list);
             if (list.size)
                 $tabHolders[tab].html(""); // Items available, clear the tab
             else
                 resetTabZone(tab); // Reset the zones
             for (let item of list.values()) {
-                item.createEntry(false);
+                console.log(item);
+                item.createEntry(false, $tabHolders[tab]);
             }
             updateDisplayIds(tab); // Update the ids for the list
         }
     };
 
-    this.connectToKernel = function () {
-        setKernelConnectionLoading(true);
-        setUrlHashParameter(HASH_PARAM_NAMES.kernelAddress, _currentKernelAddress);
-        updateKernelAddress(_currentKernelAddress); // Call to ULCDocMaster
+    this.tryKernelConnection = function (address) {
+        _kernelManager.setKernelConnectionLoading(true);
+        setUrlHashParameter(HASH_PARAM_NAMES.kernelAddress, address);
+        queryKernelAddress(address)
+            .then((kernelIdentity) => {
+                _kernelManager.setCurrentKernelIdentity(kernelIdentity);
+                if (kernelIdentity.confirmed) {
+                    connectToKernel();
+                } else {
+                    UI.promptKernelConnectionWarnAnswer();
+                }
+            })
+            .catch((err) => {
+                console.log(err);
+                log('Error fetching kernel information', TypeInfo.Warning);
+                updateKernelConnectionBox(KERNEL_CONNECTION_TYPE.error);
+            });
+    };
+
+    let connectToKernel = function () {
+        updateKernel(_kernelManager.getCurrentAddress())
+            .then((kernelConfig) => {
+                _kernelManager.setCurrentKernelConfig(kernelConfig);
+                updateKernelConnectionBox(KERNEL_CONNECTION_TYPE.connected);
+            })
+            .catch((err) => {
+                console.log(err);
+                updateKernelConnectionBox(KERNEL_CONNECTION_TYPE.error);
+            });
+    };
+
+    this.connectToModerator = function (address) {
+        _moderatorManager.setConnected(false);
+        _moderatorManager.setModeratorConnectionLoading(true);
+        updateModerator(address)
+            .then((moderatorInfo) => {
+                updateModeratorConnection(moderatorInfo);
+            })
+            .catch((err) => {
+                log('Could not connect to moderator');
+                console.log(err);
+                updateModeratorConnection(undefined);
+            });
     };
 
     /**
@@ -387,7 +531,7 @@ function UIManager() {
         for (let key of Object.keys(APP_MODE)) {
             $modeButtons[APP_MODE[key]].on('click', function () {
                 if (!$modeButtons[APP_MODE[key]].hasClass('active')) // Do not change if we are already in this mode
-                    setUIMode(APP_MODE[key], false);
+                    UI.setUIMode(APP_MODE[key], false);
             });
         }
         $.selector_cache('#clearItemListButton').on('click', function () { // Remove all items from the list in the current tab
@@ -403,14 +547,19 @@ function UIManager() {
             startSign();
         });
         $.selector_cache('#cancelButton').on('click', function () {
-            UI.setUIButtonState(UI_STATE.none);
+            UI.setUIElementsState(UI_STATE.none);
             resetElementsFromList(getCurrentList());
             UI.resetProgress();
         });
-
+        $.selector_cache('#selectAllButton').on('click', function () {
+            let shouldSelect = _selectedItems.length !== getCurrentList().size;
+            for (let item of getCurrentList().values()) {
+                item.setSelected(shouldSelect);
+            }
+        });
         $.selector_cache('#kernelAddressInputConnect').on('click', function () {
-            _currentKernelAddress = $.selector_cache('#kernelAddressInput').val();
-            UI.connectToKernel();
+            _kernelManager.setCurrentAddress($.selector_cache('#kernelAddressInput').val());
+            UI.tryKernelConnection(_kernelManager.getCurrentAddress());
         });
 
         $tabHolders[TAB_TYPE.file] // DropZone management
@@ -449,6 +598,16 @@ function UIManager() {
         $.selector_cache('#addItemButton').on('click', function () {
             createItemEntry();
         });
+        $.selector_cache('#editItemButton').on('click', function () {
+            _itemDetailsManager.displayItemListProps(_selectedItems);
+        });
+        $.selector_cache('#ropstenWarningCloseIcon').on('click', function () {
+            hideTestnetWarning();
+        });
+        $.selector_cache('#ropstenWarningClosePermanent').on('click', function () {
+            Cookies.set('hide-ropsten-warning', '1', {expires: 365});
+            hideTestnetWarning();
+        });
         $.selector_cache("body")
             .on('click', function (e) {
                 // Remove button clicked
@@ -458,8 +617,11 @@ function UIManager() {
                     let $card = getCardFromTarget($(e.target));
                     if ($card !== undefined) {
                         let index = getFileIndexFromId($card.attr('id'));
-                        fileListResetSelection();
-                        listItemClick(index);
+                        let item = getCurrentListItem(index);
+                        if (e.target.className.search('item-select-checkbox') !== -1)
+                            item.setSelected(!item.isSelected());
+                        else
+                            listItemClick(item);
                     }
                 }
             })
@@ -500,8 +662,22 @@ function UIManager() {
             });
         }
         $.selector_cache('#kernelConnectionEditButton').on('click', function () {
-            showKernelInput();
+            _kernelManager.showKernelInput();
         });
+        $.selector_cache('#kernelConnectionShareButton').on('click', function () {
+            let baseUrl = 'https://ulcdocuments.blockchain-elite.fr/ulcdoc_interactor.html#mode:check&kernel:';
+            copyToClipboard(baseUrl + _kernelManager.getCurrentAddress());
+            sendNotification(TypeInfo.Good, 'Link Copied', 'The link to this page has been copied in your clipboard.')
+        });
+
+        $.selector_cache('#actionButtonsMobileToggle').on('click', function () {
+            if ($.selector_cache('#buttonsCardContainer').hasClass('shown')) {
+                hideMobileActionButtonsContainer();
+            } else {
+                showMobileActionButtonsContainer();
+            }
+        });
+
         $.selector_cache('#advancedOptionsButton').on('click', function () {
             $.confirm({
                 title: 'Are you sure?',
@@ -517,7 +693,7 @@ function UIManager() {
                         keys: ['enter'],
                         btnClass: 'btn-orange',
                         action: function () {
-                            showModeratorInput();
+                            _moderatorManager.showModeratorInput();
                         }
                     },
                     cancel: function () {
@@ -528,185 +704,14 @@ function UIManager() {
         });
     };
 
-    let showModeratorInput = function () {
-        let verboseAttr = 'checked';
-        if (!_isVerbose)
-            verboseAttr = '';
-
-        let optimizerAttr = 'checked';
-        if (!_isOptimizerEnabled)
-            optimizerAttr = '';
-
-
-        let message =
-            '<form>' +
-            '   <div class="form-group">' +
-            '       <label>Current moderator address:</label>' +
-            '       <label>' + _currentModeratorAddress + '</label>' +
-            '   </div>' +
-            '   <div class="form-group">' +
-            '       <label>New moderator address:</label>' +
-            '       <input  type="text" class="form-control"' +
-            '       id="moderatorInput"' +
-            '       placeholder="Enter Address Here"/>' +
-            '   </div>' +
-            '</form>' +
-            '<div class="custom-control form-control-lg custom-checkbox">' +
-            '    <input type="checkbox" class="custom-control-input" id="verboseButton" ' + verboseAttr + '>' +
-            '    <label class="custom-control-label" for="verboseButton">Verbose</label>' +
-            '</div>' +
-            '<p>Verbose displays messages in the browser console. This can be useful if you want to take part in the development, report bugs, etc.</p>' +
-            '<div id="optimizerCheckbox" class="custom-control form-control-lg custom-checkbox">' +
-            '    <input type="checkbox" class="custom-control-input" id="optimizerButton" ' + optimizerAttr + '>' +
-            '    <label class="custom-control-label" for="optimizerButton">Use optimized signing</label>' +
-            '</div>' +
-            '<p>Optimized signing allows the app to group elements without information, and create only one transaction. ' +
-            'It makes the signing process easier and faster.<br>You can choose to disable it if you want to have one transaction for each item to sign.</p>';
-
-        $.confirm({
-            title: 'Advanced Options',
-            content: message,
-            type: 'orange',
-            theme: JQUERY_CONFIRM_THEME,
-            columnClass: 'medium',
-            icon: 'fas fa-cog',
-            escapeKey: 'cancel',
-            typeAnimated: true,
-            onContentReady: function () {
-                // when content is fetched & rendered in DOM
-                $("#moderatorInput").focus(); // Focus the input for faster copy/paste
-            },
-            buttons: {
-                default: {
-                    text: 'Use Default Settings',
-                    btnClass: 'btn-green',
-                    action: function () {
-                        UI.setVerbose(false);
-                        _isOptimizerEnabled = true;
-                        _currentModeratorAddress = _defaultModeratorAddress;
-                        connectToModerator();
-                    }
-                },
-                formSubmit: {
-                    text: 'Save Settings',
-                    btnClass: 'btn-blue',
-                    keys: ['enter'],
-                    action: function () {
-                        let address = this.$content.find('#moderatorInput').val();
-                        UI.setVerbose(this.$content.find('#verboseButton').is(':checked'));
-                        _isOptimizerEnabled = this.$content.find('#optimizerButton').is(':checked');
-                        if (address !== '')
-                            showConfirmModerator(address);
-                    }
-                },
-                cancel: function () {
-                    // Close
-                },
-            },
-        });
+    let showMobileActionButtonsContainer = function () {
+        $.selector_cache('#buttonsCardContainer').addClass('shown');
     };
 
-    let showConfirmModerator = function (address) {
-        $.confirm({
-            title: 'Security consideration',
-            content: "Do you really want to change authority?<br/>" +
-                "This may lead to security issues. Continue only if you trust the new authority.",
-            type: 'orange',
-            theme: JQUERY_CONFIRM_THEME,
-            columnClass: 'medium',
-            icon: 'fas fa-exclamation-triangle',
-            escapeKey: 'cancel',
-            typeAnimated: true,
-            buttons: {
-                confirm: {
-                    keys: ['enter'],
-                    btnClass: 'btn-orange',
-                    action: function () {
-                        _currentModeratorAddress = address;
-                        connectToModerator();
-                    }
-                },
-                cancel: function () {
-                    // Close
-                }
-            }
-        });
+    let hideMobileActionButtonsContainer = function () {
+        $.selector_cache('#buttonsCardContainer').removeClass('shown');
     };
 
-    let connectToModerator = function () {
-        _isModeratorConnected = false;
-        setModeratorConnectionLoading(true);
-        updateModeratorAddress(_currentModeratorAddress); // Call to ULCDocMaster
-    };
-
-    /**
-     * Show a dialog to enter a new kernel address
-     */
-    let showKernelInput = function () {
-        let checkedAttr = _currentAppMode === APP_MODE.sign ? 'checked' : '';
-        $.confirm({
-            title: 'Change kernel address',
-            content: '' +
-                '<form>' +
-                '<div class="form-group">' +
-                '<label>Current kernel address:</label>' +
-                '<label>' + _currentKernelAddress + '</label>' +
-                '</div>' +
-                '<div class="form-group">' +
-                '<label>New kernel address:</label>' +
-                '<input  type="text" class="form-control"' +
-                ' id="kernelInput"' +
-                ' placeholder="Enter Address Here"/>' +
-                '</div>' +
-                '</form>' +
-                '<div class="custom-control form-control-lg custom-checkbox">' +
-                '    <input type="checkbox" class="custom-control-input" id="enableSignButton"' + checkedAttr + '>' +
-                '    <label class="custom-control-label" for="enableSignButton">Enable signing for this kernel</label>' +
-                '</div>',
-            type: 'blue',
-            theme: JQUERY_CONFIRM_THEME,
-            columnClass: 'medium',
-            icon: 'fas fa-edit',
-            escapeKey: 'cancel',
-            typeAnimated: true,
-            onContentReady: function () {
-                // when content is fetched & rendered in DOM
-                $("#kernelInput").focus(); // Focus the input for faster copy/paste
-            },
-            buttons: {
-                formSubmit: {
-                    text: 'Connect',
-                    btnClass: 'btn-blue',
-                    keys: ['enter'],
-                    action: function () {
-                        let address = this.$content.find('#kernelInput').val();
-                        if (address === '') {
-                            $.alert({
-                                    title: 'error',
-                                    content: 'Please enter a value',
-                                    type: 'red',
-                                    theme: JQUERY_CONFIRM_THEME,
-                                    icon: 'fas fa-exclamation',
-                                    escapeKey: 'ok',
-                                    typeAnimated: true,
-                                }
-                            );
-                            return false;
-                        }
-                        if (this.$content.find('#enableSignButton').is(':checked')) {
-                            $.selector_cache("#signTab").show();
-                            setUIMode(APP_MODE.sign, false);
-                        }
-                        _currentKernelAddress = address;
-                        UI.connectToKernel();
-                    }
-                },
-                cancel: function () {
-                    //close
-                },
-            },
-        });
-    };
 
     /**
      * Show the content of the tab based on its type
@@ -714,6 +719,7 @@ function UIManager() {
      * @param type {TAB_TYPE} The type of the tab clicked
      */
     let tabClick = function (type) {
+        clearSelectedItems();
         for (let i of Object.keys(TAB_TYPE)) {
             if (TAB_TYPE[i] !== type) {
                 $tabButtons[TAB_TYPE[i]].removeClass('active');
@@ -733,7 +739,6 @@ function UIManager() {
             $.selector_cache('#importButtonHolder').show();
         }
         UI.resetProgress();
-        fileListResetSelection();
         UI.updateCheckButtonState();
     };
 
@@ -753,18 +758,22 @@ function UIManager() {
      */
     let checkStart = function () {
         UI.resetProgress(); // reset progress
+        showMobileActionButtonsContainer();
         resetElementsFromList(getCurrentList());
         if (_currentTab !== TAB_TYPE.file)
             cleanList(); // remove invalid test/hash entries before checking
         if (!isCurrentItemListEmpty()) {
             for (let item of getCurrentList().values()) {
-                item.setType(TypeElement.Loading);
+                if (_currentTab !== TAB_TYPE.hash) // We do not compute the hash if the user entered it
+                    item.setType(TypeElement.Computing);
+                else
+                    item.setType(TypeElement.Loading);
             }
             if (_currentAppMode === APP_MODE.check) {
-                UI.setUIButtonState(UI_STATE.checking);
+                UI.setUIElementsState(UI_STATE.checking);
                 log('Checking started...');
             } else {
-                UI.setUIButtonState(UI_STATE.fetching);
+                UI.setUIElementsState(UI_STATE.fetching);
                 log('Fetching started...');
             }
 
@@ -784,11 +793,11 @@ function UIManager() {
             switch (_currentTab) {
                 case TAB_TYPE.text:
                     if (item.getText().length === 0)
-                        UI.removeItemFromList(item.getIndex(), item.isSelected());
+                        UI.removeItemFromList(item.getIndex());
                     break;
                 case TAB_TYPE.hash:
                     if (item.getHash().length === 0)
-                        UI.removeItemFromList(item.getIndex(), item.isSelected());
+                        UI.removeItemFromList(item.getIndex());
             }
         }
     };
@@ -798,7 +807,7 @@ function UIManager() {
      *
      * @param state {Boolean} To enable or disable the buttons
      */
-    let setConnectionButtonLockedState = function (state) {
+    this.setConnectionButtonLockedState = function (state) {
         $.selector_cache('#advancedOptionsButton').attr('disabled', state);
         $.selector_cache('#kernelConnectionEditButton').attr('disabled', state);
     };
@@ -808,13 +817,13 @@ function UIManager() {
      *
      * @param state {UI_STATE} How should we lock the UI ?
      */
-    this.setUIButtonState = function (state) {
+    this.setUIElementsState = function (state) {
         log('Setting ui working mode to: ' + UI_STATE[state]);
         // Common locked elements
         let isWorking = state !== UI_STATE.none;
         setUITabsState(isWorking);
         // Lock connection change
-        setConnectionButtonLockedState(isWorking);
+        UI.setConnectionButtonLockedState(isWorking);
         setActionButtonIcon(state);
 
         // Lock item management
@@ -834,16 +843,27 @@ function UIManager() {
             $.selector_cache('#checkButton').attr('disabled', true);
         else
             UI.updateCheckButtonState();
-        if (state !== UI_STATE.fetched)
+        if (state !== UI_STATE.fetched) {
             $.selector_cache('.sign-next-step-logo').css('color', '#E9ECEF');
-        else
+            $('.multi-selection').hide();
+        } else {
             $.selector_cache('.sign-next-step-logo').css('color', '#17A2B8');
+            $('.multi-selection').show();
+        }
+
 
         $.selector_cache('#signButton').attr('disabled', state !== UI_STATE.fetched);
         $.selector_cache('#cancelButton').attr('disabled', state !== UI_STATE.fetched);
 
+        // Show/hide loading screen
+        if (state === UI_STATE.checking || state === UI_STATE.fetching) {
+            $.selector_cache('#actionLoadingScreen').show();
+            $.selector_cache('#addItemButton').attr('disabled', true);
+        } else if ($.selector_cache('#actionLoadingScreen').css('display') !== 'none')
+            $.selector_cache('#actionLoadingScreen').fadeOut(200);
+
         _currentUiState = state;
-        updateDIsplayedItemInfo();
+        updateDisplayedItemInfo();
     };
 
     /**
@@ -885,17 +905,22 @@ function UIManager() {
     };
 
     /**
-     * Set the file list item selected, associated to the index.
+     * Set the file list item selected.
      *
-     * @param index {Number} The file unique index
+     * @param currentItem {ListItem|FileListItem|TextListItem|HashListItem} The item clicked
      */
-    let listItemClick = function (index) {
-        for (let item of getCurrentList().values()) { // unselect previous items
-            if (item.getIndex() !== index) {
-                item.setSelected(false);
-            }
+    let listItemClick = function (currentItem) {
+        if (_selectedItems.length === 0) { // Are we multiselecting ?
+            clearSelectedItems();
+            _itemDetailsManager.displayFileProps(currentItem);
         }
-        getCurrentListItem(index).setSelected(true);
+        currentItem.setSelected(!currentItem.isSelected());
+    };
+
+    let clearSelectedItems = function () {
+        for (let item of getCurrentList().values()) {
+            item.setSelected(false);
+        }
     };
 
     /**
@@ -946,7 +971,6 @@ function UIManager() {
             },
         });
     };
-
 
     /**
      * Check if the given file is valid.
@@ -1000,13 +1024,12 @@ function UIManager() {
                     $tabHolders[TAB_TYPE.file].html(""); // init drop zone
                 }
                 let item = new FileListItem(_uniqueIdCounter, file, _currentAppMode);
-                item.createEntry(true);
+                item.createEntry(true, UI.getCurrentTabHolder());
                 getList(_currentAppMode, TAB_TYPE.file).set(_uniqueIdCounter, item);
                 UI.updateCheckButtonState();
-                UI.setUIButtonState(UI_STATE.none);
+                UI.setUIElementsState(UI_STATE.none);
                 UI.resetProgress();
                 _uniqueIdCounter += 1;
-                listItemClick(item.getIndex());
             };
             reader.onerror = function () { // file is invalid
                 sendNotification(TypeInfo.Critical, "Error", "Could not read file '" + file.name + "'");
@@ -1028,15 +1051,15 @@ function UIManager() {
             item = new TextListItem(_uniqueIdCounter, _currentAppMode);
         else
             item = new HashListItem(_uniqueIdCounter, _currentAppMode);
-        item.createEntry(true);
+        item.createEntry(true, UI.getCurrentTabHolder());
         getCurrentList().set(_uniqueIdCounter, item);
         _uniqueIdCounter += 1;
         UI.updateCheckButtonState();
-        UI.setUIButtonState(UI_STATE.none);
+        UI.setUIElementsState(UI_STATE.none);
         UI.resetProgress();
         updateDisplayIds(_currentTab);
 
-        listItemClick(item.getIndex());
+        listItemClick(item);
     };
 
     /**
@@ -1079,47 +1102,69 @@ function UIManager() {
             log('Checking next item', TypeInfo.Info);
             updateProgress(_itemsProcessedCounter, false);
             let currentItem = getCurrentListItemByIndex(_itemsProcessedCounter);
-            if (_currentAppMode === APP_MODE.check) {
+            customCheckItem(currentItem, (hash) => {
+                updateElementHash(currentItem, hash);
+                if (_currentAppMode === APP_MODE.sign)
+                    customFetchItem(currentItem);
+            });
+            if (_currentAppMode === APP_MODE.check)
                 $.selector_cache('#actionInProgress').html('Checking...');
-                if (currentItem.getHash() !== '')
-                    checkHash(currentItem.getHash(), currentItem.getIndex());
-                else {
-                    switch (_currentTab) {
-                        case TAB_TYPE.file:
-                            checkFile(currentItem.getFile(), currentItem.getIndex());
-                            break;
-                        case TAB_TYPE.text:
-                            checkText(currentItem.getText(), currentItem.getIndex());
-                            break;
-                        case TAB_TYPE.hash:
-                            checkHash(currentItem.getHash(), currentItem.getIndex());
-                            break;
-                    }
-                }
-            } else {
+            else
                 $.selector_cache('#actionInProgress').html('Fetching information...');
-                // Do not calculate the hash if we already have it
-                if (currentItem.getHash() !== '')
-                    fetchHash(currentItem.getHash(), currentItem.getIndex());
-                else {
-                    switch (_currentTab) {
-                        case TAB_TYPE.file:
-                            fetchFile(currentItem.getFile(), currentItem.getIndex());
-                            break;
-                        case TAB_TYPE.text:
-                            fetchText(currentItem.getText(), currentItem.getIndex());
-                            break;
-                        case TAB_TYPE.hash:
-                            fetchHash(currentItem.getHash(), currentItem.getIndex());
-                            break;
-                    }
-                }
 
-            }
         } else if (_currentAppMode === APP_MODE.check) // If we finished checking
             endCheck();
         else  // if we finished fetching
             trySign();
+    };
+
+    /**
+     *
+     * @param currentItem {ListItem|TextListItem|FileListItem|HashListItem}
+     * @param onHashAvailable {Function}
+     */
+    let customCheckItem = function (currentItem, onHashAvailable) {
+        // Do not calculate the hash if we already have it
+        if (currentItem instanceof HashListItem || currentItem.getHash() !== '') {
+            currentItem.setType(TypeElement.Loading);
+            checkHash(currentItem.getHash())
+                .then((docData) => {
+                    updateElementInfo(currentItem, docData)
+                })
+                .catch((err) => {
+                    console.log(err);
+                    updateElementInfo(currentItem, undefined);
+                });
+        } else if (currentItem instanceof FileListItem) {
+            checkFile(currentItem.getFile(), onHashAvailable)
+                .then((docData) => {
+                    updateElementInfo(currentItem, docData)
+                })
+                .catch((err) => {
+                    console.log(err);
+                    updateElementInfo(currentItem, undefined);
+                });
+        } else {
+            checkText(currentItem.getText(), onHashAvailable)
+                .then((docData) => {
+                    updateElementInfo(currentItem, docData)
+                })
+                .catch((err) => {
+                    console.log(err);
+                    updateElementInfo(currentItem, undefined);
+                });
+        }
+    };
+
+    let customFetchItem = function (currentItem) {
+        fetchHash(currentItem.getHash())
+            .then((signStatus) => {
+                console.log(signStatus);
+            })
+            .catch((err) => {
+                console.log(err);
+                updateElementInfo(currentItem, undefined);
+            });
     };
 
     /**
@@ -1128,7 +1173,7 @@ function UIManager() {
     let endCheck = function () {
         log('Finished checking all the items', TypeInfo.Info);
         updateProgress(0, true);
-        UI.setUIButtonState(UI_STATE.none);
+        UI.setUIElementsState(UI_STATE.none);
     };
 
     /**
@@ -1141,13 +1186,13 @@ function UIManager() {
         if (invalidElements.length)
             displayInvalidElementsError(invalidElements);
         else
-            UI.setUIButtonState(UI_STATE.fetched);
+            UI.setUIElementsState(UI_STATE.fetched);
     };
 
-    let updateDIsplayedItemInfo = function () {
+    let updateDisplayedItemInfo = function () {
         for (let i of getCurrentList().values()) {
             if (i.isSelected())
-                UI.displayFileProps(i.getIndex());
+                _itemDetailsManager.setupItemPopup(i);
         }
     };
 
@@ -1182,15 +1227,15 @@ function UIManager() {
                         if (getCurrentList().size) {
                             sendNotification(TypeInfo.Good, 'Ready to sign', 'Removed invalid elements. ' +
                                 'You can now start signing.');
-                            UI.setUIButtonState(UI_STATE.fetched);
+                            UI.setUIElementsState(UI_STATE.fetched);
                         } else {
                             sendNotification(TypeInfo.Critical, 'Error', 'No valid document to sign');
-                            UI.setUIButtonState(UI_STATE.none);
+                            UI.setUIElementsState(UI_STATE.none);
                         }
                     }
                 },
                 cancel: function () {
-                    UI.setUIButtonState(UI_STATE.none);
+                    UI.setUIElementsState(UI_STATE.none);
                 },
             },
             onContentReady: function () {
@@ -1252,7 +1297,7 @@ function UIManager() {
      */
     let removeInvalidElements = function (elements) {
         for (let i of elements) {
-            UI.removeItemFromList(i, true);
+            UI.removeItemFromList(i);
         }
     };
 
@@ -1274,62 +1319,34 @@ function UIManager() {
                     keys: ['enter'],
                     btnClass: 'btn-blue',
                     action: function () {
-                        UI.setUIButtonState(UI_STATE.signing);
+                        UI.setUIElementsState(UI_STATE.signing);
                         _elementsToSign = getCurrentList().size;
                         _elementSigned = 0;
                         $.selector_cache('#actionInProgress').html('Signing...');
-
-                        if (!_isOptimizerEnabled) {
-                            log('Signing without optimizer', TypeInfo.Info);
-                            _itemsProcessedCounter = 0;
-                            for (_itemsProcessedCounter = 0; _itemsProcessedCounter < getCurrentList().size; _itemsProcessedCounter++) {
-                                updateProgress(_itemsProcessedCounter, false);
-                                let currentItem = getCurrentListItemByIndex(_itemsProcessedCounter);
-                                signDocument(currentItem.getHash(), getItemInfoToSign(currentItem), currentItem.getIndex());
-                            }
-                            endSign();
-                        } else {
-                            log('Signing with optimizer', TypeInfo.Info);
-                            let requests = [[], [], []];
-                            for (_itemsProcessedCounter = 0; _itemsProcessedCounter < getCurrentList().size; _itemsProcessedCounter++) {
-                                updateProgress(_itemsProcessedCounter, false);
-                                let currentItem = getCurrentListItemByIndex(_itemsProcessedCounter);
-                                requests[0].push(currentItem.getHash());
-                                requests[1].push(getItemInfoToSign(currentItem));
-                                requests[2].push(currentItem.getIndex());
-                            }
-                            updateProgress(_itemsProcessedCounter, true);
-                            signOptimisedDocuments(requests[0], requests[1], requests[2]);
+                        log('Signing...', TypeInfo.Info);
+                        let items = [];
+                        let indexes = [];
+                        for (_itemsProcessedCounter = 0; _itemsProcessedCounter < getCurrentList().size; _itemsProcessedCounter++) {
+                            updateProgress(_itemsProcessedCounter, false);
+                            let currentItem = getCurrentListItemByIndex(_itemsProcessedCounter);
+                            currentItem.setType(TypeElement.awaitingMetamask);
+                            currentItem.getDocumentData().extra_data = customExtraToMap(currentItem.getCustomExtraData());
+                            items.push(currentItem.getDocumentData());
+                            indexes.push(currentItem.getIndex());
                         }
-
+                        updateProgress(_itemsProcessedCounter, true);
+                        signDocuments(items, indexes, _isOptimizerEnabled,
+                            (id, url) => updateTransactionTx(id, url),
+                            (id) => updateTransactionState(id, true),
+                            (id) => updateTransactionState(id, false));
+                        endSign();
                     }
                 },
                 cancel: function () {
-                    UI.setUIButtonState(UI_STATE.fetched);
+                    UI.setUIElementsState(UI_STATE.fetched);
                 },
             }
         });
-    };
-
-    /**
-     * Get a map containing information to sign, or undefined if no info has been entered
-     *
-     * @param item {ListItem} The list item to sign
-     * @return {Map<any, any>} The map of information to sign or undefined
-     */
-    let getItemInfoToSign = function (item) {
-        let infoMap = new Map(item.getInformation());
-        if (item.getNumSign() === 0) {// We are the first to sign, we can enter values
-            item.clearCustomExtraData();
-            if (item.getCustomExtraData().length) {// We have valid extra data
-                item.setExtraData(customExtraToMap(item.getCustomExtraData()));
-                infoMap.set(elementReservedKeys.extraData, item.getExtraData());
-            }
-            if (infoMap.size === 0) //If no data, set map to undefined
-                infoMap = undefined;
-        } else // We are not the first one to sign, we cannot enter new values
-            infoMap = undefined;
-        return infoMap;
     };
 
     /**
@@ -1350,14 +1367,14 @@ function UIManager() {
      */
     let updateProgress = function (progress, isFinished = false) {
         if (isFinished) { // Finished
-            $.selector_cache('#fileInProgress').html('...');
+            $.selector_cache('#fileInProgress').html('');
             $.selector_cache('#actionInProgress').html('Finished');
             $.selector_cache('#actionProgressBar').css("width", "100%");
             $.selector_cache('#actionProgressBar').attr("aria-valuenow", "100");
             $.selector_cache('#actionProgressBar').html('100%');
             $.selector_cache('#actionProgressBar').removeClass('progress-bar-animated');
         } else if (progress === -1) { // Not started
-            $.selector_cache('#fileInProgress').html('...');
+            $.selector_cache('#fileInProgress').html('');
             $.selector_cache('#actionInProgress').html('Not started');
             $.selector_cache('#actionProgressBar').css("width", "0");
             $.selector_cache('#actionProgressBar').attr("aria-valuenow", "0");
@@ -1388,290 +1405,26 @@ function UIManager() {
     };
 
     /**
-     * Enable or disable the kernel connecting UI.
-     *
-     * @param state {Boolean} Whether to enable the UI
-     */
-    let setKernelConnectionLoading = function (state) {
-        log('Setting kernel connecting UI to: ' + state, TypeInfo.Info);
-        setConnectionButtonLockedState(state);
-        UI.updateCheckButtonState();
-        if (state) { // Instantly display connecting
-            _isKernelConnected = false;
-            updateMainUIState();
-            $.selector_cache('#kernelConnectedAddress').html('Connection in progress...');
-            setDOMColor($.selector_cache('#kernelInfoHeader'), COLOR_CLASSES.secondary);
-            $.selector_cache('#kernelConnectionInfoIcon').attr('class', 'fas fa-circle-notch fa-spin fa-fw');
-            $.selector_cache('#kernelConnectionLoadingIcon').attr('class', 'fas fa-circle-notch fa-spin fa-fw');
-            setKernelInfo(undefined, TypeInfo.Info);
-        } else {
-            $.selector_cache('#kernelConnectionLoadingIcon').attr('class', 'fas fa-arrow-right');
-        }
-    };
-
-    /**
-     * Enable or disable the moderator connecting UI.
-     *
-     * @param state {Boolean} Whether to enable the UI
-     */
-    let setModeratorConnectionLoading = function (state) {
-        log('Setting moderator connecting UI to: ' + state, TypeInfo.Info);
-        // Disable the input while we connect
-        setConnectionButtonLockedState(state);
-        UI.updateCheckButtonState();
-        if (state) { // Instantly display connecting
-            _isKernelConnected = false;
-            _isModeratorConnected = false;
-            updateMainUIState();
-            $.selector_cache('#moderatorConnectedAddress').html('Connection in progress...');
-            setDOMColor($.selector_cache('#moderatorInfoHeader'), COLOR_CLASSES.secondary);
-        }
-        if (state) {
-            $.selector_cache('#moderatorConnectionInfoIcon').attr('class', 'fas fa-circle-notch fa-spin fa-fw');
-            $.selector_cache('#moderatorConnectionLoadingIcon').attr('class', 'fas fa-circle-notch fa-spin fa-fw');
-        } else {
-            $.selector_cache('#moderatorConnectionLoadingIcon').attr('class', 'fas fa-arrow-right');
-        }
-    };
-
-    /**
-     * Fill the kernel info table with information from result.
-     * Display an error if result is undefined.
-     *
-     * @param result {Map} Result dictionary or undefined to use the error text.
-     * @param errorType {TypeInfo} Type of the error.
-     */
-    let setKernelInfo = function (result, errorType) {
-        $.selector_cache("#kernelInfoBody").fadeOut('fast', function () {
-            $.selector_cache('#kernelInputForm').hide();
-            $.selector_cache('#kernelLoadingIcon').hide();
-            if (result !== undefined) {
-                log('Setting kernel info', TypeInfo.Info);
-                $.selector_cache('#kernelInfoZone').show();
-                $.selector_cache('#kernelInfoEmptyZone').hide();
-                $.selector_cache('#kernelConnectionEditButton').show();
-                setKernelReservedFields(result);
-                setKernelConnectedAddress(result);
-                setKernelExtraData(result);
-            } else {
-                $.selector_cache('#kernelInfoZone').hide();
-                $.selector_cache('#kernelInfoEmptyZone').show();
-                $.selector_cache('#kernelConnectionEditButton').hide();
-
-                let errorText = "Not connected";
-                switch (errorType) {
-                    case TypeInfo.Warning:
-                        errorText = 'Connection could not be verified by moderator';
-                        $.selector_cache('#kernelConnectionEditButton').show();
-                        break;
-                    case TypeInfo.Critical:
-                        errorText = 'Connection could not be established, please enter a valid address below:';
-                        $.selector_cache('#kernelInputForm').show();
-                        break;
-                    case TypeInfo.Info:
-                        errorText = 'Loading...';
-                        $.selector_cache('#kernelLoadingIcon').show();
-                        break;
-                    default:
-                        errorText = 'Not connected, please enter a kernel address below';
-                        $.selector_cache('#kernelInputForm').show();
-                        break;
-                }
-                updateKernelButtonsState();
-                $.selector_cache("#kernelInfoEmptyText").html(errorText);
-            }
-            $.selector_cache("#kernelInfoBody").fadeIn('fast');
-        });
-
-    };
-
-    /**
-     * Display kernel buttons linking to moderator if the user is an operator of the current kernel
-     */
-    let updateKernelButtonsState = function () {
-        if (_isAccountOperator && _isKernelConnected)
-            $.selector_cache("#kernelButtons").show();
-        else
-            $.selector_cache("#kernelButtons").hide();
-    };
-
-    /**
-     * Set the value for the reserved Kernel fields
-     *
-     * @param kernelInfo {Map} The information received from backend
-     */
-    let setKernelReservedFields = function (kernelInfo) {
-        if (kernelInfo.has(kernelReservedKeys.img) && kernelInfo.get(kernelReservedKeys.img) !== "") {
-            $.selector_cache("#kernelImg").hide();
-            $.selector_cache("#kernelImg").attr('src', kernelInfo.get(kernelReservedKeys.img));
-            onImgLoad("#kernelImg", function () {
-                $.selector_cache("#kernelImg").fadeIn('fast');
-            });
-        }
-
-        if (kernelInfo.has(kernelReservedKeys.name) && kernelInfo.get(kernelReservedKeys.name) !== "")
-            $.selector_cache("#kernelName").text(kernelInfo.get(kernelReservedKeys.name));
-        else
-            $.selector_cache("#kernelName").text(kernelInfo.get('Kernel Information'));
-
-        if (kernelInfo.has(kernelReservedKeys.isOrganisation) && kernelInfo.get(kernelReservedKeys.isOrganisation) === true)
-            $.selector_cache("#kernelOrganization").text('This entity is an organization');
-        else
-            $.selector_cache("#kernelOrganization").text('This entity is not an organization');
-
-        if (kernelInfo.has(kernelReservedKeys.phone) && kernelInfo.get(kernelReservedKeys.phone) !== '')
-            $.selector_cache("#kernelPhone").text(kernelInfo.get(kernelReservedKeys.phone));
-        else
-            $.selector_cache("#kernelPhoneContainer").hide();
-
-        if (kernelInfo.has(kernelReservedKeys.physicalAddress) && kernelInfo.get(kernelReservedKeys.physicalAddress) !== '') {
-            $.selector_cache("#kernelAddress").text(kernelInfo.get(kernelReservedKeys.physicalAddress));
-            $.selector_cache("#kernelAddress").attr('href', OSM_QUERY_LINK + kernelInfo.get(kernelReservedKeys.physicalAddress));
-        } else
-            $.selector_cache("#kernelAddressContainer").hide();
-
-        if (kernelInfo.has(kernelReservedKeys.url) && kernelInfo.get(kernelReservedKeys.url) !== "") {
-            $.selector_cache("#kernelUrl").attr('href', kernelInfo.get(kernelReservedKeys.url));
-            $.selector_cache("#kernelUrl").text(kernelInfo.get(kernelReservedKeys.url));
-        } else
-            $.selector_cache("#kernelUrlContainer").hide();
-
-        if (kernelInfo.has(kernelReservedKeys.mail) && kernelInfo.get(kernelReservedKeys.mail) !== "") {
-            $.selector_cache("#kernelMail").attr('href', 'mailto:' + kernelInfo.get(kernelReservedKeys.mail));
-            $.selector_cache("#kernelMail").text(kernelInfo.get(kernelReservedKeys.mail));
-        } else
-            $.selector_cache("#kernelMailContainer").hide();
-
-        if (kernelInfo.has(kernelReservedKeys.version) && kernelInfo.get(kernelReservedKeys.version) !== "")
-            $.selector_cache("#kernelVersion").text('Version ' + kernelInfo.get(kernelReservedKeys.version));
-        else
-            $.selector_cache("#kernelVersion").hide();
-    };
-
-    /**
-     * Set the current connected kernel name, or address if not referenced by moderator
-     *
-     * @param kernelInfo {Map} The information received from backend
-     */
-    let setKernelConnectedAddress = function (kernelInfo) {
-        if (kernelInfo.has(kernelReservedKeys.name)) {
-            $.selector_cache('#kernelConnectedAddress').html("Currently connected to : <strong><span id='moderatorName'></span></strong>");
-            $('#moderatorName').text(kernelInfo.get(kernelReservedKeys.name));
-
-        } else
-            $.selector_cache('#kernelConnectedAddress').text("Currently connected to : '" + _currentKernelAddress + "'");
-    };
-
-    /**
-     * Set the extra data for the kernel
-     *
-     * @param kernelInfo {Map} The information received from backend
-     */
-    let setKernelExtraData = function (kernelInfo) {
-        if (kernelInfo.get(kernelReservedKeys.extraData) !== undefined && kernelInfo.get(kernelReservedKeys.extraData).size) {
-            let $kernelExtraDataTable = $.selector_cache("#kernelExtraDataTable");
-            for (let [key, value] of kernelInfo.get(kernelReservedKeys.extraData)) {
-                $kernelExtraDataTable.append(
-                    "<tr>\n" +
-                    "<th scope='row'>" + capitalizeFirstLetter(key) + "</th>\n" +
-                    "<td>" + value + "</td>\n" +
-                    "</tr>");
-            }
-        } else
-            $.selector_cache("#kernelAdditionalInfoZone").hide();
-    };
-
-
-    /**
-     * Fill the moderator info table with information.
-     * Display an error if info is undefined.
-     *
-     * @param info {Map} Result Map or undefined to use the error text.
-     * @param errorText {String} Error text to display if result is undefined.
-     */
-    let setModeratorInfo = function (info, errorText) {
-        $.selector_cache("#moderatorInfoBody").fadeOut('fast', function () {
-            if (info !== undefined && info.size > 0) {
-                log('Setting moderator info', TypeInfo.Info);
-                $.selector_cache('#moderatorInfoZone').show();
-                $.selector_cache('#moderatorInfoEmptyZone').hide();
-                // Reserved fields
-                if (info.has(moderatorReservedKeys.register))
-                    $.selector_cache(".moderator-registration-link").attr('href', info.get(moderatorReservedKeys.register));
-                else {
-                    $.selector_cache(".moderator-registration-link").hide();
-                    log('No moderator registration link provided', TypeInfo.Warning);
-                }
-                if (info.has(moderatorReservedKeys.contact))
-                    $.selector_cache(".moderator-contact-link").attr('href', info.get(moderatorReservedKeys.contact));
-                else {
-                    $.selector_cache(".moderator-contact-link").hide();
-                    log('No moderator contact link provided', TypeInfo.Warning);
-                }
-                if (info.has(moderatorReservedKeys.search))
-                    $.selector_cache(".moderator-search-link").attr('href', info.get(moderatorReservedKeys.search));
-                else {
-                    $.selector_cache(".moderator-search-link").hide();
-                    log('No moderator search link provided', TypeInfo.Warning);
-                }
-
-                // Other fields
-                let $moderatorInfoTable = $.selector_cache("#moderatorInfoTable");
-                let isInfoEmpty = true;
-                for (let [key, value] of info) {
-                    if (!isValueInObject(key, moderatorReservedKeys)) {
-                        isInfoEmpty = false;
-                        $moderatorInfoTable.append(
-                            "<tr>\n" +
-                            "<th scope='row'>" + capitalizeFirstLetter(key) + "</th>\n" +
-                            "<td>" + value + "</td>\n" +
-                            "</tr>");
-                    }
-                }
-                if (isInfoEmpty)
-                    $.selector_cache("#moderatorAdditionalInfoZone").hide();
-            } else {
-                $.selector_cache('#moderatorInfoZone').hide();
-                $.selector_cache('#moderatorInfoEmptyZone').show();
-                $.selector_cache("#moderatorInfoEmptyText").html(errorText);
-            }
-            $.selector_cache("#moderatorInfoBody").fadeIn('fast');
-        });
-    };
-
-    let isValueInObject = function (val, object) {
-        let isIn = false;
-        for (let i of Object.keys(object)) {
-            if (object[i] === val) {
-                isIn = true;
-                break;
-            }
-        }
-        return isIn;
-    };
-
-    /**
      * Update the main UI components visibility under check and sign tabs,
      * based on current tab, wallet state and kernel ownership
      */
-    let updateMainUIState = function () {
-        if (!_isKernelConnected) {
-            $.selector_cache('#mainUIContainer').hide();
-            $.selector_cache('#accountsCard').hide();
-            $.selector_cache('#loadingAccountsMessage').hide();
-            setMainUIError(true, "Not connected",
-                "Please connect to a kernel to start using the app", COLOR_CLASSES.info, false);
-        } else if (_currentAppMode === APP_MODE.check) { // In check mode
-            $.selector_cache('#mainUIContainer').show();
-            $.selector_cache('#accountsCard').hide();
-            $.selector_cache('#loadingAccountsMessage').hide();
-            setMainUIError(false, "", "", undefined, false)
-        } else if (_currentWalletState !== WALLET_STATE.injected) { // In sign mode without injected wallet
+    this.updateMainUIState = function () {
+        if (_currentAppMode === APP_MODE.sign && _currentWalletState !== WALLET_STATE.injected) { // In sign mode without injected wallet
             $.selector_cache('#mainUIContainer').hide();
             $.selector_cache('#accountsCard').hide();
             $.selector_cache('#loadingAccountsMessage').hide();
             setMainUIError(true, "Wallet not injected",
                 "Please make sure you have metamask installed.", COLOR_CLASSES.warning, true);
+        } else if (!_kernelManager.isConnected()) {
+            $.selector_cache('#mainUIContainer').hide();
+            $.selector_cache('#accountsCard').hide();
+            $.selector_cache('#loadingAccountsMessage').hide();
+            setMainUIError(false, "", "", undefined, false);
+        } else if (_currentAppMode === APP_MODE.check) { // In check mode
+            $.selector_cache('#mainUIContainer').show();
+            $.selector_cache('#accountsCard').hide();
+            $.selector_cache('#loadingAccountsMessage').hide();
+            setMainUIError(false, "", "", undefined, false);
         } else if (_isLoadingAccounts) {
             $.selector_cache('#mainUIContainer').hide();
             $.selector_cache('#accountsCard').show();
@@ -1743,14 +1496,6 @@ function UIManager() {
     };
 
     /**
-     * Reset the file selection (unselect all items and reset details box).
-     */
-    let fileListResetSelection = function () {
-        $(".file-selected").removeClass('file-selected'); // unselect all items
-        UI.displayFileProps(undefined);
-    };
-
-    /**
      * Get the current list based on the current tab
      *
      * @return {Map} The map representing the list
@@ -1815,35 +1560,45 @@ function UIManager() {
         for (let item1 of list.values()) {
             for (let item2 of list.values()) {
                 if (item1 !== item2 && item1.getHash() === item2.getHash())
-                    UI.removeItemFromList(item2.getIndex(), item2.isSelected());
+                    UI.removeItemFromList(item2.getIndex());
             }
         }
     };
 
-    /**
-     * Get the item identified by its index in every item list, starting by the current for performance reasons
-     *
-     * @param index {Number} The unique item identifier
-     * @return {ListItem} The item found, or undefined
-     */
-    let getItemInAll = function (index) {
-        let finalItem = getCurrentListItem(index);
-        if (finalItem === undefined) {
-            for (let tabList of _itemList.values()) {
-                for (let itemList of tabList.values()) {
-                    for (let item of itemList.values()) {
-                        if (item.getIndex() === index)
-                            finalItem = item;
-                    }
-                }
-            }
+    let setupDOMDimensions = function () {
+        if ($(window).width() < 991) {
+            let height = $(window).height() - 200; // Header + action buttons
+            $.selector_cache("#mainCard").css('min-height', height);
+        } else {
+            let height = $(window).height() - 200; // Header + action buttons
+            $.selector_cache("#mainCard").css('height', height);
         }
-        return finalItem;
     };
 
     /* *********************************************************
      *                       PUBLIC FUNCTIONS
      * *********************************************************/
+
+    this.addItemToSelected = function (item) {
+        _selectedItems.push(item);
+        $.selector_cache('#editItemButton').attr('disabled', false);
+        $.selector_cache('#selectAllButton').prop('checked', _selectedItems.length === getCurrentList().size);
+    };
+
+    this.removeItemFromSelected = function (item) {
+        if (_selectedItems.indexOf(item) !== -1)
+            _selectedItems.splice(_selectedItems.indexOf(item), 1);
+        $.selector_cache('#editItemButton').attr('disabled', _selectedItems.length === 0);
+        $.selector_cache('#selectAllButton').prop('checked', false);
+    };
+
+    this.getKernelManager = function () {
+        return _kernelManager;
+    };
+
+    this.getItemDetailsManager = function () {
+        return _itemDetailsManager;
+    };
 
     /**
      * Set the app verbose mode.
@@ -1867,13 +1622,47 @@ function UIManager() {
     };
 
     /**
+     * Get the mode this app is currently in
+     *
+     * @return {APP_MODE} the current app mode
+     */
+    this.getCurrentAppMode = function () {
+        return _currentAppMode;
+    };
+
+    this.getCurrentTab = function () {
+        return _currentTab;
+    };
+
+    this.getCurrentUIState = function () {
+        return _currentUiState;
+    };
+
+    /**
+     * Get if the current account is able to sign documents
+     *
+     * @return {boolean}
+     */
+    this.isAccountOperator = function () {
+        return _isAccountOperator;
+    };
+
+    this.isOptimizerEnabled = function () {
+        return _isOptimizerEnabled;
+    };
+
+    this.setOptimizerEnabled = function (val) {
+        _isOptimizerEnabled = val;
+    };
+
+    /**
      * Check if all conditions are met to start file checking.
      * To be able to check, the item list must not be empty, and the user must be connected to a kernel.
      *
      * @return {boolean} Can we start the checking procedure ?
      */
     this.canCheck = function () {
-        return _isKernelConnected && getCurrentList().size;
+        return _kernelManager.isConnected() && getCurrentList().size;
     };
 
     /**
@@ -1882,18 +1671,11 @@ function UIManager() {
      * @return {boolean} Can we start the signing procedure ?
      */
     this.canSign = function () {
-        return _isKernelConnected && _currentWalletState === WALLET_STATE.injected && getCurrentList().size;
+        return _kernelManager.isConnected() && _currentWalletState === WALLET_STATE.injected && getCurrentList().size;
     };
 
-    /**
-     * Clone the file list item template into the right tab.
-     *
-     * @param id {String} The id of the DOM element to create.
-     * It must en with _{index} with the unique file index to be able to retrieve the file.
-     * @param type {TAB_TYPE} The type to create
-     */
-    this.createListItemFromTemplate = function (id, type) {
-        $tabListItemTemplates[type].contents().clone().attr('id', id).appendTo($tabHolders[type]);
+    this.getCurrentTabHolder = function () {
+        return $tabHolders[_currentTab];
     };
 
     /**
@@ -1901,360 +1683,46 @@ function UIManager() {
      * If we are removing the last file, display the empty file list template.
      *
      * @param index {Number} The file unique index.
-     * @param isSelected {Boolean} Whether the file is currently selected.
      */
-    this.removeItemFromList = function (index, isSelected) {
+    this.removeItemFromList = function (index) {
         $("#" + getCurrentListItem(index).getId()).remove();
         getCurrentList().delete(index);
         if (isCurrentItemListEmpty()) {
             UI.resetProgress();
             resetTabZone(_currentTab);
             UI.updateCheckButtonState();
-            UI.setUIButtonState(UI_STATE.none);
-        }
-        if (isSelected) {
-            UI.displayFileProps(undefined);
+            UI.setUIElementsState(UI_STATE.none);
         }
         updateDisplayIds(_currentTab);
-    };
-
-    /**
-     * Display file properties in the details card.
-     *
-     * @param index {Number} The file unique index.
-     */
-    this.displayFileProps = function (index) {
-        let item = getCurrentListItem(index);
-        setBlockchainInfoErrorText('', COLOR_CLASSES.none); // reset color
-        if (item !== undefined) {
-            $.selector_cache('#detailsEmptyZone').hide();
-            $.selector_cache('#detailsZone').show();
-            setDOMColor($.selector_cache('#generalInfoBody'), item.getCardColor());
-            let file = undefined;
-            if (_currentTab === TAB_TYPE.file)
-                file = item.getFile();
-            fillFileProp(file);
-            setupItemInputFields(item);
-            fillReservedFields(item);
-            // Display blockchain edit fields if the item has no signatures
-            if (_currentAppMode === APP_MODE.sign && _currentUiState === UI_STATE.fetched
-                && item.getType() === TypeElement.Fake && item.getNumSign() === 0) {
-                log('Displaying Blockchain edit fields', TypeInfo.Info);
-                $.selector_cache('#fileBlockchainInfoEmptyZone').hide();
-                $.selector_cache('#fileBlockchainInfoZone').hide();
-                $.selector_cache('#fileBlockchainEditInfoZone').show();
-                // Reset table
-                $.selector_cache("#fileBlockchainEditExtraDataTable").html('');
-                setupSourceInputField(item);
-                createDocFamilyDropDown(item);
-                createSavedInputFields(item);
-                setupExtraDataControlButtons(item);
-            } else if (item.getInformation() !== undefined && item.getInformation().size) {
-                fillBlockchainInfoFields(item);
-                if (item.getExtraData() !== undefined && item.getExtraData().size)
-                    fillBlockchainExtraDataFields(item);
-                else
-                    $.selector_cache("#fileBlockchainExtraDataZone").hide();
-            } else {
-                // No blockchain information to display
-                $.selector_cache('#fileBlockchainInfoEmptyZone').show();
-                $.selector_cache('#fileBlockchainInfoZone').hide();
-                $.selector_cache('#fileBlockchainEditInfoZone').hide();
-                setBlockchainInfoMessage(item);
-            }
-        } else {
-            $.selector_cache('#detailsEmptyZone').show();
-            $.selector_cache('#detailsZone').hide();
-        }
-        $('[data-toggle="tooltip"]').tooltip(); // Enable created tooltips
-    };
-
-    /**
-     * Fill in the file property fields if we have a valid file
-     *
-     * @param file {File} The file to display information from
-     */
-    let fillFileProp = function (file) {
-        if (file !== undefined) { // display file properties only if we have a file
-            log('Displaying file properties', TypeInfo.Info);
-            $.selector_cache("#itemNameProp").text(file.name);
-            $.selector_cache("#itemTypeProp").attr('class', getMimeTypeIcon(file));
-            $.selector_cache("#fileSizeProp").text(humanFileSize(file.size));
-            let date = new Date(file.lastModified);
-            $.selector_cache("#fileDateProp").text(date);
-            $.selector_cache(".file-specific-info").show();
-        } else
-            $.selector_cache(".file-specific-info").hide();
-    };
-
-    let fillReservedFields = function (item) {
-        // display generic info
-        if (item.getHash() !== '')
-            $.selector_cache("#itemHashProp").text(item.getHash());
-        else
-            $.selector_cache("#itemHashProp").text('Not yet calculated');
-        if (item.getType() !== TypeElement.Unknown) {
-            $.selector_cache("#itemStatusProp").show();
-            $.selector_cache("#itemStatusProp").text(ITEM_STATE_TEXT[item.getType()]);
-        } else
-            $.selector_cache("#itemStatusProp").hide();
-
-        // Set the number of signatures needed
-        if (item.getNeededSign() > 0 && item.getType() !== TypeElement.Unknown) {
-            $.selector_cache("#itemNumSignProp").text(item.getNumSign() + "/" + item.getNeededSign());
-            $.selector_cache("#itemNumSignContainer").show();
-        } else
-            $.selector_cache("#itemNumSignContainer").hide();
-        // Set the Tx url if available
-        if (item.getTxUrl() !== '') {
-            $.selector_cache("#itemTxUrlProp").attr('href', item.getTxUrl());
-            $.selector_cache("#itemTxUrlProp").show();
-        } else
-            $.selector_cache("#itemTxUrlProp").hide();
-    };
-
-    let setupItemInputFields = function (item) {
-        if (!(item instanceof FileListItem)) {
-            $.selector_cache("#itemNameProp").text(item.getTitle());
-            if (item instanceof TextListItem) {
-                $.selector_cache("#itemTypeProp").attr('class', 'fas fa-align-left');
-                $.selector_cache("#itemTextInput").val(item.getText());
-                $.selector_cache("#itemTextInputContainer").show();
-                $.selector_cache("#itemHashInputContainer").hide();
-                $.selector_cache("#itemTextInput").off('change keyup paste'); // Remove previous event handlers
-                $.selector_cache("#itemTextInput").on('change keyup paste', function () {
-                    item.setText($.selector_cache("#itemTextInput").val());
-                    if (item.getType() !== TypeElement.Unknown) {
-                        item.reset();
-                        item.setHash('');
-                        UI.displayFileProps(item.getIndex());
-                        UI.resetProgress();
-                        UI.setUIButtonState(UI_STATE.none);
-                    }
-                });
-                $.selector_cache("#itemTextInput").focus();
-            } else { // We have a hash
-                $.selector_cache("#itemTypeProp").attr('class', 'fas fa-hashtag');
-                $.selector_cache("#itemTextInputContainer").hide();
-                $.selector_cache("#itemHashInput").val(item.getHash());
-                $.selector_cache("#itemHashInputContainer").show();
-                $.selector_cache("#itemHashInput").off('change keyup paste'); // Remove previous event handlers
-                $.selector_cache("#itemHashInput").on('change keyup paste', function () {
-                    item.setHash($.selector_cache("#itemHashInput").val());
-                    if (item.getType() !== TypeElement.Unknown) {
-                        item.reset();
-                        UI.displayFileProps(item.getIndex());
-                        UI.resetProgress();
-                        UI.setUIButtonState(UI_STATE.none);
-                    }
-                });
-                $.selector_cache("#itemHashInput").focus();
-            }
-        } else {
-            $.selector_cache("#itemTextInputContainer").hide();
-            $.selector_cache("#itemHashInputContainer").hide();
-        }
-    };
-
-    let fillBlockchainInfoFields = function (item) {
-        log('Displaying Blockchain information', TypeInfo.Info);
-        $.selector_cache('#fileBlockchainInfoEmptyZone').hide();
-        $.selector_cache('#fileBlockchainInfoZone').show();
-        $.selector_cache('#fileBlockchainEditInfoZone').hide();
-        // Reset table
-        $.selector_cache("#fileBlockchainInfoTable").html('');
-        let counter = 0;
-        for (let [key, value] of item.getInformation()) {
-            counter++;
-            if (key === elementReservedKeys.documentFamily)
-                value = getCompatibleFamily()[value]; // Get the document family string
-            $.selector_cache("#fileBlockchainInfoTable").append(
-                "<tr>\n" +
-                "<th scope='row' id='blockchainFieldKey" + counter + "'></th>\n" +
-                "<td id='blockchainFieldValue" + counter + "'></td>\n" +
-                "</tr>");
-            $("#blockchainFieldKey" + counter).text(key);
-            $("#blockchainFieldValue" + counter).text(value); // Prevent XSS
-        }
-    };
-
-    let fillBlockchainExtraDataFields = function (item) {
-        $.selector_cache("#fileBlockchainExtraDataZone").show();
-        // Reset table
-        $.selector_cache("#fileBlockchainExtraDataTable").html('');
-        let counter = 0;
-        for (let [key, value] of item.getExtraData()) {
-            counter++;
-            $.selector_cache("#fileBlockchainExtraDataTable").append(
-                "<tr>\n" +
-                "<th scope='row' id='blockchainExtraFieldKey" + counter + "'></th>\n" +
-                "<td id='blockchainExtraFieldValue" + counter + "'></td>\n" +
-                "</tr>");
-            $("#blockchainExtraFieldKey" + counter).text(key);
-            $("#blockchainExtraFieldValue" + counter).text(value); // Prevent XSS
-        }
-    };
-
-    let setBlockchainInfoMessage = function (item) {
-        let message = _blockchainErrorMsg.get(_currentAppMode).get(item.getType());
-        if (message !== undefined)
-            setBlockchainInfoErrorText(message[0], message[1]);
-        else
-            setBlockchainInfoErrorText('', COLOR_CLASSES.none);
-    };
-
-    let setBlockchainInfoErrorText = function (text, color) {
-        $.selector_cache('#fileBlockchainInfoEmptyText').html(text);
-        setDOMColor($.selector_cache('#fileBlockchainInfoCard'), color);
-    };
-
-    /**
-     *
-     * @param item {ListItem}
-     */
-    let setupSourceInputField = function (item) {
-        if (item.getInformation().has(elementReservedKeys.source))
-            $.selector_cache("#infoSourceInput").val(item.getInformation().get(elementReservedKeys.source));
-        else
-            $.selector_cache("#infoSourceInput").val('');
-
-        $.selector_cache("#infoSourceInput").off('change keyup paste');
-        $.selector_cache("#infoSourceInput").on('change keyup paste', function () {
-            let val = $.selector_cache("#infoSourceInput").val();
-            if (val !== '')
-                item.getInformation().set(elementReservedKeys.source, val);
-            else
-                item.getInformation().delete(elementReservedKeys.source);
-        });
-    };
-
-    /**
-     * Generate the dropdown menu based on kernel document family.
-     *
-     * @param item {ListItem} The item we are editing
-     */
-    let createDocFamilyDropDown = function (item) {
-        let dropdownButton = $.selector_cache("#docFamilyDropdownButton");
-        let dropdownMenu = $.selector_cache("#docFamilyDropdownMenu");
-        let docFamilyArray = getCompatibleFamily();
-        // clear menu
-        dropdownMenu.html('');
-        // Generate dropdown menu entries
-        for (let i = 0; i < getCompatibleFamily().length; i++) {
-            dropdownMenu.append("<button class='dropdown-item btn' id='dropdownButton" + i + "'>" + docFamilyArray[i] + "</button>");
-            $("#dropdownButton" + i).on('click', function () {
-                dropdownButton.text(docFamilyArray[i]);
-                if (i !== 0)
-                    item.getInformation().set(elementReservedKeys.documentFamily, i);
-                else
-                    item.getInformation().delete(elementReservedKeys.documentFamily);
-            });
-        }
-        // Set default value
-        if (item.getInformation().has(elementReservedKeys.documentFamily))
-            dropdownButton.text(docFamilyArray[item.getInformation().get(elementReservedKeys.documentFamily)]);
-        else
-            dropdownButton.text(docFamilyArray[0]);
-    };
-
-    /**
-     * Create input fields with values from the item.
-     * @param item {ListItem} The list item to take values from
-     */
-    let createSavedInputFields = function (item) {
-        item.clearCustomExtraData();
-        $.selector_cache('#fileBlockchainEditExtraDataTable').html(''); // Clear the list to recreate it
-        if (item.getCustomExtraData().length === 0)
-            createNewInputFields(item, 0, '', '');
-        else {
-            for (let i = 0; i < item.getCustomExtraData().length; i++) {
-                if (item.getCustomExtraData()[i] !== undefined) {
-                    createNewInputFields(item, i, item.getCustomExtraData()[i][0], item.getCustomExtraData()[i][1])
-                }
-            }
-        }
-
-    };
-
-    /**
-     * Create a new input fields in the edit blockchain zone.
-     *
-     * @param item {ListItem} The list item we are editing
-     * @param index {Number} The index of the last input field created
-     * @param key {String} The default value for the key input field
-     * @param value {String} The default value for the value input field
-     */
-    let createNewInputFields = function (item, index, key, value) {
-        $.selector_cache("#fileBlockchainEditExtraDataTable").append(
-            "<tr id='inputRowExtra" + index + "'>\n" +
-            "<th><input class='form-control' id='inputKeyExtra" + index + "' type='text' placeholder='Enter a key'></th>\n" +
-            "<td><textarea class='form-control' id='inputValueExtra" + index + "' placeholder='Enter a value'></textarea></td>\n" +
-            "<td><button class='btn btn-danger delete-extra-button' id='inputDeleteExtra" + index + "'" +
-            " data-toggle='tooltip' data-placement='bottom' title='Delete this row'>" +
-            "<i class='fas fa-trash'></i></button></td>\n" +
-            "</tr>");
-        let inputKey = $("#inputKeyExtra" + index);
-        let inputValue = $("#inputValueExtra" + index);
-        $("#inputDeleteExtra" + index).on('click', function () {
-            item.setCustomExtraData(index, undefined);
-            $("#inputRowExtra" + index).remove();
-        });
-        inputKey.val(key);
-        inputValue.val(value);
-        item.setCustomExtraData(index, [key, value]);
-        inputKey.on('change keyup paste', function () {
-            item.setCustomExtraData(index, [inputKey.val(), inputValue.val()]);
-        });
-        inputValue.on('change keyup paste', function () {
-            item.setCustomExtraData(index, [inputKey.val(), inputValue.val()]);
-        });
-    };
-
-    /**
-     * Setup event handlers for blockchain edit buttons
-     * @param item {ListItem} The list item we are editing
-     */
-    let setupExtraDataControlButtons = function (item) {
-        // Reset event handlers
-        $.selector_cache("#editExtraDataAddButton").off('click');
-        $.selector_cache("#editExtraDataClearButton").off('click');
-        // Set event handlers
-        $.selector_cache("#editExtraDataAddButton").on('click', function () {
-            createNewInputFields(item, item.getCustomExtraData().length, '', '');
-        });
-        $.selector_cache("#editExtraDataClearButton").on('click', function () {
-            for (let i = 0; i < item.getCustomExtraData().length; i++) {
-                if (item.getCustomExtraData()[i] !== undefined)
-                    $("#inputRowExtra" + i).remove();
-            }
-            item.clearCustomExtraData();
-            createNewInputFields(item, 0, '', '');
-        });
     };
 
     /**
      * Initialize the UI with default value.
      */
     this.initUI = function () {
-        this.setVerbose(false);
+        this.setVerbose(true);
         log('Successfully Loaded');
+        _kernelManager = new UIKernelManager();
+        _moderatorManager = new UIModeratorManager();
+        _itemDetailsManager = new UIItemDetailsManager();
         setAppVersion();
         setDefaultFieldValues();
         detectAppMode();
-        setUIMode(_currentAppMode, true);
+        UI.setUIMode(_currentAppMode, true);
+        setupDOMDimensions();
         UI.updateCheckButtonState();
-        UI.setUIButtonState(UI_STATE.none);
-        setKernelInfo(undefined, undefined);
-        setModeratorInfo(undefined, 'Connection in progress...');
+        UI.setUIElementsState(UI_STATE.none);
+        updateKernelConnectionBox(KERNEL_CONNECTION_TYPE.notConnected);
+        updateModeratorConnection(undefined);
         for (let i of Object.keys(TAB_TYPE)) {
             resetTabZone(TAB_TYPE[i]);
         }
         $('[data-toggle="tooltip"]').tooltip(); // enable Popper.js tooltips
-        UI.displayFileProps(undefined);
         registerEvents();
         UI.resetProgress();
-        this.updateAccounts(undefined);
+        updateAccounts(undefined);
         _canUseDropZone = true;
+        detectCurrentNetwork();
     };
 
     let setAppVersion = function () {
@@ -2270,37 +1738,29 @@ function UIManager() {
      * Display additional information using tooltips.
      *
      * @param connectionType {TypeConnection} The type of connection to display.
-     * @param infoType {TypeInfo} The type of information, to choose which tooltip to display.
      */
-    this.updateNetworkConnectedUI = function (connectionType, infoType) {
+    let updateNetworkConnectedUI = function (connectionType) {
         // reset badge
         $.selector_cache('#networkTypeField').attr('class', 'badge');
         log('Setting network connected UI', TypeInfo.Info);
-        switch (infoType) {
-            case TypeInfo.Good:
+        switch (connectionType) {
+            case TypeConnection.Mainnet:
                 $.selector_cache('#networkTypeField').attr('data-original-title', 'You are connected to a public server');
                 $.selector_cache('#networkTypeField').addClass('badge-success');
-                _defaultModeratorAddress = officialBlockchainEliteModerator;
+                _moderatorManager.setDefaultAddress(getDefaultModerator(false));
                 break;
-            case TypeInfo.Warning:
+            case TypeConnection.Ropsten:
                 $.selector_cache('#networkTypeField').attr('data-original-title', 'You are connected to a test server');
                 $.selector_cache('#networkTypeField').addClass('badge-warning');
-                _defaultModeratorAddress = ropstenBlockchainEliteModerator;
+                _moderatorManager.setDefaultAddress(getDefaultModerator(true));
                 break;
-            case TypeInfo.Critical:
+            default:
                 $.selector_cache('#networkTypeField').attr('data-original-title', 'Could not connect');
                 $.selector_cache('#networkTypeField').addClass('badge-danger');
-                _defaultModeratorAddress = '';
+                _moderatorManager.setDefaultAddress('');
                 break;
         }
-        for (let type in TypeConnection) {
-            if (TypeConnection[type] === connectionType) {
-                $.selector_cache('#networkTypeField').html(type);
-                break;
-            }
-        }
-        _currentNetworkType = connectionType;
-        _currentModeratorAddress = _defaultModeratorAddress;
+        $.selector_cache('#networkTypeField').html(getNetworkName(connectionType));
     };
 
     /**
@@ -2309,7 +1769,7 @@ function UIManager() {
      *
      * @param isInjected {Boolean} Whether the wallet is injected or infura.
      */
-    this.updateWalletStateUI = function (isInjected) {
+    let updateWalletStateUI = function (isInjected) {
         // reset badge
         $.selector_cache('#connectionTypeField').attr('class', 'badge');
         log('Setting wallet injected state to: ' + isInjected, TypeInfo.Info);
@@ -2324,31 +1784,26 @@ function UIManager() {
             $.selector_cache('#connectionTypeField').attr('data-original-title', 'You are using an infura wallet');
             _currentWalletState = WALLET_STATE.infura;
         }
-        updateMainUIState();
+        UI.updateMainUIState();
         UI.updateCheckButtonState();
-
-        tryReadyUI();
     };
 
     /**
      * Show a dialog to the user asking for connection confirmation
-     *
-     * @param status {resultQueryStatus} The status of the connection
-     * @param revokedReason {String} The reason
      */
-    this.promptKernelConnectionWarnAnswer = function (status, revokedReason) {
+    this.promptKernelConnectionWarnAnswer = function () {
+        let status = _kernelManager.getKernelStatus();
         let message = '';
         switch (status) {
-            case resultQueryStatus.revoked:
+            case KERNEL_REFERENCEMENT_STATUS.revoked:
                 message = 'The Kernel you are connecting to has been revoked by the moderator.\n' +
-                    'This mean the moderator does not recognize the kernel anymore and cannot prove its identity.\n' +
-                    'revoked reason: ' + revokedReason;
+                    'This mean the moderator does not recognize the kernel anymore and cannot prove its identity.';
                 break;
-            case resultQueryStatus.initialized:
+            case KERNEL_REFERENCEMENT_STATUS.initialized:
                 message = 'The Moderator knows the Kernel you are connecting to, but has not yet passed security confirmation.' +
                     'As such, it cannot provide information on its identity.';
                 break;
-            case resultQueryStatus.unknown:
+            case KERNEL_REFERENCEMENT_STATUS.notReferenced:
                 message = 'The Kernel you are connecting is unknown to the Moderator. It is impossible to prove its identity.';
                 break;
         }
@@ -2369,11 +1824,11 @@ function UIManager() {
                         btnClass: 'btn-orange',
                         action: function () {
                             log('Connection insecure');
-                            updateKernelObject(_currentKernelAddress, undefined);
+                            connectToKernel();
                         }
                     },
                     cancel: function () {
-                        UI.updateKernelConnection(undefined, undefined);
+                        updateKernelConnectionBox(KERNEL_CONNECTION_TYPE.notConnected);
                     },
                 }
             });
@@ -2383,149 +1838,102 @@ function UIManager() {
     /**
      * Set the kernel connection information.
      *
-     * @param connectionStatus {TypeInfo} The connection status
-     * @param moderatorInfo {Map} The connection information
-     * Reserved keys :
-     * 'connection-status' for a TypeInfo describing the connection.
-     * 'img' for the image url. Not setting this key will not show an image.
-     * 'extra-data' for a map containing additional data.
-     *
+     * @param connectionType {KERNEL_CONNECTION_TYPE} The connection status
      */
-    this.updateKernelConnection = function (connectionStatus, moderatorInfo) {
+    let updateKernelConnectionBox = function (connectionType) {
         _isAccountsListAvailable = false; // Kernel operators may change
         resetAllElements(); // Element signatures are different from each kernel
-        setKernelConnectionLoading(false);
-        $.selector_cache('#collapseSignature').collapse('show');
-        switch (connectionStatus) {
-            case TypeInfo.Good:
-                $.selector_cache('#kernelConnectionInfoIcon').attr('class', 'fas fa-check-circle text-success');
-                setDOMColor($.selector_cache('#kernelInfoHeader'), COLOR_CLASSES.success);
-                setKernelInfo(moderatorInfo, TypeInfo.Good);
+        _kernelManager.setKernelConnectionLoading(false);
+        switch (connectionType) {
+            case KERNEL_CONNECTION_TYPE.connected:
+                if (_kernelManager.getKernelStatus() === KERNEL_REFERENCEMENT_STATUS.referenced)
+                    $.selector_cache('#kernelConnectionInfoIcon').attr('class', 'fas fa-check-circle text-success');
+                else
+                    $.selector_cache('#kernelConnectionInfoIcon').attr('class', 'fas fa-exclamation-triangle text-warning');
+                _kernelManager.setKernelInfoBox(KERNEL_CONNECTION_TYPE.connected);
                 if (_currentAppMode === APP_MODE.sign)
                     askForAccounts();
-                _isKernelConnected = true;
+                _kernelManager.setConnected(true);
                 break;
-            case TypeInfo.Warning:
-                $.selector_cache('#kernelConnectionInfoIcon').attr('class', 'fas fa-exclamation-triangle text-warning');
-                $.selector_cache('#kernelConnectedAddress').html("Currently connected to : '" + _currentKernelAddress + "'");
-                setDOMColor($.selector_cache('#kernelInfoHeader'), COLOR_CLASSES.warning);
-                setKernelInfo(undefined, TypeInfo.Warning);
-                if (_currentAppMode === APP_MODE.sign)
-                    askForAccounts();
-                _isKernelConnected = true;
-                break;
-            case TypeInfo.Critical:
+            case KERNEL_CONNECTION_TYPE.error:
                 $.selector_cache('#kernelConnectionInfoIcon').attr('class', 'fas fa-times text-danger');
-                $.selector_cache('#kernelConnectedAddress').html("Could not connect to '" + _currentKernelAddress + "'");
-                setDOMColor($.selector_cache('#kernelInfoHeader'), COLOR_CLASSES.danger);
-                setKernelInfo(undefined, TypeInfo.Critical);
-                _isKernelConnected = false;
+                $.selector_cache('#kernelConnectedAddress').html("Could not connect to '" + _kernelManager.getCurrentAddress() + "'");
+                _kernelManager.setKernelInfoBox(KERNEL_CONNECTION_TYPE.error);
+                _kernelManager.setConnected(false);
                 break;
-            default:
+            case KERNEL_CONNECTION_TYPE.notConnected:
                 $.selector_cache('#kernelConnectionInfoIcon').attr('class', 'fas fa-question');
                 $.selector_cache('#kernelConnectedAddress').html("Not Connected");
-                setDOMColor($.selector_cache('#kernelInfoHeader'), COLOR_CLASSES.secondary);
-                setKernelInfo(undefined, undefined);
-                _isKernelConnected = false;
+                _kernelManager.setKernelInfoBox(KERNEL_CONNECTION_TYPE.notConnected);
+                _kernelManager.setConnected(false);
                 break;
         }
         UI.updateCheckButtonState();
-        updateMainUIState();
+        UI.updateMainUIState();
     };
 
     /**
-     * Set the moderator info.
+     * Set the moderator connection info.
      *
-     * @param connectionInfo {Map} Map containing moderator info.
-     *  Reserved keys :
-     * 'connection-status' for a TypeInfo describing the connection.
-     * 'registration_link' for a link to the registration page.
-     * 'contact_link' for a link to the contact page.
+     * @param moderatorInfo {Object} Object containing moderator info.
      */
-    this.updateModeratorConnection = function (connectionInfo) {
-        let connectionType = TypeInfo.Info;
-        if (connectionInfo !== undefined && connectionInfo.has(moderatorReservedKeys.status))
-            connectionType = connectionInfo.get(moderatorReservedKeys.status);
-
-        _isModeratorConnected = true;
-        setModeratorConnectionLoading(false);
+    let updateModeratorConnection = function (moderatorInfo) {
         log('Updating moderator input UI', TypeInfo.Info);
-        UI.updateKernelConnection(undefined, undefined); // Reset the kernel connection
-        switch (connectionType) {
-            case TypeInfo.Good:
-                $.selector_cache('#moderatorConnectionInfoIcon').attr('class', 'fas fa-check-circle text-success');
-                if (_currentModeratorAddress === _defaultModeratorAddress) {
-                    let modName = _currentNetworkType === TypeConnection.Mainnet ? 'Blockchain Élite ULCDocuments Official' : 'Blockchain Élite ULCDocuments Testnet';
-                    $.selector_cache('#moderatorConnectedAddress').html("Currently connected to default: " +
-                        "<strong>" + modName + "</strong>");
-                } else
-                    $.selector_cache('#moderatorConnectedAddress').html("Currently connected to: " +
-                        "'<strong>" + _currentModeratorAddress + "</strong>'");
-                setDOMColor($.selector_cache('#moderatorInfoHeader'), COLOR_CLASSES.success);
-                setModeratorInfo(connectionInfo, "");
-                break;
-            case TypeInfo.Critical:
-                _isKernelConnected = false;
-                $.selector_cache('#moderatorConnectionInfoIcon').attr('class', 'fas fa-times text-danger');
-                $.selector_cache('#moderatorConnectedAddress').html("Could not connect to '" + _currentModeratorAddress + "'");
-                setDOMColor($.selector_cache('#moderatorInfoHeader'), COLOR_CLASSES.danger);
-                setModeratorInfo(undefined, 'Connection could not be established, falling back to default');
-                break;
+        _moderatorManager.setConnected(true);
+        _moderatorManager.setModeratorConnectionLoading(false);
+        updateKernelConnectionBox(KERNEL_CONNECTION_TYPE.notConnected); // Reset the kernel connection
+        if (moderatorInfo !== undefined) {
+            _moderatorManager.setCurrentAddress(moderatorInfo.address);
+            $.selector_cache('#moderatorConnectionInfoIcon').attr('class', 'fas fa-check-circle text-success');
+            if (_moderatorManager.isConnectedToDefault()) {
+                let modName = _currentNetworkType === TypeConnection.Mainnet ? 'Blockchain Élite ULCDocuments Official' : 'Blockchain Élite ULCDocuments Testnet';
+                $.selector_cache('#moderatorConnectedAddress').html("Currently connected to default: " +
+                    "<strong id='moderatorName'>" + modName + "</strong>");
+            } else
+                $.selector_cache('#moderatorConnectedAddress').html("Currently connected to: " +
+                    "'<strong id='moderatorAddress'>" + _moderatorManager.getCurrentAddress() + "</strong>'");
+            setDOMColor($.selector_cache('#moderatorInfoHeader'), COLOR_CLASSES.success);
+            _moderatorManager.setModeratorInfo(moderatorInfo, "");
+        } else {
+            _kernelManager.setConnected(false);
+            $.selector_cache('#moderatorConnectionInfoIcon').attr('class', 'fas fa-times text-danger');
+            $.selector_cache('#moderatorConnectedAddress').html("Could not connect to '" + _moderatorManager.getCurrentAddress() + "'");
+            setDOMColor($.selector_cache('#moderatorInfoHeader'), COLOR_CLASSES.danger);
+            _moderatorManager.setModeratorInfo(undefined, 'Connection could not be established, falling back to default');
         }
-        tryReadyUI();
         UI.updateCheckButtonState();
     };
 
     /**
      * Update the element associated to index.
      *
-     * @param index {Number} The file unique index.
-     * @param elementInfo {Map} Map containing file information
+     * @param currentItem {ListItem|FileListItem|TextListItem|HashListItem} The item to update
+     * @param docData {DocumentData}
      */
-    this.updateElement = function (index, elementInfo) {
+    let updateElementInfo = function (currentItem, docData) {
         let elementType = TypeElement.Unknown;
-        if (elementInfo !== undefined && elementInfo.has(elementReservedKeys.status)) {
-            elementType = elementInfo.get(elementReservedKeys.status);
-            // Separate basic info and extra data, and remove reserved keys from basic info
-            let extraData = undefined;
-            if (elementInfo.has(elementReservedKeys.extraData)) {
-                extraData = elementInfo.get(elementReservedKeys.extraData);
-                elementInfo.delete(elementReservedKeys.extraData);
-            }
-            let signNeed = 0;
-            let signNum = 0;
-            if (elementInfo.has(fetchElementReservedKeys.signNeed) && elementInfo.get(fetchElementReservedKeys.signNeed) > 0) {
-                signNeed = elementInfo.get(fetchElementReservedKeys.signNeed);
-                elementInfo.delete(fetchElementReservedKeys.signNeed);
-                if (elementInfo.has(fetchElementReservedKeys.signPending)) {
-                    signNum = elementInfo.get(fetchElementReservedKeys.signPending);
-                    elementInfo.delete(fetchElementReservedKeys.signPending);
-                }
-            }
-            elementInfo.delete(elementReservedKeys.status);
-            getCurrentListItem(index).setNumSign(signNum);
-            getCurrentListItem(index).setNeededSign(signNeed);
-            // Do not reset element info and extra data if transaction failed
-            getCurrentListItem(index).setInformation(elementInfo);
-            getCurrentListItem(index).setExtraData(extraData);
+        if (docData !== undefined && docData !== {}) {
+            elementType = docData.signed ? TypeElement.Signed : TypeElement.Fake;
+            currentItem.setDocumentData(docData);
         } else {
-            log('Element status unavailable, resetting to default.');
-            getCurrentListItem(index).setInformation(undefined);
-            getCurrentListItem(index).setExtraData(undefined);
+            log('Error occured.');
+            currentItem.setDocumentData({});
+            elementType = TypeElement.Invalid;
         }
         _itemsProcessedCounter += 1;
-        getCurrentListItem(index).setType(elementType);
+        currentItem.setType(elementType);
         checkNextItem();
     };
 
     /**
      * Update the hash of the element associated to index.
      *
-     * @param index {Number} The item unique index.
-     * @param hash {String} The hash to display.
+     * @param currentItem {ListItem|FileListItem|TextListItem|HashListItem} The item to update
+     * @param hash {string}
      */
-    this.updateElementHash = function (index, hash) {
-        getCurrentListItem(index).setHash(hash);
+    let updateElementHash = function (currentItem, hash) {
+        currentItem.setType(TypeElement.Loading); // We have the hash, we can start asking blockchain
+        currentItem.setHash(hash);
     };
 
     /**
@@ -2536,7 +1944,7 @@ function UIManager() {
      *
      * @param accountsMap {Map} The accounts list
      */
-    this.updateAccounts = function (accountsMap) {
+    let updateAccounts = function (accountsMap) {
         $.selector_cache('#accountsListBody').fadeOut('fast', function () {
             if (accountsMap !== undefined && accountsMap.size !== 0) {
                 let isFirstElem = true;
@@ -2566,14 +1974,14 @@ function UIManager() {
                             '</tr>');
                         $.selector_cache("#accountsTable").append(
                             "<tr class='" + rowClass + "'>\n" +
-                            "<td scope=\"row\">" + key + " (Current Account)" + "</td>\n" +
+                            "<td>" + key + " (Current Account)" + "</td>\n" +
                             "<td>" + rowOwnership + "</td>\n" +
                             "</tr>");
                         isFirstElem = false;
                     } else { // Other accounts
                         $.selector_cache("#accountsTable").append(
                             "<tr class='" + rowClass + "'>\n" +
-                            "<td scope=\"row\">" + key + "</td>\n" +
+                            "<td>" + key + "</td>\n" +
                             "<td>" + rowOwnership + "</td>\n" +
                             "</tr>");
                     }
@@ -2588,8 +1996,8 @@ function UIManager() {
                 _isAccountOperator = false;
             }
             _isLoadingAccounts = false;
-            updateKernelButtonsState();
-            updateMainUIState();
+            _kernelManager.updateKernelButtonsState();
+            UI.updateMainUIState();
             $.selector_cache('#accountsListBody').fadeIn('fast');
         });
     };
@@ -2597,11 +2005,11 @@ function UIManager() {
     /**
      * Update the element to tell the user the transaction is currently being processed
      *
-     * @param index {Number} The item unique index
+     * @param id {number} The item unique index
      * @param url {String} The Tx url
      */
-    this.updateTransactionTx = function (index, url) {
-        let item = getCurrentListItem(index);
+    let updateTransactionTx = function (id, url) {
+        let item = getCurrentListItem(id);
         if (url !== undefined) {
             item.setTxUrl(url);
             item.setType(TypeElement.TxProcessing);
@@ -2611,13 +2019,13 @@ function UIManager() {
     /**
      * Update the element to tell the user the transaction has been completed, successfully or not
      *
-     * @param index {Number} The item unique index
+     * @param id {number} The item unique index
      * @param state {Boolean} Whether the transaction was successful or not
      */
-    this.updateTransactionState = function (index, state) {
+    let updateTransactionState = function (id, state) {
         // We unlocked the UI after sending the transactions,
         // so we must find the element in the right tab and check if it isn't removed
-        let item = getItemInAll(index);
+        let item = getCurrentListItem(id);
         if (item !== undefined) {
             if (state) {
                 item.setNumSign(item.getNumSign() + 1);
@@ -2629,7 +2037,7 @@ function UIManager() {
             log('Item with index ' + index + ' has been removed and cannot be updated', TypeInfo.Warning);
         _elementSigned += 1;
         if (_elementSigned === _elementsToSign)
-            UI.setUIButtonState(UI_STATE.none);
+            UI.setUIElementsState(UI_STATE.none);
 
         console.log('signed: ' + _elementSigned + '/' + _elementsToSign);
     };
@@ -2643,6 +2051,3 @@ function UIManager() {
 
 let UI = new UIManager();
 UI.initUI();
-
-
-// separate UI into 3 parts : import, check, result

@@ -16,6 +16,7 @@
 <!--@author Adrien BARBANSON <Contact Form avaiable on Blockchain Elite Website-->
 <!--Dev Entity: Blockchain-Elite (https://www.blockchain-elite.fr/)-->
 
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -24,7 +25,7 @@
           integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
     <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.6.3/css/all.css"
           integrity="sha384-UHRtZLI+pbxtHCWp1t77Bi1L4ZtiqrqD80Kn4Z8NTSRyMA2Fd33n5dQ8lWUE00s/" crossorigin="anonymous">
-    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/index.css">
     <link rel="stylesheet" type="text/css" href="css/bootstrapOverwrite.css"/>
     <link href="https://fonts.googleapis.com/css?family=Libre+Franklin|Montserrat" rel="stylesheet">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
@@ -71,12 +72,9 @@
         </div>
         <div class="shadow">
             <div class="container py-4">
-                <div class="container alert-warning text-center p-3 shadow">
-                    <h2>
-                        <i class="fas fa-exclamation-triangle"></i>
-                        This app is currently in beta version
-                        <i class="fas fa-exclamation-triangle"></i>
-                    </h2>
+                <div class="container alert-warning text-center p-3 shadow" id="warningContainer">
+                    <h1><i class="fas fa-exclamation-triangle"></i></h1>
+                    <h2>This app is currently in beta version</h2>
                     <h4>Only use testnets to sign/check documents.</h4>
                     <p>
                         If you only want to check document signatures, the web app is automatically configured
@@ -111,7 +109,7 @@
                                         Please follow these instructions to connect to a kernel.
                                     </a>
                                 </p>
-                                <a href="ulcdoc_interactor.html#mode:check"
+                                <a href="ulcdoc_interactor.html#mode:check&network:ropsten"
                                    class="btn btn-primary to-app-button">
                                     Check
                                     <i class="far fa-check-square" style="margin-left: 10px"></i>
@@ -120,7 +118,7 @@
                         </div>
                     </div>
                     <div class="col-sm">
-                        <div class="card border-success text-center mb-3 shadow start-app-container">
+                        <div class="card border-info text-center mb-3 shadow start-app-container">
                             <div class="card-body">
                                 <h5 class="card-title">Sign a document</h5>
                                 <p class="text-muted">
@@ -129,8 +127,8 @@
                                         Please follow these instruction to setup a signing environment.
                                     </a>
                                 </p>
-                                <a href="ulcdoc_interactor.html#mode:sign"
-                                   class="btn btn-success to-app-button">
+                                <a href="ulcdoc_interactor.html#mode:sign&network:ropsten"
+                                   class="btn btn-info to-app-button">
                                     Sign
                                     <i class="far fa-edit" style="margin-left: 10px"></i>
                                 </a>
@@ -144,7 +142,7 @@
 
 
     <!--FOOTER-->
-    <footer class="p-0 shadow">
+    <footer class="p-0 shadow index-footer">
         <div class="container-fluid text-center">
             <div class="row">
                 <div class="col-sm-6 p-3">

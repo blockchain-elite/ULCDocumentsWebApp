@@ -23,6 +23,7 @@ html, body {
     padding: 0;
     margin: 0;
     font-family: 'Libre Franklin', sans-serif;
+    transition: 0.3s;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -34,8 +35,13 @@ footer {
     position: absolute;
     width: 100%;
     bottom: 0;
-    height: 210px;
+    height: 310px;
     color: white;
+    padding: 0 0 100px;
+}
+
+.index-footer {
+    height: 210px;
 }
 
 footer a {
@@ -49,6 +55,11 @@ footer a:hover {
 .footer-copyright {
     background: #000000;
     color: white;
+}
+
+#container {
+    min-height:100%;
+    position:relative;
 }
 
 .navbar {
@@ -88,10 +99,19 @@ footer a:hover {
 .bootstrap-notify {
     width: 575px;
     padding: 0 10px 0;
+    margin-bottom: 100px !important;
 }
 
 .bootstrap-notify-title {
     font-size: 1.2rem;
+}
+
+.jconfirm-content {
+    height: 100%; /* Fix bottom of jconfrim getting hidden*/
+}
+
+.jconfirm .jconfirm-box div.jconfirm-title-c .jconfirm-title {
+    line-height: 30px;
 }
 
 @media
@@ -154,8 +174,13 @@ only screen and (max-width: 575px) {
         font-size: 1rem;
     }
 
-    footer {
+    .index-footer {
         height: 300px;
+        font-size: 0.8rem;
+    }
+
+    footer {
+        height: 450px;
         font-size: 0.8rem;
     }
 

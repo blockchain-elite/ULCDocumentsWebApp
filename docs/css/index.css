@@ -1,0 +1,82 @@
+
+#indexContainer {
+    margin-bottom: 0;
+    /* Height of the footer in the index */
+    padding: 0 0 210px;
+}
+
+#WelcomeJumbotron {
+    background-image: url('../images/bg_header.jpg');
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: cover;
+    min-height: 400px;
+    margin-bottom: 0;
+}
+
+#WelcomeMessage {
+    background-color: rgba(0,0,0,0.3);
+    border-radius: 5px;
+    margin: auto 15% auto 15%;
+    padding: 10px;
+}
+
+#WelcomeMessage h1 {
+    font-size: 4rem;
+}
+
+#WelcomeMessage p{
+    font-size: 1.8em;
+}
+
+.to-app-button {
+    padding: 20px;
+    width: 170px;
+    border-radius: 0.5rem;
+    font-size: 1.5em;
+    font-weight: bold;
+}
+
+@media
+only screen and (max-width: 1200px) {
+    #WelcomeJumbotron h1{
+        font-size: 3em;
+    }
+
+    #WelcomeMessage p{
+        font-size: 1.7em;
+    }
+}
+
+@media
+only screen and (max-width: 767px) {
+    #WelcomeMessage {
+        margin: auto;
+    }
+}
+
+@media
+only screen and (max-width: 575px) {
+
+    #indexContainer {
+        /* Height of the footer in the index */
+        padding-bottom: 300px;
+    }
+
+    #WelcomeJumbotron h1{
+        font-size: 2em;
+    }
+
+    #WelcomeMessage p{
+        font-size: 1.25em;
+    }
+
+    #warningContainer h2 {
+        font-size: 1.6rem;
+    }
+
+    #warningContainer h4 {
+        font-size: 1.3rem;
+    }
+
+}

@@ -24,7 +24,7 @@
 function isHashValidFormat(check){
     let re = /[0-9a-f]{64}/g;
     let result = re.test(check);
-    logMe(ULCDocModMasterPrefix, "Hash to check=" + check + " | result=" + result.toString());
+    //logMe(ULCDocModMasterPrefix, "Check hash regEx : " + check + " | regExResult=" + result.toString());
     return result;
 }
 
@@ -38,7 +38,7 @@ function formatExtraData(raw_extra_data){
     let extra_data_table = raw_extra_data.split(',');
     let result = new Map();
     extra_data_table.forEach(function(oneExtraDataCouple){
-        let oneExtraData = oneExtraDataCouple.split(":")
+        let oneExtraData = oneExtraDataCouple.split(":");
         logMe(ULCDocModMasterPrefix,"New Couple detected !  [" + oneExtraData[0] + ":" + oneExtraData[1] + "]");
         result.set(oneExtraData[0],oneExtraData[1]);
     });
@@ -90,14 +90,4 @@ function formatTxURL(txHash){
     }
 
     return finalUrl;
-}
-
-/** @dev function that create human readable date from block.timestamp value
-*  @param {Number} nonHumanDate block.timestamp date
-* @return {String} converted date */
-function formatHumanReadableDate(nonHumanDate) {
-
-    //Because Blockchain Time is not trustable at +- 30 minutes
-    //There is not need to display minutes/secondes of this date.
-    return new Date(nonHumanDate * 1000).toLocaleString([],{day: '2-digit', hour: '2-digit', year:'2-digit', month:'2-digit', timeZoneName:'short'});
 }

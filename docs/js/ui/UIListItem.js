@@ -20,6 +20,32 @@
 // Define a main class list item, then make FileListItem, TextListItem and HashListItem inherit it
 // Create a new file UIListItems
 
+let itemDOMElement =
+    '    <div class="card item-card mb-3 shadow-sm item-state-unknown">\n' +
+    '        <div class="card-body p-0">' +
+    '            <div class="row" style="margin: 0">' +
+    '                <div class="col-1 pr-0 multi-selection item-select-checkbox-container" style="display: none;">' +
+    '                   <div class="btn item-select-checkbox">' +
+    '                       <i class="item-select-checkbox-icon fas fa-check" style="display: none"></i>' +
+    '                   </div>' +
+    '                </div>' +
+    '                <div class="col-1 mx-2 d-flex" style="padding: 0; min-width: 40px">' +
+    '                    <i class="item-type-icon"></i>' +
+    '                </div>' +
+    '                <div class="col" style="max-width: 50%; padding: 0">' +
+    '                    <div class="pt-1 item-name"></div>' +
+    '                    <div class="pt-1 text-muted item-subtitle"></div>' +
+    '                    <div class="pt-1 text-muted list-item-state"></div>' +
+    '                </div>' +
+    '                <div class="col text-center item-state-icon d-flex justify-content-center align-items-center">' +
+    '                    <i class="fas fa-question list-item-icon"></i>' +
+    '                </div>' +
+    '            </div>' +
+    '        </div>' +
+    '       <i class="text-muted remove-list-item-button fas fa-times"></i>' +
+    '   </div>';
+
+
 class ListItem {
 
     /**
@@ -33,13 +59,14 @@ class ListItem {
         this.index = index;
         this.id = idPrefix + index;
         this.hash = '';
-        this.information = new Map();
-        this.extraData = new Map();
+        this.documentData = undefined;
         this.customExtraData = [];
         this.$item = undefined;
         this.$removeButton = undefined;
-        this.OUT_ANIM = 'fadeOutLeft faster';
-        this.IN_ANIM = 'fadeInLeft faster';
+        this.$selectedCheckbox = undefined;
+        this.$selectedCheckboxIcon = undefined;
+        this.OUT_ANIM = 'zoomOut faster';
+        this.IN_ANIM = 'zoomIn faster';
         this.type = TypeElement.Unknown;
         this.appMode = appMode;
         this.numSign = 0;
@@ -50,8 +77,7 @@ class ListItem {
 
     reset() {
         this.setType(TypeElement.Unknown);
-        this.setInformation(new Map());
-        this.setExtraData(new Map());
+        this.setDocumentData(undefined);
         this.customExtraData = [];
         this.txUrl = '';
     }
@@ -79,7 +105,7 @@ class ListItem {
     setTxUrl(url) {
         this.txUrl = url;
         if (this.isSelected())
-            UI.displayFileProps(this.index);
+            UI.getItemDetailsManager().setupItemPopup(this);
     }
 
     /**
@@ -100,28 +126,14 @@ class ListItem {
         return this.numSign;
     }
 
-    /**
-     * Set the number of signatures needed for this item
-     *
-     * @param num {Number} The number of signatures needed
-     */
-    setNeededSign(num) {
-        this.neededSign = num;
-    }
-
-    /**
-     * Get the number of signatures needed for this item
-     *
-     * @return {Number} The number of signatures needed
-     */
-    getNeededSign() {
-        return this.neededSign;
+    clearCustomExtraData() {
+        this.customExtraData = [];
     }
 
     /**
      * Remove empty or invalid elements from the customExtraData array
      */
-    clearCustomExtraData() {
+    sanitizeCustomExtraData() {
         for (let i = 0; i < this.customExtraData.length; i++) {
             if (this.customExtraData[i] === undefined || this.customExtraData[i][0] === '' || this.customExtraData[i][0] === '')
                 this.customExtraData.splice(i, 1);
@@ -146,47 +158,15 @@ class ListItem {
     };
 
     /**
-     * Set the information to be displayed when clicked on this item.
-     * If the item is currently selected, update the details zone.
      *
-     * @param information {Map} Dictionary containing the information.
+     * @return {DocumentData}
      */
-    setInformation(information) {
-        this.information = new Map (information);
-        if (this.isSelected()) {
-            UI.displayFileProps(this.index);
-        }
+    getDocumentData() {
+        return this.documentData;
     }
 
-    /**
-     * Return the information associated to this item.
-     *
-     * @return {Object}
-     */
-    getInformation() {
-        return this.information;
-    }
-
-    /**
-     * Set the extraData to be displayed when clicked on this item.
-     * If the item is currently selected, update the details zone.
-     *
-     * @param extraData {Map} The extra data to display
-     */
-    setExtraData(extraData) {
-        this.extraData = new Map (extraData);
-        if (this.isSelected()) {
-            UI.displayFileProps(this.index);
-        }
-    }
-
-    /**
-     * Return the extra data associated to this item.
-     *
-     * @return {Object}
-     */
-    getExtraData() {
-        return this.extraData;
+    setDocumentData(docData) {
+        this.documentData = docData;
     }
 
     /**
@@ -197,7 +177,7 @@ class ListItem {
     setHash(hash) {
         this.hash = hash;
         if (this.isSelected()) {
-            UI.displayFileProps(this.index);
+            UI.getItemDetailsManager().setupItemPopup(this);
         }
     }
 
@@ -218,10 +198,15 @@ class ListItem {
     setSelected(state) {
         if (state && !this.isSelected()) {
             this.$item.addClass(this.FILE_SELECTED_CLASS);
-            UI.displayFileProps(this.index);
-
-        } else if (!state)
+            this.$selectedCheckbox.addClass('btn-primary');
+            this.$selectedCheckboxIcon.fadeIn(200);
+            UI.addItemToSelected(this);
+        } else if (!state) {
             this.$item.removeClass(this.FILE_SELECTED_CLASS);
+            this.$selectedCheckbox.removeClass('btn-primary');
+            this.$selectedCheckboxIcon.fadeOut(200);
+            UI.removeItemFromSelected(this);
+        }
     }
 
     /**
@@ -247,6 +232,10 @@ class ListItem {
                 cardColor = COLOR_CLASSES.info;
                 iconClasses += 'fas fa-circle-notch fa-spin fa-fw';
                 break;
+            case TypeElement.awaitingMetamask: // Waiting metamask confirmation...
+                cardColor = COLOR_CLASSES.info;
+                iconClasses += 'fas fa-spinner fa-spin fa-fw';
+                break;
             case TypeElement.TxProcessing: // Waiting signature...
                 cardColor = COLOR_CLASSES.info;
                 iconClasses += 'fas fa-circle-notch fa-spin fa-fw';
@@ -260,7 +249,6 @@ class ListItem {
                     cardColor = COLOR_CLASSES.none;
                     iconClasses += 'fas fa-check';
                 }
-
                 break;
             case TypeElement.TransactionFailure: // Could not sign
                 cardColor = COLOR_CLASSES.danger;
@@ -309,7 +297,7 @@ class ListItem {
         this.cardColor = cardColor;
         this.type = type;
         if (this.isSelected())
-            UI.displayFileProps(this.index);
+            UI.getItemDetailsManager().setupItemPopup(this);
     }
 
     getType() {
@@ -319,10 +307,15 @@ class ListItem {
     /**
      * Create the UI entry from the template in the file list.
      */
-    createEntry($item, isAnimated) {
-        this.$item = $item;
+    createEntry(isAnimated, tabHolder) {
+        let $selector = $(itemDOMElement);
+        $selector.attr('id', this.id);
+        tabHolder.append($selector);
+        this.$item = $selector;
         this.$removeButton = this.$item.find(".remove-list-item-button");
         this.$removeButton.attr('id', 'buttonRemoveItem_' + this.index);
+        this.$selectedCheckbox = this.$item.find('.item-select-checkbox');
+        this.$selectedCheckboxIcon = this.$item.find('.item-select-checkbox-icon');
         this.$fileState = this.$item.find(".list-item-state");
         this.setType(this.getType());
         if (isAnimated)
@@ -336,7 +329,7 @@ class ListItem {
         this.$removeButton.prop('disabled', true);
         let object = this;
         animateCss($("#" + this.id), this.OUT_ANIM, function () {
-            UI.removeItemFromList(object.index, object.isSelected());
+            UI.removeItemFromList(object.index);
         });
     };
 
@@ -358,14 +351,11 @@ class FileListItem extends ListItem {
         this.file = file;
     }
 
-    createEntry(isAnimated) {
-        UI.createListItemFromTemplate(this.id, TAB_TYPE.file);
-        super.createEntry($('#' + this.id), isAnimated);
-        this.$item.find(".uploaded-file-name").text(this.file.name);
-        this.$item.find(".uploaded-file-icon").html(
-            "<i style='font-size: 1.5rem;margin-right: 5px' class='" + getMimeTypeIcon(this.file) + "'></i>"
-        );
-        this.$item.find(".uploaded-file-size").text(humanFileSize(this.file.size, false));
+    createEntry(isAnimated, tabHolder) {
+        super.createEntry(isAnimated, tabHolder);
+        this.$item.find(".item-name").text(this.file.name);
+        this.$item.find(".item-type-icon").addClass(getMimeTypeIcon(this.file));
+        this.$item.find(".item-subtitle").text(humanFileSize(this.file.size, false));
 
     }
 
@@ -391,13 +381,13 @@ class TextListItem extends ListItem {
         this.savedText = "";
     }
 
-    createEntry(isAnimated) {
-        UI.createListItemFromTemplate(this.id, TAB_TYPE.text);
-        super.createEntry($('#' + this.id), isAnimated);
-        this.textTitle = this.$item.find(".list-text-title");
+    createEntry(isAnimated, tabHolder) {
+        super.createEntry(isAnimated, tabHolder);
+        this.textTitle = this.$item.find(".item-name");
         this.textTitle.text("Text n°" + this.index);
-        this.itemText = this.$item.find('.item-text');
+        this.itemText = this.$item.find('.item-subtitle');
         this.setText(this.savedText);
+        this.$item.find(".item-type-icon").addClass('fas fa-align-left');
     }
 
     getText() {
@@ -436,13 +426,13 @@ class HashListItem extends ListItem {
         super(index, 'hashListItem_', appMode);
     }
 
-    createEntry(isAnimated) {
-        UI.createListItemFromTemplate(this.id, TAB_TYPE.hash);
-        super.createEntry($('#' + this.id), isAnimated);
-        this.hashTitle = this.$item.find(".list-hash-title");
-        this.hashTitle.text("Hash n°" + this.index);
-        this.itemHash = this.$item.find('.item-hash');
+    createEntry(isAnimated, tabHolder) {
+        super.createEntry(isAnimated, tabHolder);
+        this.hashTitle = this.$item.find(".item-name");
+        this.setTitle(this.index);
+        this.itemHash = this.$item.find('.item-subtitle');
         this.setHash(this.hash);
+        this.$item.find(".item-type-icon").addClass('fas fa-hashtag');
     }
 
     setItemLocked(isLocked) {
@@ -460,6 +450,6 @@ class HashListItem extends ListItem {
     }
 
     setTitle(id) {
-        this.hashTitle.text('Hash n°' + id);
+        this.hashTitle.text(UI.getKernelManager().getCurrentKernelConfig().hashMethod + ' n°' + id);
     }
 }
